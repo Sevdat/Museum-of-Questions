@@ -232,7 +232,7 @@ public class WorldBuilder : MonoBehaviour
             if (point != origin){
                 Vector3 pointDirection = VectorManipulator.vectorDirections(origin,point);
                 Vector3 perpendicular = VectorManipulator.normalizeVector3(
-                        VectorManipulator.crossVector(origin,point)
+                        VectorManipulator.crossVector(pointDirection,rotationAxis)
                         );      
 
                 float halfAngle = angle * 0.5f * (Mathf.PI/180.0f);

@@ -27,9 +27,10 @@ public class Body : MonoBehaviour
         public Vector3 localFootAngle;
         public int[] foot = new int[]{2,3,4};
 
-        public void moveHip(float alphaAngles, Vector3 ax){
+        public Vector3[] moveHip(float alphaAngles, Vector3 ax){
             tempBody = BodyCreator.movePart(alphaAngles,hip,ax,globalBody,tempBody);
             localHipAngle = EularClass.getAngles(globalBody[hip[0]],globalBody[hip[1]]);
+            return tempBody;
         }
         public void moveKnee(float alphaAngles){
             tempBody = BodyCreator.movePart(alphaAngles,knee,localKneeAngle,globalBody,tempBody);
@@ -54,9 +55,11 @@ public class Body : MonoBehaviour
         joints = new bodyStructure(){ 
         };
         joints.initBody();
+        joints.moveHip(-50f,new Vector3(1f,0f,0f));
+        joints.globalBody = joints.tempBody;
         joints.drawBody();
     }
-    Vector3 axi = new Vector3(1f,0f,0f);
+    Vector3 axi = new Vector3(0f,0f,1f);
     float angle = 0;
     float time = 0;
     void Update(){
