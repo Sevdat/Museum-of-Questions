@@ -163,7 +163,6 @@ public class WorldBuilder : MonoBehaviour
             int z = boundry(pos.z, dimensionZ);
             return new Vector3Int(x,y,z);
         }
-
         public static void createOrDeleteObject(
             Vector3[] obj, bool create
             ){ 
@@ -218,10 +217,8 @@ public class WorldBuilder : MonoBehaviour
             return vec;
         }
     }
-
     public static class QuaternionClass {
-        public static Vector4 quatMul(Vector4 q1, Vector4 q2)
-        {
+        public static Vector4 quatMul(Vector4 q1, Vector4 q2) {
             float w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
             float x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
             float y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
@@ -235,7 +232,7 @@ public class WorldBuilder : MonoBehaviour
             if (point != origin){
                 Vector3 pointDirection = VectorManipulator.vectorDirections(origin,point);
                 Vector3 perpendicular = VectorManipulator.normalizeVector3(
-                        VectorManipulator.crossVector(rotationAxis, pointDirection)
+                        VectorManipulator.crossVector(origin,point)
                         );      
 
                 float halfAngle = angle * 0.5f * (Mathf.PI/180.0f);
@@ -306,7 +303,6 @@ public class WorldBuilder : MonoBehaviour
         public static Vector3[] rotateObject(
             float alpha, Vector3 origin,Vector3[] point,Vector3 rotationAxis
             ){
-            BitArrayManipulator.createOrDeleteObject(point, false);
             int size = point.Length;
             Vector3[] rotatedVec = new Vector3[size];
             for (int i = 0; i < size; i++){
@@ -328,6 +324,23 @@ public class WorldBuilder : MonoBehaviour
 
     }
     public static class BodyCreator{
+        public static Vector3[] loadParts(int[] bodyPart,Vector3[] globalBody){
+            int size = bodyPart.Length;
+            Vector3[] vec = new Vector3[size];
+            for (int i = 0; i < size; i++){
+                vec[i] = globalBody[bodyPart[i]];
+            }
+            return vec;
+        }
+        public static Vector3[] movePart(
+            float angles, int[] bodyPart,
+            Vector3 rotationAxis,Vector3[] globalBody,
+            Vector3[] tempBody){
+            Vector3[] bodyVec = loadParts(bodyPart,globalBody);
+            Vector3 bodyOrigin = bodyVec[0];
+            BitArrayManipulator.createOrDeleteObject(tempBody, false);
+            return Movement.rotateObject(angles,bodyOrigin,bodyVec,rotationAxis);
+        }
         public static Vector3[] diagonal(
             Vector3[] points,
             float step
@@ -352,6 +365,21 @@ public class WorldBuilder : MonoBehaviour
                     );
             }
             return diagonalArray;
+        }
+    }
+    public Vector3[] tempConnections = new Vector3[]{new Vector3(0,0,0)};
+    public void connectPoints(Vector3[] globalBody, float step){
+        int size = globalBody.Length-1;
+        int stepSize = (int)(1/step);
+        BitArrayManipulator.createOrDeleteObject(tempConnections,false);
+        tempConnections = new Vector3[(int)(1/step)*size];
+        for (int i = 0; i < globalBody.Length-1; i++){
+            Vector3[] t = BodyCreator.diagonal(
+                new Vector3[]{globalBody[i],globalBody[i+1]},
+                step);
+            for(int e = 0; e < t.Length; e++){
+                tempConnections[e + i*stepSize] = t[e];
+            }
         }
     }
 
@@ -496,3 +524,47 @@ public class WorldBuilder : MonoBehaviour
 //         rotatedVec = origin + new Vector3(x,y,z);
 //     }
 // }
+
+        // public static Vector4 axisAngle(float angle, Vector3 axis) {
+        //     float halfAngle = angle * 0.5f * (Mathf.PI/180.0f);
+        //     float sina = Mathf.Sin(halfAngle);
+        //     float cosa = Mathf.Cos(halfAngle);
+        //     float w = cosa;
+        //     float x = axis.x * sina;
+        //     float y = axis.y * sina;
+        //     float z =  axis.z * sina;
+        //     return new Vector4(x, y, z, w);
+        // }
+        // public static Vector4 fromToRotation(Vector3 aFrom, Vector3 aTo)
+        // {
+        //     Vector3 axis = VectorManipulator.normalizeVector3(
+        //         VectorManipulator.crossVector(aFrom, aTo)
+        //         );
+        //     float angle = Vector3.Angle(aFrom, aTo);
+        //     return axisAngle(angle, axis.normalized);
+        // }
+        // public static Vector4 inverseQuat(Vector4 quat) {
+        //     return new Vector4(-quat.x,-quat.y,-quat.z,quat.w);
+        // }
+        // public static Vector4 axisQuat(Vector3 quat) {
+        //     return new Vector4(quat.x, quat.y, quat.z,0);
+        // }
+        // public static Vector3 rotate(
+        //     float angle,Vector3 origin, Vector3 point,Vector3 rotationAxis
+        //     ){
+        //     Vector3 rotatedVec = origin;
+        //     if (point != origin){
+        //         Vector3 pointDirection = VectorManipulator.vectorDirections(origin,point);
+        //         Vector4 quat = fromToRotation(origin,-point);
+        //         Vector4 axis = axisQuat(pointDirection);
+        //         Vector4 inverse = inverseQuat(quat);
+        //         Vector4 rotatedQuaternion = quatMul(quatMul(quat,axis), inverse);
+                
+        //         rotatedVec = origin + new Vector3(
+        //                 rotatedQuaternion.x,
+        //                 rotatedQuaternion.y,
+        //                 rotatedQuaternion.z
+        //                 );
+        //     }
+        //     return rotatedVec;
+        // }

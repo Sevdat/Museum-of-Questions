@@ -12,6 +12,7 @@ public class Body : MonoBehaviour
     bodyStructure joints;
     public class bodyStructure : WorldBuilder{
         public Vector3 globalAngles;
+        public Vector3[] tempBody;
         public Vector3[] globalBody = new Vector3[]{
          new Vector3(20f,18f,20f),
          new Vector3(20f,12f,20f),
@@ -27,83 +28,44 @@ public class Body : MonoBehaviour
         public int[] foot = new int[]{2,3,4};
 
         public void moveHip(float alphaAngles, Vector3 ax){
-            movePart(alphaAngles,hip,ax);
+            tempBody = BodyCreator.movePart(alphaAngles,hip,ax,globalBody,tempBody);
             localHipAngle = EularClass.getAngles(globalBody[hip[0]],globalBody[hip[1]]);
         }
         public void moveKnee(float alphaAngles){
-            movePart(alphaAngles,knee,localKneeAngle);
+            tempBody = BodyCreator.movePart(alphaAngles,knee,localKneeAngle,globalBody,tempBody);
             localKneeAngle = EularClass.getAngles(globalBody[knee[0]],globalBody[knee[1]]);
         }
         public void moveFoot(float alphaAngles){
-            movePart(alphaAngles,foot,localFootAngle);
+            tempBody = BodyCreator.movePart(alphaAngles,foot,localFootAngle,globalBody,tempBody);
             localFootAngle = EularClass.getAngles(globalBody[foot[0]],globalBody[foot[1]]);
         }
-        public Vector3[] loadParts(int[] bodyPart){
-            int size = bodyPart.Length;
-            Vector3[] vec = new Vector3[size];
-            for (int i = 0; i < size; i++){
-                vec[i] = globalBody[bodyPart[i]];
-            }
-            return vec;
-        }
-        public void movePart(float angles, int[] bodyPart, Vector3 rotationAxis){
-            Vector3[] bodyVec = loadParts(bodyPart);
-            Vector3 bodyOrigin = bodyVec[0];
-            Vector3[] rotatedVec = Movement.rotateObject(angles,bodyOrigin,bodyVec,rotationAxis);
-            for (int i = 0; i< bodyVec.Length; i++){
-                globalBody[bodyPart[i]] = rotatedVec[i];
-            }
-        }
-        public Vector3[] temp = new Vector3[]{new Vector3(0,0,0)};
-        public void tempArray(Vector3[] globalBody, float step){
-            int size = globalBody.Length-1;
-            int stepSize = (int)(1/step);
-            BitArrayManipulator.createOrDeleteObject(temp,false);
-            temp = new Vector3[(int)(1/step)*size];
-            for (int i = 0; i < globalBody.Length-1; i++){
-                Vector3[] t = BodyCreator.diagonal(
-                    new Vector3[]{globalBody[i],globalBody[i+1]},
-                    step);
-                for(int e = 0; e < t.Length; e++){
-                    temp[e + i*stepSize] = t[e];
-                }
-            }
-        }
         public void initBody(){
+            tempBody = globalBody; //Dangerous because it links
             globalAngles = new Vector3(0,0,0);
             localHipAngle = EularClass.getAngles(globalBody[hip[0]],globalBody[hip[1]]);
             localKneeAngle = EularClass.getAngles(globalBody[knee[0]],globalBody[knee[1]]);
             localFootAngle = EularClass.getAngles(globalBody[foot[0]],globalBody[foot[1]]);
         }
         public void drawBody(){
-            BitArrayManipulator.createOrDeleteObject(globalBody, true);
+            BitArrayManipulator.createOrDeleteObject(tempBody, true);
         }
     }  
     void Start(){
         joints = new bodyStructure(){ 
         };
-        // joints.initBody();
-        joints.moveHip(50f,new Vector3(0,0,1));
-        // joints.drawBody();
-        // WorldBuilder.createOrDeleteObject(origin,true);
+        joints.initBody();
+        joints.drawBody();
     }
-    // Update is called once per frame
-    Vector3[] origin = new Vector3[]{new Vector3(15,15,15),new Vector3(15,10,15)};
     Vector3 axi = new Vector3(1f,0f,0f);
-    Vector3[] tempPoint = new Vector3[]{new Vector3(0,0,0)};
     float angle = 0;
     float time = 0;
     void Update(){
         time += Time.deltaTime;
         if (time >0.01f){
             angle +=1f;
-            WorldBuilder.BitArrayManipulator.createOrDeleteObject(tempPoint,false);
-            tempPoint = WorldBuilder.Movement.rotateObject(angle,joints.globalBody[0],joints.globalBody,axi);
-            WorldBuilder.BitArrayManipulator.createOrDeleteObject(tempPoint,true);
-            // joints.moveHip(1f,axi);
-            // joints.drawBody();
-        time = 0f;
-        // print(WorldBuilder.getAngles(origin,point));
+            joints.moveHip(angle,axi);
+            joints.drawBody();
+            time = 0f;
         }
     }
 }
