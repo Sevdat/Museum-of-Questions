@@ -216,6 +216,14 @@ public class WorldBuilder : MonoBehaviour
             }
             return vec;
         }
+        public static Vector3[] copyVecArray(Vector3[] vecArray){
+            Vector3[] clone = new Vector3[vecArray.Length];
+            for (int i = 0; i< clone.Length; i++){
+                Vector3 newVec = clone[i];
+                clone[i] = newVec;
+            }
+            return clone;
+        }
     }
     public static class QuaternionClass {
         public static Vector4 quatMul(Vector4 q1, Vector4 q2) {
@@ -232,7 +240,7 @@ public class WorldBuilder : MonoBehaviour
             if (point != origin){
                 Vector3 pointDirection = VectorManipulator.vectorDirections(origin,point);
                 Vector3 perpendicular = VectorManipulator.normalizeVector3(
-                        VectorManipulator.crossVector(pointDirection,rotationAxis)
+                        rotationAxis
                         );      
 
                 float halfAngle = angle * 0.5f * (Mathf.PI/180.0f);
@@ -257,48 +265,7 @@ public class WorldBuilder : MonoBehaviour
             return rotatedVec;
         }
     }
-    public static class EularClass{
-        public static float[] locatePoint(
-            float radius,
-            float constantOpposite, float axisAdjacent,
-            float axisOpposite
-            ){
-            float currentTheta = constantOpposite/radius;
-            float checkSin = Mathf.Asin(currentTheta);
-            currentTheta = float.IsNaN(checkSin)? 
-                Mathf.Asin(radius/constantOpposite) : checkSin;
-
-            float adjacent = radius*Mathf.Cos(currentTheta);
-
-            float currentAlpha = axisAdjacent/adjacent;
-            float checkCos = Mathf.Acos(currentAlpha);
-            currentAlpha = float.IsNaN(checkCos)? 
-                Mathf.Acos(adjacent/axisAdjacent) : checkCos;
-
-            float rotationSide = Mathf.Sign(axisOpposite);
-            return new float[]{
-                rotationSide*currentAlpha,
-                adjacent
-                };
-        }
-        public static Vector3 getAngles(Vector3 origin, Vector3 point){
-            Vector3 alphaRotations = new Vector3(0,0,0);
-            if (origin != point){
-            Vector3 dir = VectorManipulator.vectorDirections(origin,point);
-            float radius = VectorManipulator.vectorRadius(dir);
-
-            float[] xValues = locatePoint(radius,dir.z,dir.y,dir.x);
-            alphaRotations.x = xValues[0]*radianToAngle;
-
-            float[] yValues = locatePoint(radius,dir.x,dir.y,dir.z);
-            alphaRotations.y = yValues[0]*radianToAngle;
-
-            float[] zValues = locatePoint(radius,dir.y,dir.z,dir.x);
-            alphaRotations.z = zValues[0]*radianToAngle;
-            }
-            return alphaRotations;
-        }
-    }
+    
     public static class Movement{
         public static Vector3[] rotateObject(
             float alpha, Vector3 origin,Vector3[] point,Vector3 rotationAxis
@@ -321,7 +288,6 @@ public class WorldBuilder : MonoBehaviour
                 }
             return movedObj;
         }
-
     }
     public static class BodyCreator{
         public static Vector3[] loadParts(int[] bodyPart,Vector3[] globalBody){
@@ -332,14 +298,17 @@ public class WorldBuilder : MonoBehaviour
             }
             return vec;
         }
-        public static Vector3[] movePart(
+        public static Vector3[] rotatePart(
             float angles, int[] bodyPart,
-            Vector3 rotationAxis,Vector3[] globalBody,
-            Vector3[] tempBody){
+            Vector3 rotationAxis,Vector3[] globalBody
+            ){
             Vector3[] bodyVec = loadParts(bodyPart,globalBody);
             Vector3 bodyOrigin = bodyVec[0];
-            BitArrayManipulator.createOrDeleteObject(tempBody, false);
-            return Movement.rotateObject(angles,bodyOrigin,bodyVec,rotationAxis);
+            Vector3[] rotatedVec = Movement.rotateObject(angles,bodyOrigin,bodyVec,rotationAxis);
+            for (int i = 0; i< bodyVec.Length; i++){
+                globalBody[bodyPart[i]] = rotatedVec[i];
+            }
+            return globalBody;
         }
         public static Vector3[] diagonal(
             Vector3[] points,
