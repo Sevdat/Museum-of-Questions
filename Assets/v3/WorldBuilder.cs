@@ -216,10 +216,10 @@ public class WorldBuilder : MonoBehaviour
             }
             return vec;
         }
-        public static Vector3[] copyVecArray(Vector3[] vecArray){
+        public static Vector3[] addToArray(Vector3[] vecArray,Vector3 add){
             Vector3[] clone = new Vector3[vecArray.Length];
             for (int i = 0; i< clone.Length; i++){
-                Vector3 newVec = clone[i];
+                Vector3 newVec = vecArray[i] +add;
                 clone[i] = newVec;
             }
             return clone;
@@ -309,6 +309,18 @@ public class WorldBuilder : MonoBehaviour
                 globalBody[bodyPart[i]] = rotatedVec[i];
             }
             return globalBody;
+        }
+        public static Vector3[] rotateAxis(float angles,Vector3[] localCross, Vector3 rotationAxis, int index,Vector3[] globalBody){
+            Vector3 origin = globalBody[0];
+            for (int i = 0; i < localCross.Length; i++){
+                if (i != index){
+                    localCross[i] = 
+                    QuaternionClass.rotate(
+                        angles,origin,localCross[i]+origin,rotationAxis
+                        ) - origin;
+                }
+            }
+            return localCross;
         }
         public static Vector3[] diagonal(
             Vector3[] points,
