@@ -153,7 +153,7 @@ public class WorldBuilder : MonoBehaviour
                     location = Math.Abs(location % (dimension+1));
                 else if (location < 0) {
                     int size = dimension+1;
-                    location = size-Math.Abs(location % size);
+                    location = size-1-Math.Abs(location % size);
                 }
             return location;
         }
@@ -163,16 +163,21 @@ public class WorldBuilder : MonoBehaviour
             int z = boundry(pos.z, dimensionZ);
             return new Vector3Int(x,y,z);
         }
-        public static void createOrDeleteObject(
-            Vector3[] obj, bool create
-            ){ 
-            for (int i = 0; i < obj.Length; i++){
-                Vector3Int vector = setVectorInBoundry(
+        public static Vector3Int intVecInArray(float x,float y,float z){
+            return setVectorInBoundry(
                     new Vector3Int(
-                        Mathf.RoundToInt(obj[i].x),
-                        Mathf.RoundToInt(obj[i].y),
-                        Mathf.RoundToInt(obj[i].z)
+                        Mathf.RoundToInt(x),
+                        Mathf.RoundToInt(y),
+                        Mathf.RoundToInt(z)
                     )
+                    );
+        }
+        public static void createOrDeleteObject(
+            Vector3[] obj, bool create,int step
+            ){ 
+            for (int i = 0; i < obj.Length; i += step){
+                Vector3Int vector = intVecInArray(
+                    obj[i].x, obj[i].y, obj[i].z
                     );
                 createOrDelete(vector,create);
             }
@@ -193,6 +198,14 @@ public class WorldBuilder : MonoBehaviour
                 Mathf.Pow(vectorDirections.z,2.0f)
             );
             return radius;
+        }
+        public static float stepsNeeded(Vector3 vectorDirections){
+            double step = Math.Cbrt(
+                Mathf.Pow(vectorDirections.x,2.0f)+
+                Mathf.Pow(vectorDirections.y,2.0f)+
+                Mathf.Pow(vectorDirections.z,2.0f)
+            );
+            return (float)step;
         }
         public static Vector3 crossVector(Vector3 a,Vector3 b){
             Vector3 perpendicular = new Vector3(){
@@ -269,103 +282,508 @@ public class WorldBuilder : MonoBehaviour
             return rotatedVec;
         }
     }
-    
-    public static class Movement{
-        public static Vector3[] rotateObject(
-            float alpha, Vector3 origin,Vector3[] point,Vector3 rotationAxis
+
+    public class bodyStructure {
+        public List<Index> jointList;
+        public int[][][] bodyHierarchy;
+        public Vector3[] global;
+        public Vector3[] local;
+        public Vector3[][] mesh;
+        public int[][][] collision;
+        static float length = 1;
+        Vector3 axisLengthX = new Vector3(length,0,0);
+        Vector3 axisLengthY = new Vector3(0,length,0);
+        Vector3 axisLengthZ = new Vector3(0,0,length);
+        
+        public struct Index {
+            public int currentIndex;
+            public IndexConnections[] connections;
+            public MeshStructure meshStructure;
+            public Index(int currentIndex, IndexConnections[] connections, MeshStructure meshStructure) {
+                this.currentIndex = currentIndex;
+                this.connections = connections;
+                this.meshStructure = meshStructure;
+            }
+        }
+        public Index index(int currentIndex, IndexConnections[] connections, MeshStructure meshStructure) {
+            return new Index(currentIndex,connections,meshStructure);
+        }
+        public struct IndexConnections {
+            public int connectedIndex;
+            public float radius;
+            public IndexConnections(int connectedIndex, float radius) {
+                this.connectedIndex = connectedIndex;
+                this.radius = radius;
+            }
+        }
+        public IndexConnections connections(int connectedIndex, float radius){
+            return new IndexConnections(connectedIndex,radius);
+        }
+        public struct MeshStructure {
+            public Cube drawCube;
+            public Cube[] deleteFromCube;
+            public MeshStructure(Cube drawCube, Cube[] deleteFromCube){
+                this.drawCube = drawCube;
+                this.deleteFromCube = deleteFromCube;
+            }
+        }
+        public struct Cube{
+            public Square frontSquare;
+            public Square backSquare;
+            public RotateCube[] rotateCube;
+            public Cube(Square frontSquare,Square backSquare,RotateCube[] rotateCube){
+                this.frontSquare = frontSquare;
+                this.backSquare = backSquare;
+                this.rotateCube = rotateCube;
+            }
+        }
+        public Cube cube(
+            Square upperSquare, Square lowerSquare
             ){
-            int size = point.Length;
+            return new Cube(){
+                frontSquare = upperSquare,
+                backSquare = lowerSquare,
+            };
+        }
+        public struct RotateCube {
+            public float angle;
+            public Vector3 origin;
+            public Vector3 rotationCorner;
+            public bool dictionary;
+            public RotateCube(float angle, Vector3 origin, Vector3 rotationCorner, bool dictionary){
+                this.angle = angle;
+                this.origin = origin;
+                this.rotationCorner = rotationCorner;
+                this.dictionary = dictionary;
+            }
+        }
+        public RotateCube rotateCube(float angle, Vector3 origin, Vector3 rotationCorner, bool dictionary){
+            return new RotateCube(){
+                angle = angle,
+                origin = origin,
+                rotationCorner = rotationCorner,
+                dictionary = dictionary
+            };
+        }
+        public struct Square {
+            public Vector3 topLeft;
+            public Vector3 topRight;
+            public Vector3 bottomLeft;
+            public Vector3 bottomRight;
+            public Square(
+                Vector3 topLeft, Vector3 topRight, 
+                Vector3 bottomLeft,Vector3 bottomRight
+                    ) {
+                    this.topLeft = topLeft;
+                    this.topRight = topRight;
+                    this.bottomLeft = bottomLeft;
+                    this.bottomRight = bottomRight;
+                }
+        }
+        public Square distanceFromCenter(
+            Vector3 topLeft, Vector3 topRight,
+            Vector3 bottomLeft, Vector3 bottomRight
+            ){
+            return new Square(){
+                topRight = topRight,
+                topLeft = topLeft,
+                bottomLeft = bottomLeft,
+                bottomRight = bottomRight,
+            };
+        }
+        public Vector3 corner(float xFromCenter, float yFromCenter, float zFromCenter){
+            return new Vector3(xFromCenter, yFromCenter, zFromCenter);
+        }
+        public void globalPoint(Vector3 point){
+            global = (global==null)? 
+                new Vector3[]{
+                point,
+                point+axisLengthX,
+                point+axisLengthY,
+                point+axisLengthZ
+            }:
+                new Vector3[]{
+                    global[0]+point,
+                    global[1]+point,
+                    global[2]+point,
+                    global[3]+point,
+                };
+        }
+        public void globalPoint(float angle, int rotationAxis){
+            Vector3 origin = global[0];
+            Vector4 quat = QuaternionClass.angledAxis(angle,global[rotationAxis]-origin);
+            global[1]= QuaternionClass.rotate(origin,global[1],quat);
+            global[2]= QuaternionClass.rotate(origin,global[2],quat);
+            global[3]= QuaternionClass.rotate(origin,global[3],quat);
+        }
+
+        public void moveGlobal(
+            float speed,int direction
+            ){
+            Vector3 move = 
+                VectorManipulator.vectorDirections(global[0],global[direction])*speed;
+            for (int i = 0; i < local.Length; i++){
+                local[i] += move; 
+                }
+            for (int i = 0; i < global.Length; i++){
+                global[i] += move;
+            }
+        }
+        public HashSet<int> createSet(int size){
+            HashSet<int> set = new HashSet<int>();
+            for(int i = 0; i < size; i++){
+                set.Add(i);
+            }
+            return set;
+        }
+        public void sortList(){
+            int size = jointList.Count;
+            Index[] sortedJointArray = new Index[size];
+            for (int i = 0; i<size; i++){
+                Index joint = jointList[i];
+                int index = joint.currentIndex;
+                sortedJointArray[index] = joint;
+            }
+            jointList = new List<Index>(sortedJointArray);
+        }
+        public void renumberIndex(){
+            Dictionary<int,int> pairs = new Dictionary<int, int>();
+            int size = jointList.Count;
+            Index[] changeList = new Index[jointList.Count];
+            for (int i = 0;i<size;i++){
+                pairs.Add(jointList[i].currentIndex,i);
+            }
+            for (int i = 0;i<jointList.Count;i++){
+                Index index = jointList[i];
+                index.currentIndex = pairs[index.currentIndex];
+                for (int e = 0;e<index.connections.Length;e++){
+                    IndexConnections connected = index.connections[e];
+                    connected.connectedIndex = pairs[connected.connectedIndex];
+                }
+                changeList[i] = index;
+            }
+            jointList = new List<Index>(changeList);
+        }
+        public IndexConnections[][] sortedConnections(){
+            int size = jointList.Count;
+            IndexConnections[][] sortedJointArray = new IndexConnections[size][];
+            for (int i = 0; i<size; i++){
+                Index joint = jointList[i];
+                int index = joint.currentIndex;
+                IndexConnections[] connectedToIndex = joint.connections;
+                sortedJointArray[index] = connectedToIndex;
+            }
+            return sortedJointArray;
+        }
+        public int[][] indexHierarchy(int index,IndexConnections[][] sortedJointArray,HashSet<int> search){
+            HashSet<int> setClone = new HashSet<int>(search);
+            List<IndexConnections[]> activeConnections = new List<IndexConnections[]>(){
+                sortedJointArray[index]
+            };
+            int axisSize = 4;
+            List<int> hierarchy = new List<int>(){index*axisSize};
+            while (activeConnections.Count != 0){
+                IndexConnections[] connectedArray = activeConnections[0];
+                if (connectedArray!= null){
+                    for (int i = 0;i<connectedArray.Length;i++){
+                        IndexConnections connection = connectedArray[i];
+                        int searchIndex = connection.connectedIndex;
+                        if (setClone.Contains(searchIndex)) {
+                            hierarchy.Add(searchIndex*axisSize);
+                            activeConnections.Add(sortedJointArray[searchIndex]);
+                            setClone.Remove(searchIndex);
+                        }
+                    }
+                }
+            activeConnections.RemoveAt(0);
+            }
+            int[] remainder = new int[setClone.Count];
+            setClone.CopyTo(remainder);
+            return new int[][]{hierarchy.ToArray(),remainder};
+        }
+        public Vector3[] createLine(Vector3 startPoint,IndexConnections[][] sortedJointArray,HashSet<int> search){
+            int size = sortedJointArray.Length;
+            HashSet<int> setClone = new HashSet<int>(search);
+            Vector3[] jointVectors = new Vector3[size*4];
+            jointVectors[0] = startPoint;
+            jointVectors[1] = startPoint+axisLengthX;
+            jointVectors[2] = startPoint+axisLengthY;
+            jointVectors[3] = startPoint+axisLengthZ;
+            List<int> indexList = new List<int>(){0};
+            while (indexList.Count != 0){
+                IndexConnections[] connectionsArray = sortedJointArray[indexList[0]];
+                if (connectionsArray!= null){
+                    for (int i = 0;i<connectionsArray.Length;i++){
+                        IndexConnections connection = connectionsArray[i];
+                        int index = connection.connectedIndex;
+                        if (setClone.Contains(index)) {
+                            indexList.Add(index);
+                            Vector3 vec = jointVectors[indexList[0]*4]-new Vector3(0f,connection.radius,0f);
+                            setClone.Remove(index);
+                            index*=4;
+                            jointVectors[index] = vec;
+                            jointVectors[index+1] = vec+axisLengthX;
+                            jointVectors[index+2] = vec+axisLengthY;
+                            jointVectors[index+3] = vec+axisLengthZ;
+                        }
+                    }
+                }
+            indexList.RemoveAt(0);
+            }
+            return jointVectors;
+        }
+        public void jointHierarchy(Vector3 startPoint){
+            IndexConnections[][] sortedJointArray = sortedConnections();
+            int size = sortedJointArray.Length;
+            HashSet<int> set = createSet(size);
+            int[][][] indexParts = new int[size][][];
+            for (int i = 0;i<size;i++){
+                indexParts[i] = indexHierarchy(i, sortedJointArray, set);
+            }
+            Vector3[] vecWithAxis = createLine(startPoint,sortedJointArray,set);
+            
+            bodyHierarchy = indexParts;
+            local = vecWithAxis;
+        }
+        public void rotateLocal(float angle, int index, int rotationAxis, bool oppositeDirection){
+            int originIndex = index*4;
+            Vector3[] bodyVec = local;
+            Vector3 origin = bodyVec[originIndex];
+            int rotationIndex = originIndex+rotationAxis;
+            int remainder = oppositeDirection ? 1:0;
+            int[] connected = bodyHierarchy[index][remainder];
+            int size = connected.Length;  
+            Vector4 quat = QuaternionClass.angledAxis(angle,bodyVec[rotationIndex]-origin);
+            for (int i = 0; i<size;i++){
+                int indexForGlobal = connected[i];
+                bodyVec[indexForGlobal]= QuaternionClass.rotate(
+                    origin,bodyVec[indexForGlobal],quat
+                );
+                bodyVec[indexForGlobal+1]= QuaternionClass.rotate(
+                    origin,bodyVec[indexForGlobal+1],quat
+                );
+                bodyVec[indexForGlobal+2]= QuaternionClass.rotate(
+                    origin,bodyVec[indexForGlobal+2],quat
+                );
+                bodyVec[indexForGlobal+3]= QuaternionClass.rotate(
+                    origin,bodyVec[indexForGlobal+3],quat
+                );
+            }
+        }
+        public void invertAxis(int indexHierarchy, bool x, bool y, bool z){
+            Vector3[] vec = local;
+            int[] indexList = bodyHierarchy[indexHierarchy][0];
+            for (int i = 0; i<indexList.Length; i++){
+                int index = indexList[i];
+                Vector3 origin = vec[index];
+                if (x){
+                vec[index+1] = origin - VectorManipulator.vectorDirections(origin,vec[index+1]);
+                }
+                if (y){
+                vec[index+2] = origin - VectorManipulator.vectorDirections(origin,vec[index+2]);
+                }
+                if (z){
+                vec[index+3] = origin - VectorManipulator.vectorDirections(origin,vec[index+3]);
+                }
+            }
+        }
+        public Vector3[] rotateVectors(
+            float alpha, Vector3 origin,Vector3[] points,Vector3 rotationAxis
+            ){
+            int size = points.Length;
             Vector4 angledAxis = QuaternionClass.angledAxis(alpha,rotationAxis);
             Vector3[] rotatedVec = new Vector3[size];
             for (int i = 0; i < size; i++){
-                Vector3 vec = QuaternionClass.rotate(origin,point[i],angledAxis);
+                Vector3 vec = QuaternionClass.rotate(origin,points[i],angledAxis);
                 rotatedVec[i] = vec;
                 }
             return rotatedVec;
         }
-        public static Vector3[] moveObject(
-            Vector3 move, Vector3[] obj
-            ){
-            BitArrayManipulator.createOrDeleteObject(obj, false);
-            Vector3[] movedObj = new Vector3[obj.Length];
-            for (int i = 0; i < movedObj.Length; i++){
-                movedObj[i] = obj[i]+move; 
+        public void dictionaryFilter(Dictionary<int,Vector3> dictionary,Vector3[] keys, bool addOrRemove){
+            if (addOrRemove){
+                for (int i =0;i<keys.Length;i++){
+                    Vector3 vec = keys[i];
+                    Vector3Int intVec = 
+                        BitArrayManipulator.intVecInArray(
+                                vec.x,vec.y,vec.z
+                                );
+                    int key = BitArrayManipulator.vecToInt(
+                            intVec.x,intVec.y,intVec.z
+                            );
+                        if (!dictionary.ContainsKey(key)){
+                            dictionary.Add(key,vec);
+                        }
                 }
-            return movedObj;
-        }
-    }
-    public static class BodyCreator{
-        public static Vector3[] loadParts(int[] bodyPart,Vector3[] globalBody){
-            int size = bodyPart.Length;
-            Vector3[] vec = new Vector3[size];
-            for (int i = 0; i < size; i++){
-                vec[i] = globalBody[bodyPart[i]];
+            } else {
+                for (int i =0;i<keys.Length;i++){
+                    Vector3 vec = keys[i];
+                    Vector3Int intVec = 
+                        BitArrayManipulator.intVecInArray(
+                                vec.x,vec.y,vec.z
+                                );
+                    int key = BitArrayManipulator.vecToInt(
+                            intVec.x,intVec.y,intVec.z
+                            );
+                    if (dictionary.ContainsKey(key)){
+                        dictionary.Remove(key);
+                    }
+                }
             }
-            return vec;
         }
-        // public static Vector3[] rotatePart(
-        //     float angles, int[] bodyPart,
-        //     Vector3 rotationAxis,Vector3[] globalBody
-        //     ){
-        //     Vector3[] bodyVec = loadParts(bodyPart,globalBody);
-        //     Vector3 bodyOrigin = bodyVec[0];
-        //     Vector3[] rotatedVec = Movement.rotateObject(angles,bodyOrigin,bodyVec,rotationAxis);
-        //     for (int i = 0; i< bodyVec.Length; i++){
-        //         globalBody[bodyPart[i]] = rotatedVec[i];
-        //     }
-        //     return globalBody;
-        // }
-        // public static Vector3[] rotateAxis(float angles,Vector3[] localCross, Vector3 rotationAxis, int index,Vector3[] globalBody){
-        //     Vector3 origin = globalBody[0];
-        //     for (int i = 0; i < localCross.Length; i++){
-        //         if (i != index){
-        //             localCross[i] = 
-        //             QuaternionClass.rotate(
-        //                 angles,origin,localCross[i]+origin,rotationAxis
-        //                 ) - origin;
-        //         }
-        //     }
-        //     return localCross;
-        // }
-        public static Vector3[] diagonal(
-            Vector3[] points,
-            float step
+        public Vector3 angledCoordinates(
+            Vector3 origin, Vector3 point,
+            Vector3 stepX, Vector3 stepY, Vector3 stepZ
             ){
-            float x0 = points[0].x;
-            float x1 = points[1].x;
-            float y0 = points[0].y;
-            float y1 = points[1].y;
-            float z0 = points[0].z;
-            float z1 = points[1].z;
-            float x = x1-x0;
-            float y = y1-y0;
-            float z = z1-z0;
-            int size = (int)(1/step);
-            Vector3[] diagonalArray = new Vector3[size];
-            for (int i = 0; i < size; i++){ 
-                float f = i*step;
-                diagonalArray[i] = new Vector3(
-                    x*f+x0,
-                    y*f+y0,
-                    z*f+z0
-                    );
-            }
-            return diagonalArray;
+            return origin + point.x*stepX 
+                          + point.y*stepY 
+                          + point.z*stepZ;
         }
-    }
-    public Vector3[] tempConnections = new Vector3[]{new Vector3(0,0,0)};
-    public void connectPoints(Vector3[] globalBody, float step){
-        int size = globalBody.Length-1;
-        int stepSize = (int)(1/step);
-        BitArrayManipulator.createOrDeleteObject(tempConnections,false);
-        tempConnections = new Vector3[(int)(1/step)*size];
-        for (int i = 0; i < globalBody.Length-1; i++){
-            Vector3[] t = BodyCreator.diagonal(
-                new Vector3[]{globalBody[i],globalBody[i+1]},
-                step);
-            for(int e = 0; e < t.Length; e++){
-                tempConnections[e + i*stepSize] = t[e];
+        public void meshGeneration(
+            int index
+            ){ 
+            Index connection = jointList[index];
+            int currentIndex = connection.currentIndex*4;   
+            MeshStructure meshData = connection.meshStructure;
+            Cube createMesh = meshData.drawCube;
+            Cube[] deletionArray = meshData.deleteFromCube;
+
+            Vector3 origin = local[currentIndex]; 
+            Vector3 stepX = local[currentIndex+1]-origin;
+            Vector3 stepY = local[currentIndex+2]-origin;
+            Vector3 stepZ = local[currentIndex+3]-origin;
+
+            Dictionary<int,Vector3> mainMesh = 
+                cubeGeneration(createMesh,origin,stepX,stepY,stepZ);
+            
+            for (int i = 0; i<deletionArray.Length;i++){
+                Cube deleteCube = deletionArray[i];
+                Vector3[] cubeVectors = 
+                    new List<Vector3>(cubeGeneration(deletionArray[i],origin,stepX,stepY,stepZ).Values).ToArray();
+                RotateCube[] rotation = deleteCube.rotateCube;
+                    for (int j = 0;j<rotation.Length;j++){
+                        RotateCube rotationData = rotation[j];
+                        Vector3 cubeOrigin = origin + rotationData.origin;
+                        cubeVectors = rotateVectors(
+                            -90,
+                            cubeOrigin,
+                            cubeVectors,
+                            rotationData.rotationCorner
+                            );
+                        if (rotationData.dictionary) dictionaryFilter(mainMesh,cubeVectors,false);
+                    }
             }
+            BitArrayManipulator.createOrDeleteObject(
+                new List<Vector3>(mainMesh.Values).ToArray(),true,1
+                );
+        }
+        public Dictionary<int,Vector3> cubeGeneration(
+            Cube cube,Vector3 origin,
+            Vector3 stepX,Vector3 stepY,Vector3 stepZ
+            ){
+            Vector3 backTopLeft = cube.backSquare.topLeft;
+            Vector3 backTopRight = cube.backSquare.topRight;
+            Vector3 backBottomLeft = cube.backSquare.bottomLeft;
+            Vector3 backBottomRight = cube.backSquare.bottomRight;
+
+            Vector3 frontTopLeft = cube.frontSquare.topLeft;
+            Vector3 frontTopRight = cube.frontSquare.topRight;
+            Vector3 frontBottomLeft = cube.frontSquare.bottomLeft;
+            Vector3 frontBottomRight = cube.frontSquare.bottomRight;
+
+            Vector3 a = angledCoordinates(origin,backTopLeft,stepX,stepY,stepZ);
+
+            Vector3 b = angledCoordinates(origin,backTopRight,stepX,stepY,stepZ);
+
+            Vector3 c = angledCoordinates(origin,backBottomLeft,stepX,stepY,stepZ);
+
+            Vector3 d = angledCoordinates(origin,backBottomRight,stepX,stepY,stepZ);
+
+            Vector3 e = angledCoordinates(origin,frontTopLeft,stepX,stepY,stepZ);
+
+            Vector3 f = angledCoordinates(origin,frontTopRight,stepX,stepY,stepZ);
+
+            Vector3 g = angledCoordinates(origin,frontBottomLeft,stepX,stepY,stepZ);
+
+            Vector3 h = angledCoordinates(origin,frontBottomRight,stepX,stepY,stepZ);
+
+            Vector3 ac = VectorManipulator.vectorDirections(a,c);
+            Vector3 bd = VectorManipulator.vectorDirections(b,d);
+            Vector3 eg = VectorManipulator.vectorDirections(e,g);
+            Vector3 fh = VectorManipulator.vectorDirections(f,h);
+
+            float stepAC = VectorManipulator.vectorRadius(ac);
+            float stepBD = VectorManipulator.vectorRadius(bd);
+            float stepEG = VectorManipulator.vectorRadius(eg);
+            float stepFH = VectorManipulator.vectorRadius(fh);
+            
+            if (stepAC != 0.0f) ac /= stepAC;
+            if (stepBD != 0.0f) bd /= stepBD;
+            if (stepEG != 0.0f) eg /= stepEG;
+            if (stepFH != 0.0f) fh /= stepFH;
+
+            int countAC = 0;  int limitAC = (int)Mathf.Abs(stepAC);
+            int countBD = 0;  int limitBD = (int)Mathf.Abs(stepBD);
+            int countEG = 0;  int limitEG = (int)Mathf.Abs(stepEG);
+            int countFH = 0;  int limitFH = (int)Mathf.Abs(stepFH);
+            int maxACBD = (limitAC>limitBD)?limitAC:limitBD;
+            int maxEGFH = (limitEG>limitFH)?limitEG:limitFH;
+            int maxLimitCount = (maxACBD>maxEGFH)?maxACBD+1:maxEGFH+1;
+            int count = 0;
+            Dictionary<int,Vector3> search = new Dictionary<int,Vector3>();
+            while (count!=maxLimitCount){
+                Vector3 ae = VectorManipulator.vectorDirections(
+                    a+ac*countAC,
+                    e+eg*countEG
+                    );
+                Vector3 bf = VectorManipulator.vectorDirections(
+                    b+bd*countBD,
+                    f+fh*countFH
+                    );
+
+                float stepAE = VectorManipulator.vectorRadius(ae);
+                float stepBF = VectorManipulator.vectorRadius(bf);
+                if (stepAE != 0.0f) ae /= stepAE;
+                if (stepBF != 0.0f) bf /= stepBF;
+
+                int countAE = 0;  int limitAE = (int)Mathf.Abs(stepAE);
+                int countBF = 0;  int limitBF = (int)Mathf.Abs(stepBF);
+                int maxAEBF = (limitAE>limitBF)?limitAE+1:limitBF+1;
+                int maxCount = 0;
+                while(maxCount != maxAEBF){
+                    Vector3[] keys = fillInbetween(
+                        a+ae*countAE+ac*countAC,
+                        b+bf*countBF+bd*countBD
+                        );
+                    dictionaryFilter(search,keys,true);
+                    maxCount++;
+                    if (countAE<limitAE){countAE++;}
+                    if (countBF<limitBF){countBF++;}
+                }
+                count++;
+                if (countAC<limitAC){countAC++;}
+                if (countBD<limitBD){countBD++;}
+                if (countEG<limitEG){countEG++;}
+                if (countFH<limitFH){countFH++;}
+            }
+            return search;
+        }
+        public Vector3[] fillInbetween(
+            Vector3 origin, Vector3 point
+            ){ 
+            float step = VectorManipulator.vectorRadius(
+                VectorManipulator.vectorDirections(origin,point)
+            );
+            Vector3 direction = (point-origin)/ step;
+            int size = (int)step+1;
+            List<Vector3> diagonalArray = new List<Vector3>();
+            for (int i = 0; i < size; i++){ 
+                diagonalArray.Add(origin+direction*i);
+            }
+            return diagonalArray.ToArray();
+        }
+        
+        public void drawLocal(bool createOrDelete){
+            BitArrayManipulator.createOrDeleteObject(local,createOrDelete,4);
         }
     }
 
@@ -554,3 +972,54 @@ public class WorldBuilder : MonoBehaviour
         //     }
         //     return rotatedVec;
         // }
+
+            // public static class BodyCreator{
+    //     public static Vector3[] loadParts(int[] bodyPart,Vector3[] globalBody){
+    //         int size = bodyPart.Length;
+    //         Vector3[] vec = new Vector3[size];
+    //         for (int i = 0; i < size; i++){
+    //             vec[i] = globalBody[bodyPart[i]];
+    //         }
+    //         return vec;
+    //     }
+    //     public static Vector3[] diagonal(
+    //         Vector3[] points,
+    //         float step
+    //         ){
+    //         float x0 = points[0].x;
+    //         float x1 = points[1].x;
+    //         float y0 = points[0].y;
+    //         float y1 = points[1].y;
+    //         float z0 = points[0].z;
+    //         float z1 = points[1].z;
+    //         float x = x1-x0;
+    //         float y = y1-y0;
+    //         float z = z1-z0;
+    //         int size = (int)(1/step);
+    //         Vector3[] diagonalArray = new Vector3[size];
+    //         for (int i = 0; i < size; i++){ 
+    //             float f = i*step;
+    //             diagonalArray[i] = new Vector3(
+    //                 x*f+x0,
+    //                 y*f+y0,
+    //                 z*f+z0
+    //                 );
+    //         }
+    //         return diagonalArray;
+    //     }
+    // }
+    // public Vector3[] tempConnections = new Vector3[]{new Vector3(0,0,0)};
+    // public void connectPoints(Vector3[] globalBody, float step){
+    //     int size = globalBody.Length-1;
+    //     int stepSize = (int)(1/step);
+    //     BitArrayManipulator.createOrDeleteObject(tempConnections,false);
+    //     tempConnections = new Vector3[(int)(1/step)*size];
+    //     for (int i = 0; i < globalBody.Length-1; i++){
+    //         Vector3[] t = BodyCreator.diagonal(
+    //             new Vector3[]{globalBody[i],globalBody[i+1]},
+    //             step);
+    //         for(int e = 0; e < t.Length; e++){
+    //             tempConnections[e + i*stepSize] = t[e];
+    //         }
+    //     }
+    // }
