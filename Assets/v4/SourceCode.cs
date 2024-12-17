@@ -112,7 +112,7 @@ public class SourceCode:MonoBehaviour {
         public void get(){
             bool over180 = (angleY>Mathf.PI)? true:false;
             axis.getPointAroundOrigin(sphere.origin,out float tempAngleY, out float tempAngleX);
-            if (!float.IsNaN(angleY)&& !float.IsNaN(angleY)){
+            if (!float.IsNaN(tempAngleY)&& !float.IsNaN(tempAngleX)){
                 angleY = tempAngleY;
                 if (!(angleY == 0f || angleY == Mathf.PI)) angleX = tempAngleX;
                 if (over180) {
@@ -639,7 +639,7 @@ public class SourceCode:MonoBehaviour {
         public Editor editor;
         public List<BakedMesh> bakedMeshes;
         public string amountOfDigits; 
-        public int countStart, count;
+        public int timerStart, time;
 
         public Body(){}
         public Body(int worldKey){
@@ -650,12 +650,12 @@ public class SourceCode:MonoBehaviour {
             editor = new Editor(this);
             editor.initilizeBody();
             amountOfDigits = "0.000000";
-            count = 0;
-            countStart = 20;
+            time = 0;
+            timerStart = 20;
         }
 
-        public void newCountStart(int countStart){
-            this.countStart = countStart;    
+        public void newCountStart(int timerStart){
+            this.timerStart = timerStart;    
         }
         public void newAccuracy(int amount){
             string newString;
@@ -695,7 +695,7 @@ public class SourceCode:MonoBehaviour {
                 }
             }
             string stringPath = $"Body_{worldKey}_";
-            string updateReadWrite = $"{stringPath}UpdateReadWrite: {countStart}\n";
+            string updateReadWrite = $"{stringPath}UpdateReadWrite: {timerStart}\n";
             string accuracyAmount = $"{stringPath}Accuracy: {amountOfDigits.Length-2}\n";
             string showAxis = $"{stringPath}ShowAxis: {globalAxis.renderAxis.created}\n";
             string globalAxisScale = $"{stringPath}GlobalAxisScale: {accuracy(globalAxis.axisDistance)}\n";
@@ -1112,6 +1112,7 @@ public class SourceCode:MonoBehaviour {
                 localAxis.alignRotationTo(unityAxis, out float angle, out Vector3 axis, out Vector4 quat);
                 localAxis.spinFuture.sphere.setOrigin(unityAxis.transform.position+axis*localAxis.axisDistance);
                 localAxis.spinFuture.get();
+                if (float.IsNaN(angle)) angle = 0;
                 localAxis.spinFuture.speed = angle;
                 rotateHierarchy(quat, true);
             }
@@ -1488,41 +1489,47 @@ public class SourceCode:MonoBehaviour {
         bool radianOrDegree = false;
         bool initilize;
         Body body;
+        string pathToFolder;
         Dictionary<int,int> newJointKeys = new Dictionary<int,int>();
         Dictionary<int,int> newSphereKeys = new Dictionary<int,int>();
         Dictionary<int,List<int>> deleted = new Dictionary<int, List<int>>();
         public Editor(){}
         public Editor(Body body){
             this.body = body;
+            pathToFolder = $"Assets/v4/{body.worldKey}";
+            if (!Directory.Exists(pathToFolder)) {
+                Directory.CreateDirectory(pathToFolder);
+                }
+            
         }
         
-        internal void writer(){
-            using(StreamWriter writetext = new StreamWriter($"Assets/v4/{body.worldKey}.txt")) {
-                writetext.WriteLine(body.saveBody());
-                int size = body.bodyStructure.Length;
-                for (int i = 0; i<size; i++){
-                    Joint joint = body.bodyStructure[i];
-                    if (joint != null){
-                        writetext.WriteLine(joint.saveJointPosition(radianOrDegree));
-                        writetext.WriteLine(joint.pointCloud.savePointCloud(out List<int> collisionSphereIndexes, out int listSize));
-                        CollisionSphere[] collisionSpheres = joint.pointCloud.collisionSpheres;
-                        for (int j = 0; j<listSize;j++){
-                            writetext.WriteLine(collisionSpheres[collisionSphereIndexes[j]].saveCollisionSphere(radianOrDegree));
-                        }
+        void writePositions(StreamWriter writetext){
+            writetext.WriteLine(body.saveBody());
+            int size = body.bodyStructure.Length;
+            for (int i = 0; i<size; i++){
+                Joint joint = body.bodyStructure[i];
+                if (joint != null){
+                    writetext.WriteLine(joint.saveJointPosition(radianOrDegree));
+                    writetext.WriteLine(joint.pointCloud.savePointCloud(out List<int> collisionSphereIndexes, out int listSize));
+                    CollisionSphere[] collisionSpheres = joint.pointCloud.collisionSpheres;
+                    for (int j = 0; j<listSize;j++){
+                        writetext.WriteLine(collisionSpheres[collisionSphereIndexes[j]].saveCollisionSphere(radianOrDegree));
                     }
                 }
-                for (int i = 0; i<size; i++){
-                    Joint joint = body.bodyStructure[i];
-                    if (joint != null){
-                        writetext.WriteLine(joint.saveJoint(radianOrDegree));
-                    }
-                }
-                writetext.WriteLine(body.saveBodyPosition(radianOrDegree));
-                writetext.WriteLine("");
             }
         }
-        internal void reader(){
-            using(StreamReader readtext = new StreamReader($"Assets/v4/{body.worldKey}.txt")){
+        void writeMotions(StreamWriter writetext){
+            int size = body.bodyStructure.Length;
+            for (int i = 0; i<size; i++){
+                Joint joint = body.bodyStructure[i];
+                if (joint != null){
+                    writetext.WriteLine(joint.saveJoint(radianOrDegree));
+                }
+            }
+        }
+        
+        internal void reader(int count){
+            using(StreamReader readtext = new StreamReader($"{pathToFolder}/{count}.txt")){
                 string readText;
                 while ((readText = readtext.ReadLine()) != null){
                     string[] splitStr = readText.Split(":");
@@ -1547,19 +1554,44 @@ public class SourceCode:MonoBehaviour {
             newSphereKeys = new Dictionary<int,int>();
             deleted = new Dictionary<int, List<int>>();
         }
+        internal void writer(){
+            using(StreamWriter writeText = new StreamWriter($"Assets/v4/{body.worldKey}.txt")) {
+                writePositions(writeText);
+                writeMotions(writeText);
+                writeText.WriteLine(body.saveBodyPosition(radianOrDegree));
+                writeText.WriteLine("");
+            }
+        }
+        internal void trackWriter(){
+            using (StreamWriter writeText = new StreamWriter($"{pathToFolder}/{count}.txt",  true)){
+                writePositions(writeText);
+            }
+            body.updatePhysics();
+            using (StreamWriter writeText = new StreamWriter($"{pathToFolder}/{count}.txt",  true)){
+                writeMotions(writeText);
+                writeText.WriteLine(body.saveBodyPosition(radianOrDegree));
+                writeText.WriteLine("");
+            }
+            count++;
+        }
+        
         public void initilizeBody(){
             initilize = true;
-            reader();
+            reader(0);
             initilize = false;
         }
+        int count = 0;
+        public void trackBody(){
+            trackWriter();
+        }
         public void readWrite(){
-            if (body.count == 0){
-                reader();
+            if (body.time == 0){
+                reader(0);
                 body.updatePhysics();
                 writer();
-                body.count = body.countStart;
+                body.time = body.timerStart;
             } else {
-                body.count -=1;
+                body.time -=1;
             }
         }
         void removeEmpty(string[] strArray, out List<string> list){
@@ -1633,7 +1665,7 @@ public class SourceCode:MonoBehaviour {
         void updateReadWriteInstruction(List<string> value){
             if (value.Count>0){
                 bool check = int.TryParse(value[0], out int amount);
-                if (check) body.countStart = amount; 
+                if (check) body.timerStart = amount; 
             }        
         }
 
@@ -2205,6 +2237,7 @@ public class SourceCode:MonoBehaviour {
                     }
                     if (!set.Contains(key)){
                         set.Add(key);
+                        if (i>pointCloud.collisionSpheres.Length) print($"problem: joint_{joint.connection.indexInBody}sphere_{i}");
                         if (key >= pointCloud.collisionSpheres.Length){
                             nullKeys.Add(key);
                             nullCount++;

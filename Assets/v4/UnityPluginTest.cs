@@ -146,24 +146,29 @@ public class UnityPluginTest : MonoBehaviour
         public void readWrite(){
             lol.editor.readWrite();
         }
+        public void trackWriter(){
+            lol.editor.trackWriter();
+        }
     }
     Experiment exp = new Experiment();
     void Start(){
         exp.strt();
     }
-
+    int count = 0;
+    int time = 0;
     // Update is called once per frame
-    void Update()
+    void LateUpdate()
     {
-        exp.readWrite();
-        // print(exp.lol.editor.jointSelector.selected.connection.current);
-        // if (time == 60 && count!= 360) {
-        //     lol.rotate(lol.quat(Mathf.PI/180),lol.rotationAxis);
-        //     time = 0;
-        //     count++;
+        exp.lol.editor.reader(count);
+        count++;
+        if (count>66) count = 0;
+        // print(count);
+        // if (time > 0){
         //     print(count);
-        //     }
-        // time++;
-        
+        //     exp.lol.editor.reader(count);
+        //     count++;
+        //     if (count>66) count = 0;
+        //     time = 0;
+        // } else time++;
     }
 }

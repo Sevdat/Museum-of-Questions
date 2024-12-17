@@ -23,7 +23,6 @@ public class PathScript : MonoBehaviour
         Button clone = gameObject.GetComponent<Button>();
         clone.onClick.AddListener(() => onClick(clone));
         clone.GetComponentInChildren<TMP_Text>().text = strName;
-
         return gameObject;
     }
     public string pathToString(){
@@ -54,12 +53,12 @@ public class PathScript : MonoBehaviour
     }
     public void onClick(Button button){
         bool check = false;
-        for (int i = 0;i<buttons.Count;i++){
+        for (int i = 0;i<buttons.Count;i++) {
             if (check) {
                 Destroy(buttons[i]);
                 buttons.RemoveAt(i);
                 i--;
-                };
+                }
             if (buttons[i] == button.gameObject) check = true;
         }
         folders.getFolders();
