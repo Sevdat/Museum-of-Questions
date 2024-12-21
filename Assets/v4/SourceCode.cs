@@ -189,12 +189,9 @@ public class SourceCode:MonoBehaviour {
         public RenderAxis renderAxis;
         public Vector3 origin,x,y,z;
         public float axisDistance;
-
-        public float worldAngleY,worldSpeedY,
-                     worldAngleX,worldSpeedX,
-                     localAngleY,localSpeedY;
-                     
+        public float worldAngleY, worldAngleX, localAngleY;
         public AroundAxis spinPast,spinFuture,movePast,moveFuture;
+        
         public Axis(){}
         public Axis(Body body,Vector3 origin, float distance){
             this.body = body;
@@ -204,9 +201,6 @@ public class SourceCode:MonoBehaviour {
             y = origin + new Vector3(0,distance,0);
             z = origin + new Vector3(0,0,distance);
             worldAngleY = 0; worldAngleX = 0; localAngleY = 0; 
-            worldSpeedY = 0;
-            worldSpeedX = 0;
-            localSpeedY = 0;
             renderAxis = new RenderAxis(this);
             spinPast = new AroundAxis(this, renderAxis.spinPast);
             spinFuture = new AroundAxis(this, renderAxis.spinFuture);
@@ -640,6 +634,9 @@ public class SourceCode:MonoBehaviour {
         public List<BakedMesh> bakedMeshes;
         public string amountOfDigits; 
         public int timerStart, time;
+        public string globalOriginLocation,globalAxisRotationXYZ,radianOrDegree,
+            updateReadWrite,accuracyAmount,showAxis,globalAxisScale,
+            bodyStructureSize,allJointsInBody;
 
         public Body(){}
         public Body(int worldKey){
@@ -679,10 +676,12 @@ public class SourceCode:MonoBehaviour {
                 else 
                 globalAxis.getWorldRotationInRadians(out worldAngleY,out worldAngleX,out localAngleY);
             string stringPath = $"Body_{worldKey}_";
-            string globalOriginLocation = $"{stringPath}GlobalOriginLocation: {accuracy(globalOrigin.x)} {accuracy(globalOrigin.y)} {accuracy(globalOrigin.z)}\n";
-            string globalAxisRotationXYZ = $"{stringPath}GlobalAxisRotationXYZ: {accuracy(worldAngleY)} {accuracy(worldAngleX)} {accuracy(localAngleY)}\n";
-            string radianOrDegree = $"{stringPath}RadianOrAngle: {radianOrAngle}\n";
-            return globalOriginLocation + globalAxisRotationXYZ + radianOrDegree;
+            globalOriginLocation = $" {accuracy(globalOrigin.x)} {accuracy(globalOrigin.y)} {accuracy(globalOrigin.z)}\n";
+            globalAxisRotationXYZ = $" {accuracy(worldAngleY)} {accuracy(worldAngleX)} {accuracy(localAngleY)}\n";
+            radianOrDegree = $" {radianOrAngle}\n";
+            return $"{stringPath}GlobalOriginLocation:{globalOriginLocation}" + 
+                $"{stringPath}GlobalAxisRotationXYZ:{globalAxisRotationXYZ}" + 
+                $"{stringPath}RadianOrAngle:{radianOrDegree}";
         }
         public string saveBody(){
             List<int> jointIndexes = new List<int>();
@@ -695,14 +694,19 @@ public class SourceCode:MonoBehaviour {
                 }
             }
             string stringPath = $"Body_{worldKey}_";
-            string updateReadWrite = $"{stringPath}UpdateReadWrite: {timerStart}\n";
-            string accuracyAmount = $"{stringPath}Accuracy: {amountOfDigits.Length-2}\n";
-            string showAxis = $"{stringPath}ShowAxis: {globalAxis.renderAxis.created}\n";
-            string globalAxisScale = $"{stringPath}GlobalAxisScale: {accuracy(globalAxis.axisDistance)}\n";
-            string bodyStructureSize = $"{stringPath}BodyStructureSize: {bodyStructure.Length}\n";
-            string allJointsInBody = $"{stringPath}AllJointsInBody:{strJointIndexes}\n";
+            updateReadWrite = $" {timerStart}\n";
+            accuracyAmount = $" {amountOfDigits.Length-2}\n";
+            showAxis = $" {globalAxis.renderAxis.created}\n";
+            globalAxisScale = $" {accuracy(globalAxis.axisDistance)}\n";
+            bodyStructureSize = $" {bodyStructure.Length}\n";
+            allJointsInBody = $"{strJointIndexes}\n";
 
-            return accuracyAmount + updateReadWrite + showAxis + globalAxisScale + bodyStructureSize + allJointsInBody;
+            return $"{stringPath}UpdateReadWrite:{updateReadWrite}" + 
+                $"{stringPath}Accuracy:{accuracyAmount}" + 
+                $"{stringPath}ShowAxis:{showAxis}" + 
+                $"{stringPath}GlobalAxisScale:{globalAxisScale}" + 
+                $"{stringPath}BodyStructureSize:{bodyStructureSize}" + 
+                $"{stringPath}AllJointsInBody:{allJointsInBody}";
         }
 
         public void rotateBody(float worldAngleY, float worldAngleX, float localAngleY){
@@ -984,9 +988,16 @@ public class SourceCode:MonoBehaviour {
         public Connection connection;
         public PointCloud pointCloud;
         public float fromGlobalAxisY,fromGlobalAxisX,distanceFromGlobalAxis;
-        public bool movementOption;
-        public bool keepBodyTogether;
+        public bool movementOptionBool,keepBodyTogetherBool;
         public GameObject unityAxis;
+        public string movementOption,distanceFromGlobalOrigin,YXFromGlobalAxis,localAxisRotation,localOriginLocation,
+            active,showAxis,keepBodyTogether,localAxisScale,
+            spinPastX,spinPastY,spinPastSpeedAndAcceleration,
+            spinFutureX,spinFutureY,spinFutureSpeedAndAcceleration,
+            movePastX,movePastY,movePastSpeedAndAcceleration,
+            moveFutureX,moveFutureY,moveFutureSpeedAndAcceleration,
+            pastConnectionsInBody,futureConnectionsInBody,
+            resetPastJoints,resetFutureJoints;
 
         public Joint(){}
         public Joint(Body body, int indexInBody){
@@ -1004,8 +1015,8 @@ public class SourceCode:MonoBehaviour {
             body.keyGenerator.getKey();
             fromGlobalAxisY = 0;
             fromGlobalAxisX = 0;
-            movementOption = false;
-            keepBodyTogether = true;
+            movementOptionBool = false;
+            keepBodyTogetherBool = true;
         }
 
         public string saveJointPosition(bool radianOrAngle){
@@ -1030,42 +1041,56 @@ public class SourceCode:MonoBehaviour {
                 else 
                 localAxis.getWorldRotationInRadians(out worldAngleY,out worldAngleX,out localAngleY);
             string stringPath = $"Body_{body.worldKey}_Joint_{connection.indexInBody}_";
-            string movementOption = $"{stringPath}MovementOption: {this.movementOption}\n";
-            string distanceFromGlobalOrigin = $"{stringPath}DistanceFromGlobalOrigin: {body.accuracy(distanceFromOrigin)}\n";
-            string YXFromGlobalAxis = $"{stringPath}YXFromGlobalAxis: {body.accuracy(fromGlobalAxisY*convert)} {body.accuracy(fromGlobalAxisX*convert)}\n";
-            string localAxisRotation = $"{stringPath}LocalAxisRotation: {body.accuracy(worldAngleY)} {body.accuracy(worldAngleX)} {body.accuracy(localAngleY)}\n";
-            string localOriginLocation = $"{stringPath}LocalOriginLocation: {body.accuracy(localAxis.origin.x)} {body.accuracy(localAxis.origin.y)} {body.accuracy(localAxis.origin.z)}";
+            movementOption = $"{stringPath}MovementOption: {movementOptionBool}\n";
+            distanceFromGlobalOrigin = $"{stringPath}DistanceFromGlobalOrigin: {body.accuracy(distanceFromOrigin)}\n";
+            YXFromGlobalAxis = $"{stringPath}YXFromGlobalAxis: {body.accuracy(fromGlobalAxisY*convert)} {body.accuracy(fromGlobalAxisX*convert)}\n";
+            localAxisRotation = $"{stringPath}LocalAxisRotation: {body.accuracy(worldAngleY)} {body.accuracy(worldAngleX)} {body.accuracy(localAngleY)}\n";
+            localOriginLocation = $"{stringPath}LocalOriginLocation: {body.accuracy(localAxis.origin.x)} {body.accuracy(localAxis.origin.y)} {body.accuracy(localAxis.origin.z)}";
             return movementOption + distanceFromGlobalOrigin + YXFromGlobalAxis + localAxisRotation + localOriginLocation;
         }
+
+
         public string saveJoint(bool radianOrAngle){
             float convert = radianOrAngle? 180f/Mathf.PI:1;
             string stringPath = $"Body_{body.worldKey}_Joint_{connection.indexInBody}_";
-            string active = $"{stringPath}Active: {connection.active}\n";
-            string showAxis = $"{stringPath}ShowAxis: {localAxis.renderAxis.created}\n";
-            string keepBodyTogether = $"{stringPath}KeepBodyTogether: {this.keepBodyTogether}\n";
-            string localAxisScale = $"{stringPath}LocalAxisScale: {body.accuracy(localAxis.axisDistance)}\n";
-            string spinPastX = $"{stringPath}SpinPastX: {body.accuracy(localAxis.spinPast.angleX*convert)} {body.accuracy(localAxis.spinPast.sensitivitySpeedX*convert)} {body.accuracy(localAxis.spinPast.sensitivityAccelerationX)}\n";
-            string spinPastY = $"{stringPath}SpinPastY: {body.accuracy(localAxis.spinPast.angleY*convert)} {body.accuracy(localAxis.spinPast.sensitivitySpeedY*convert)} {body.accuracy(localAxis.spinPast.sensitivityAccelerationY)}\n";
-            string spinPastSpeedAndAcceleration = $"{stringPath}SpinPastSpeedAndAcceleration: {body.accuracy(localAxis.spinPast.speed*convert)} {body.accuracy(localAxis.spinPast.acceleration)}\n";
-            string spinFutureX = $"{stringPath}SpinFutureX: {body.accuracy(localAxis.spinFuture.angleX*convert)} {body.accuracy(localAxis.spinFuture.sensitivitySpeedX*convert)} {body.accuracy(localAxis.spinFuture.sensitivityAccelerationX)}\n";
-            string spinFutureY = $"{stringPath}SpinFutureY: {body.accuracy(localAxis.spinFuture.angleY*convert)} {body.accuracy(localAxis.spinFuture.sensitivitySpeedY*convert)} {body.accuracy(localAxis.spinFuture.sensitivityAccelerationY)}\n";
-            string spinFutureSpeedAndAcceleration = $"{stringPath}SpinFutureSpeedAndAcceleration: {body.accuracy(localAxis.spinFuture.speed*convert)} {body.accuracy(localAxis.spinFuture.acceleration)}\n";
-            string movePastX = $"{stringPath}MovePastX: {body.accuracy(localAxis.movePast.angleX*convert)} {body.accuracy(localAxis.movePast.sensitivitySpeedX*convert)} {body.accuracy(localAxis.movePast.sensitivityAccelerationX)}\n";
-            string movePastY = $"{stringPath}MovePastY: {body.accuracy(localAxis.movePast.angleY*convert)} {body.accuracy(localAxis.movePast.sensitivitySpeedY*convert)} {body.accuracy(localAxis.movePast.sensitivityAccelerationY)}\n";
-            string movePastSpeedAndAcceleration = $"{stringPath}MovePastSpeedAndAcceleration: {body.accuracy(localAxis.movePast.speed)} {body.accuracy(localAxis.movePast.acceleration)}\n";
-            string moveFutureX = $"{stringPath}MoveFutureX: {body.accuracy(localAxis.moveFuture.angleX*convert)} {body.accuracy(localAxis.moveFuture.sensitivitySpeedX*convert)} {body.accuracy(localAxis.moveFuture.sensitivityAccelerationX)}\n";
-            string moveFutureY = $"{stringPath}MoveFutureY: {body.accuracy(localAxis.moveFuture.angleY*convert)} {body.accuracy(localAxis.moveFuture.sensitivitySpeedY*convert)} {body.accuracy(localAxis.moveFuture.sensitivityAccelerationY)}\n";
-            string moveFutureSpeedAndAcceleration = $"{stringPath}MoveFutureSpeedAndAcceleration: {body.accuracy(localAxis.moveFuture.speed)} {body.accuracy(localAxis.moveFuture.acceleration)}\n";
-            string pastConnectionsInBody = $"{stringPath}PastConnectionsInBody: {connection.pastToString()}\n";
-            string futureConnectionsInBody = $"{stringPath}FutureConnectionsInBody: {connection.futureToString()}\n";
-            string resetPastJoints = $"{stringPath}ResetPastJoints: False\n";
-            string resetFutureJoints = $"{stringPath}ResetFutureJoints: False\n";
-            return active + showAxis + keepBodyTogether + localAxisScale +
-                spinPastX + spinPastY + spinPastSpeedAndAcceleration +
-                spinFutureX + spinFutureY + spinFutureSpeedAndAcceleration +
-                movePastX + movePastY + movePastSpeedAndAcceleration +
-                moveFutureX + moveFutureY + moveFutureSpeedAndAcceleration +
-                pastConnectionsInBody + futureConnectionsInBody + 
+            active = $" {connection.active}\n";
+            showAxis = $" {localAxis.renderAxis.created}\n";
+            keepBodyTogether = $" {keepBodyTogetherBool}\n";
+            localAxisScale = $" {body.accuracy(localAxis.axisDistance)}\n";
+            spinPastX = $" {body.accuracy(localAxis.spinPast.angleX*convert)} {body.accuracy(localAxis.spinPast.sensitivitySpeedX*convert)} {body.accuracy(localAxis.spinPast.sensitivityAccelerationX)}\n";
+            spinPastY = $" {body.accuracy(localAxis.spinPast.angleY*convert)} {body.accuracy(localAxis.spinPast.sensitivitySpeedY*convert)} {body.accuracy(localAxis.spinPast.sensitivityAccelerationY)}\n";
+            spinPastSpeedAndAcceleration = $" {body.accuracy(localAxis.spinPast.speed*convert)} {body.accuracy(localAxis.spinPast.acceleration)}\n";
+            spinFutureX = $" {body.accuracy(localAxis.spinFuture.angleX*convert)} {body.accuracy(localAxis.spinFuture.sensitivitySpeedX*convert)} {body.accuracy(localAxis.spinFuture.sensitivityAccelerationX)}\n";
+            spinFutureY = $" {body.accuracy(localAxis.spinFuture.angleY*convert)} {body.accuracy(localAxis.spinFuture.sensitivitySpeedY*convert)} {body.accuracy(localAxis.spinFuture.sensitivityAccelerationY)}\n";
+            spinFutureSpeedAndAcceleration = $" {body.accuracy(localAxis.spinFuture.speed*convert)} {body.accuracy(localAxis.spinFuture.acceleration)}\n";
+            movePastX = $" {body.accuracy(localAxis.movePast.angleX*convert)} {body.accuracy(localAxis.movePast.sensitivitySpeedX*convert)} {body.accuracy(localAxis.movePast.sensitivityAccelerationX)}\n";
+            movePastY = $" {body.accuracy(localAxis.movePast.angleY*convert)} {body.accuracy(localAxis.movePast.sensitivitySpeedY*convert)} {body.accuracy(localAxis.movePast.sensitivityAccelerationY)}\n";
+            movePastSpeedAndAcceleration = $" {body.accuracy(localAxis.movePast.speed)} {body.accuracy(localAxis.movePast.acceleration)}\n";
+            moveFutureX = $" {body.accuracy(localAxis.moveFuture.angleX*convert)} {body.accuracy(localAxis.moveFuture.sensitivitySpeedX*convert)} {body.accuracy(localAxis.moveFuture.sensitivityAccelerationX)}\n";
+            moveFutureY = $" {body.accuracy(localAxis.moveFuture.angleY*convert)} {body.accuracy(localAxis.moveFuture.sensitivitySpeedY*convert)} {body.accuracy(localAxis.moveFuture.sensitivityAccelerationY)}\n";
+            moveFutureSpeedAndAcceleration = $" {body.accuracy(localAxis.moveFuture.speed)} {body.accuracy(localAxis.moveFuture.acceleration)}\n";
+            pastConnectionsInBody = $" {connection.pastToString()}\n";
+            futureConnectionsInBody = $" {connection.futureToString()}\n";
+            resetPastJoints = $"{stringPath}ResetPastJoints: False\n";
+            resetFutureJoints = $"{stringPath}ResetFutureJoints: False\n";
+            return $"{stringPath}Active:{active}" + 
+                $"{stringPath}ShowAxis:{showAxis}" + 
+                $"{stringPath}KeepBodyTogether:{keepBodyTogether}" + 
+                $"{stringPath}LocalAxisScale:{localAxisScale}" +
+                $"{stringPath}SpinPastX:{spinPastX}" + 
+                $"{stringPath}SpinPastY:{spinPastY}" + 
+                $"{stringPath}SpinPastSpeedAndAcceleration:{spinPastSpeedAndAcceleration}" +
+                $"{stringPath}SpinFutureX:{spinFutureX}" + 
+                $"{stringPath}SpinFutureY:{spinFutureY}" + 
+                $"{stringPath}SpinFutureSpeedAndAcceleration:{spinFutureSpeedAndAcceleration}" +
+                $"{stringPath}MovePastX:{movePastX}" + 
+                $"{stringPath}MovePastY:{movePastY}" + 
+                $"{stringPath}MovePastSpeedAndAcceleration:{movePastSpeedAndAcceleration}" +
+                $"{stringPath}MoveFutureX:{moveFutureX}" + 
+                $"{stringPath}MoveFutureY:{moveFutureY}" + 
+                $"{stringPath}MoveFutureSpeedAndAcceleration:{moveFutureSpeedAndAcceleration}" +
+                $"{stringPath}PastConnectionsInBody:{pastConnectionsInBody}" + 
+                $"{stringPath}FutureConnectionsInBody:{futureConnectionsInBody}" + 
                 resetPastJoints + resetFutureJoints;
         }
 
@@ -1077,7 +1102,7 @@ public class SourceCode:MonoBehaviour {
             localAxis.renderAxis.deleteAxis();
             body.bodyStructure[connection.indexInBody] = null;
         }
-        public void distanceFromGlobalOrigin(float newDistance){
+        public void getDistanceFromGlobalOrigin(float newDistance){
             Vector3 globalOrigin = body.globalAxis.origin;
             Vector3 localOrigin = localAxis.origin;
             float length = localAxis.length(localOrigin-globalOrigin);
@@ -1145,12 +1170,12 @@ public class SourceCode:MonoBehaviour {
         public void movePastHierarchy(){
             Vector3 move = localAxis.movePast.sphere.origin - localAxis.origin;
             moveHierarchy(move, false);
-            if (keepBodyTogether) moveHierarchy(move, true);
+            if (keepBodyTogetherBool) moveHierarchy(move, true);
         }
         public void moveFutureHierarchy(){
             Vector3 move = localAxis.moveFuture.sphere.origin - localAxis.origin;
             moveHierarchy(move, true);
-            if (keepBodyTogether) moveHierarchy(move, false);
+            if (keepBodyTogetherBool) moveHierarchy(move, false);
         }
         internal void moveHierarchy(Vector3 newVec, bool pastOrFuture){
             initTree(pastOrFuture, out List<Joint> tree, out int size);  
@@ -1164,7 +1189,7 @@ public class SourceCode:MonoBehaviour {
             }
             resetUsed(tree,size);
         }
-        public void resetPastJoints(){
+        public void resetPastJointHierarchies(){
             initTree(false, out List<Joint> tree, out int size);  
             for (int i = 0; i<size;i++){
                 Joint joint = tree[i];
@@ -1175,7 +1200,7 @@ public class SourceCode:MonoBehaviour {
             }
             resetUsed(tree,size);
         }
-        public void resetFutureJoints(){
+        public void resetFutureHierarchies(){
             initTree(true, out List<Joint> tree, out int size);  
             for (int i = 0; i<size;i++){
                 Joint joint = tree[i];
@@ -1204,7 +1229,8 @@ public class SourceCode:MonoBehaviour {
         public Joint joint;
         public KeyGenerator keyGenerator;
         public CollisionSphere[] collisionSpheres;
-        
+        public string pointCloudSize,allSpheresInJoint;
+
         public PointCloud(){}
         public PointCloud(Joint joint, int amountOfSpheres){
             collisionSpheres = new CollisionSphere[amountOfSpheres];
@@ -1217,17 +1243,18 @@ public class SourceCode:MonoBehaviour {
             int size = collisionSpheres.Length;
             indexes = new List<int>();
             string stringPath = $"Body_{joint.body.worldKey}_Joint_{joint.connection.indexInBody}_";
-            string pointCloudSize = $"{stringPath}PointCloudSize: {size}\n";
-            string allSpheresInJoint = $"{stringPath}AllSpheresInJoint: ";
+            pointCloudSize = $" {size}\n";
+            allSpheresInJoint = "";
             for (int i = 0; i<collisionSpheres.Length; i++){
                 CollisionSphere collisionSphere = collisionSpheres[i];
                 if (collisionSphere != null) {
-                    allSpheresInJoint += $"{i} ";
+                    allSpheresInJoint += $" {i}";
                     indexes.Add(i);
                     listSize++;
                 }
             }
-            return pointCloudSize+allSpheresInJoint+"\n";
+            return $"{stringPath}PointCloudSize:{pointCloudSize}"+ 
+                $"{stringPath}AllSpheresInJoint:{allSpheresInJoint}\n";
         }
         public void deleteSphere(int key){
             CollisionSphere remove = collisionSpheres[key];
@@ -1389,6 +1416,7 @@ public class SourceCode:MonoBehaviour {
         public Path path;
         public AroundAxis aroundAxis;
         public BakedMeshIndex bakedMeshIndex;
+        public string distanceFromLocalOrigin,YFromLocalAxis,XFromLocalAxis,radius,color;
 
         public CollisionSphere(){}
         public CollisionSphere(Joint joint, int sphereIndex){
@@ -1409,12 +1437,16 @@ public class SourceCode:MonoBehaviour {
             Sphere sphere = aroundAxis.sphere;
             float convert = radianOrAngle? 180f/Mathf.PI:1;
             string stringPath = $"Body_{path.body.worldKey}_Joint_{path.joint.connection.indexInBody}_Sphere_{path.collisionSphereKey}_";
-            string distanceFromLocalOrigin = $"{stringPath}DistanceFromLocalOrigin: {body.accuracy(aroundAxis.distance)} {body.accuracy(aroundAxis.speed)} {body.accuracy(aroundAxis.acceleration)}\n";
-            string YFromLocalAxis = $"{stringPath}YFromLocalAxis: {body.accuracy(aroundAxis.angleY*convert)} {body.accuracy(aroundAxis.sensitivitySpeedY*convert)} {body.accuracy(aroundAxis.sensitivityAccelerationY)}\n";
-            string XFromLocalAxis = $"{stringPath}XFromLocalAxis: {body.accuracy(aroundAxis.angleX*convert)} {body.accuracy(aroundAxis.sensitivitySpeedX*convert)} {body.accuracy(aroundAxis.sensitivityAccelerationX)}\n";
-            string radius = $"{stringPath}Radius: {body.accuracy(sphere.radius)}\n";
-            string color = $"{stringPath}ColorRGBA: {body.accuracy(sphere.color.r)} {body.accuracy(sphere.color.g)} {body.accuracy(sphere.color.b)} {body.accuracy(sphere.color.a)}\n";
-            return distanceFromLocalOrigin + YFromLocalAxis + XFromLocalAxis + radius + color;
+            distanceFromLocalOrigin = $" {body.accuracy(aroundAxis.distance)} {body.accuracy(aroundAxis.speed)} {body.accuracy(aroundAxis.acceleration)}\n";
+            YFromLocalAxis = $" {body.accuracy(aroundAxis.angleY*convert)} {body.accuracy(aroundAxis.sensitivitySpeedY*convert)} {body.accuracy(aroundAxis.sensitivityAccelerationY)}\n";
+            XFromLocalAxis = $" {body.accuracy(aroundAxis.angleX*convert)} {body.accuracy(aroundAxis.sensitivitySpeedX*convert)} {body.accuracy(aroundAxis.sensitivityAccelerationX)}\n";
+            radius = $" {body.accuracy(sphere.radius)}\n";
+            color = $" {body.accuracy(sphere.color.r)} {body.accuracy(sphere.color.g)} {body.accuracy(sphere.color.b)} {body.accuracy(sphere.color.a)}\n";
+            return $"{stringPath}DistanceFromLocalOrigin:{distanceFromLocalOrigin}" + 
+                $"{stringPath}YFromLocalAxis:{YFromLocalAxis}" + 
+                $"{stringPath}XFromLocalAxis:{XFromLocalAxis}" + 
+                $"{stringPath}Radius:{radius}" + 
+                $"{stringPath}ColorRGBA:{color}";
         }
         public void setOrigin(Vector3 newOrigin){
             aroundAxis.sphere.setOrigin(newOrigin);
@@ -1426,7 +1458,7 @@ public class SourceCode:MonoBehaviour {
             aroundAxis.sphere.setRadius(newRadius);
         }
         public void updatePhysics(){
-            bakedMeshIndex.updatePoint();
+            if (bakedMeshIndex != null) bakedMeshIndex.updatePoint();
             aroundAxis.updatePhysics(false);
         }
     }
@@ -1535,16 +1567,15 @@ public class SourceCode:MonoBehaviour {
                     string[] splitStr = readText.Split(":");
                     if (splitStr.Length == 2){
                         removeEmpty(splitStr[0].Split("_"), out List<string> instruction);
-                        removeEmpty(splitStr[1].Split(" "), out List<string> values);
                         switch (instruction.Count){
                             case 3:
-                                bodyInstructions(instruction[2],values);
+                                bodyInstructions(instruction[2],splitStr[1]);
                             break;
                             case 5:
-                                jointInstructions(instruction[3],instruction[4],values);
+                                jointInstructions(instruction[3],instruction[4],splitStr[1]);
                             break;
                             case 7:
-                                sphereInstructions(instruction[3],instruction[5],instruction[6],values);
+                                sphereInstructions(instruction[3],instruction[5],instruction[6],splitStr[1]);
                             break;
                         }
                     }
@@ -1555,7 +1586,7 @@ public class SourceCode:MonoBehaviour {
             deleted = new Dictionary<int, List<int>>();
         }
         internal void writer(){
-            using(StreamWriter writeText = new StreamWriter($"Assets/v4/{body.worldKey}.txt")) {
+            using(StreamWriter writeText = new StreamWriter($"{pathToFolder}/{count}.txt")) {
                 writePositions(writeText);
                 writeMotions(writeText);
                 writeText.WriteLine(body.saveBodyPosition(radianOrDegree));
@@ -1625,34 +1656,70 @@ public class SourceCode:MonoBehaviour {
         const string globalAxisRotationXYZ = "GlobalAxisRotationXYZ";
         const string accuracy = "Accuracy";
         const string radianOrAngle = "RadianOrAngle";
-        public void bodyInstructions(string instruction, List<string> value){
+        public void bodyInstructions(string instruction, string str){
             switch (instruction){
                 case bodyStructureSize:
-                    bodyStructureSizeInstruction(value);
+                    if (!str.Equals(body.bodyStructureSize)){
+                        body.bodyStructureSize = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        bodyStructureSizeInstruction(value);
+                    }
                 break;
                 case updateReadWrite:
-                    updateReadWriteInstruction(value);
+                    if (!str.Equals(body.updateReadWrite)){
+                        body.updateReadWrite = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        updateReadWriteInstruction(value);
+                    }
                 break;
                 case showAxis:
-                    showAxisInstruction(value);
+                    if (!str.Equals(body.showAxis)){
+                        body.showAxis = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        showAxisInstruction(value);
+                    }
                 break;
                 case globalAxisScale:
-                    globalAxisScaleInstruction(value);
+                    if (!str.Equals(body.globalAxisScale)){
+                        body.globalAxisScale = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        globalAxisScaleInstruction(value);
+                    }
                 break;
                 case allJointsInBody:
-                    allJointsInBodyInstruction(value);
+                    if (!str.Equals(body.allJointsInBody)){
+                        body.allJointsInBody = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        allJointsInBodyInstruction(value);
+                    }
                 break;
                 case globalOriginLocation:
-                    globalOriginLocationInstruction(value);
+                    if (!str.Equals(body.globalOriginLocation)){
+                        body.globalOriginLocation = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        globalOriginLocationInstruction(value);
+                    }
                 break;
                 case globalAxisRotationXYZ:
-                    globalAxisRotationXYZInstruction(value);
+                    if (!str.Equals(body.globalAxisRotationXYZ)){
+                        body.globalAxisRotationXYZ = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        globalAxisRotationXYZInstruction(value);
+                    }
                 break;
                 case accuracy:
-                    accuracyInstruction(value);
+                    if (!str.Equals(body.accuracyAmount)){
+                        body.accuracyAmount = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        accuracyInstruction(value);
+                    }
                 break;
                 case radianOrAngle:
-                    radianOrAngleInstruction(value);
+                    if (!str.Equals(body.radianOrDegree)){
+                        body.radianOrDegree = str;
+                        removeEmpty(str.Split(" "), out List<string> value);
+                        radianOrAngleInstruction(value);
+                    }
                 break;
             }
         }
@@ -1668,7 +1735,6 @@ public class SourceCode:MonoBehaviour {
                 if (check) body.timerStart = amount; 
             }        
         }
-
         void gatherBodyData(List<string> value,out bool error, out int maxKey, out int nullCount, out HashSet<int> set,out List<int> nullKeys){
             set = new HashSet<int>();
             nullKeys = new List<int>();
@@ -1816,90 +1882,195 @@ public class SourceCode:MonoBehaviour {
         const string resetFutureJoints = "ResetFutureJoints";
         const string pointCloudSize = "PointCloudSize";
         const string allSpheresInJoint = "AllSpheresInJoint";
-        public void jointInstructions(string jointKey, string instruction, List<string> value){
+        public void jointInstructions(string jointKey, string instruction, string str){
             Joint joint = getJoint(jointKey);
             if (joint != null) {
                 switch (instruction){
                     case active:
-                        activeInstruction(joint,value);
+                        if (!str.Equals(joint.active)){
+                            joint.active = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            activeInstruction(joint,value);
+                        }
                     break;
                     case showAxis:
-                        showAxisInstruction(joint,value);
+                        if (!str.Equals(joint.showAxis)){
+                            joint.showAxis = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            showAxisInstruction(joint,value);
+                        }
                     break;
                     case keepBodyTogether:
-                        keepBodyTogetherInstruction(joint,value);
+                        if (!str.Equals(joint.keepBodyTogether)){
+                            joint.keepBodyTogether = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            keepBodyTogetherInstruction(joint,value);
+                        }
                     break;
                     case localAxisScale:
-                        localAxisScaleInstruction(joint,value);
+                        if (!str.Equals(joint.localAxisScale)){
+                            joint.localAxisScale = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            localAxisScaleInstruction(joint,value);
+                        }
                     break;
                     case movementOption:
-                        movementOptionInstruction(joint,value);
+                        if (!str.Equals(joint.movementOption)){
+                            joint.movementOption = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            movementOptionInstruction(joint,value);
+                        }
                     break;
                     case distanceFromGlobalOrigin:
-                        distanceFromGlobalOriginInstruction(joint,value);
+                        if (!str.Equals(joint.distanceFromGlobalOrigin)){
+                            joint.distanceFromGlobalOrigin = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            distanceFromGlobalOriginInstruction(joint,value);
+                        }
                     break;
                     case YXFromGlobalAxis:
-                        YXFromGlobalAxisInstruction(joint,value);
+                        if (true){
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            YXFromGlobalAxisInstruction(joint,value);
+                        }
                     break;
                     case localAxisRotation:
-                        localAxisRotationInstruction(joint,value);
+                        if (!str.Equals(joint.localAxisRotation)){
+                            joint.localAxisRotation = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            localAxisRotationInstruction(joint,value);
+                        }
                     break;
                     case localOriginLocation:
-                        localOriginLocationInstruction(joint,value);
+                        if (!str.Equals(joint.localOriginLocation)){
+                            joint.localOriginLocation = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            localOriginLocationInstruction(joint,value);
+                        }
                     break;
                     case spinPastX:
-                        spinPastXInstruction(joint,value);
+                        if (!str.Equals(joint.spinPastX)){
+                            joint.spinPastX = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            spinPastXInstruction(joint,value);
+                        }
                     break;
                     case spinPastY:
-                        spinPastYInstruction(joint,value);
+                        if (!str.Equals(joint.spinPastY)){
+                            joint.spinPastY = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            spinPastYInstruction(joint,value);
+                        }
                     break;
                     case spinPastSpeedAndAcceleration:
-                        spinPastSpeedAndAccelerationInstruction(joint,value);
+                        if (!str.Equals(joint.spinFutureSpeedAndAcceleration)){
+                            joint.spinPastY = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            spinPastSpeedAndAccelerationInstruction(joint,value);
+                        }
                     break;
                     case spinFutureX:
-                        spinFutureXInstruction(joint,value);
+                        if (!str.Equals(joint.spinFutureX)){
+                            joint.spinFutureX = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            spinFutureXInstruction(joint,value);
+                        }
                     break;
                     case spinFutureY:
-                        spinFutureYInstruction(joint,value);
+                        if (!str.Equals(joint.spinFutureY)){
+                            joint.spinFutureY = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            spinFutureYInstruction(joint,value);
+                        }
                     break;
                     case spinFutureSpeedAndAcceleration:
-                        spinFutureSpeedAndAccelerationInstruction(joint,value);
+                        if (!str.Equals(joint.spinFutureSpeedAndAcceleration)){
+                            joint.spinFutureSpeedAndAcceleration = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            spinFutureSpeedAndAccelerationInstruction(joint,value);
+                        }
                     break;
                     case movePastX:
-                        movePastXInstruction(joint,value);
+                        if (!str.Equals(joint.movePastX)){
+                            joint.movePastX = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            movePastXInstruction(joint,value);
+                        }
                     break;
                     case movePastY:
-                        movePastYInstruction(joint,value);
+                        if (!str.Equals(joint.movePastY)){
+                            joint.movePastY = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            movePastYInstruction(joint,value);
+                        }
                     break;
                     case movePastSpeedAndAcceleration:
-                        movePastSpeedAndAccelerationInstruction(joint,value);
+                        if (!str.Equals(joint.movePastSpeedAndAcceleration)){
+                            joint.movePastSpeedAndAcceleration = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            movePastSpeedAndAccelerationInstruction(joint,value);
+                        }
                     break;
                     case moveFutureX:
-                        moveFutureXInstruction(joint,value);
+                        if (!str.Equals(joint.moveFutureX)){
+                            joint.moveFutureX = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            moveFutureXInstruction(joint,value);
+                        }
                     break;
                     case moveFutureY:
-                        moveFutureYInstruction(joint,value);
+                        if (!str.Equals(joint.moveFutureY)){
+                            joint.moveFutureY = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            moveFutureYInstruction(joint,value);
+                        }
                     break;
                     case moveFutureSpeedAndAcceleration:
-                        moveFutureSpeedAndAccelerationInstruction(joint,value);
+                        if (!str.Equals(joint.moveFutureSpeedAndAcceleration)){
+                            joint.moveFutureSpeedAndAcceleration = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            moveFutureSpeedAndAccelerationInstruction(joint,value);
+                        }
                     break;                  
                     case pastConnectionsInBody:
-                        pastConnectionsInBodyInstruction(joint,value);
+                        if (!str.Equals(joint.pastConnectionsInBody)){
+                            joint.pastConnectionsInBody = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            pastConnectionsInBodyInstruction(joint,value);
+                        }
                     break;
                     case futureConnectionsInBody:
-                        futureConnectionsInBodyInstruction(joint,value);
+                        if (!str.Equals(joint.futureConnectionsInBody)){
+                            joint.futureConnectionsInBody = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            futureConnectionsInBodyInstruction(joint,value);
+                        }
                     break;
                     case resetPastJoints:
-                        resetPastJointsInstruction(joint,value);
+                        if (true){
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            resetPastJointsInstruction(joint,value);
+                        }
                     break;
                     case resetFutureJoints:
-                        resetFutureJointsInstruction(joint,value);
+                        if (true){
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            resetFutureJointsInstruction(joint,value);
+                        }
                     break;
                     case pointCloudSize:
-                        pointCloudSizeInstruction(joint,value);
+                        if (!str.Equals(joint.pointCloud.pointCloudSize)){
+                            joint.pointCloud.pointCloudSize = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            pointCloudSizeInstruction(joint,value);
+                        }
                     break;
                     case allSpheresInJoint:
-                        allSpheresInJointInstruction(joint,value);
+                        if (!str.Equals(joint.pointCloud.allSpheresInJoint)){
+                            joint.pointCloud.allSpheresInJoint = str;
+                            removeEmpty(str.Split(" "), out List<string> value);
+                            allSpheresInJointInstruction(joint,value);
+                        }
                     break;
                 }
             }
@@ -1921,9 +2092,9 @@ public class SourceCode:MonoBehaviour {
         void keepBodyTogetherInstruction(Joint joint,List<string> value){
             if (value.Count>0){
                 if (value[0] == "True") 
-                    joint.keepBodyTogether = true;
+                    joint.keepBodyTogetherBool = true;
                 else if (value[0] == "False") 
-                    joint.keepBodyTogether = false;
+                    joint.keepBodyTogetherBool = false;
             } 
         }
         void localAxisScaleInstruction(Joint joint,List<string> value){
@@ -1939,16 +2110,16 @@ public class SourceCode:MonoBehaviour {
         void movementOptionInstruction(Joint joint,List<string> value){
             if (value.Count>0){
                 if (value[0] == "True") 
-                    joint.movementOption = true;
+                    joint.movementOptionBool = true;
                 else if (value[0] == "False") 
-                    joint.movementOption = false;
+                    joint.movementOptionBool = false;
             }
         }
         void distanceFromGlobalOriginInstruction(Joint joint,List<string> value){
             if (value.Count>0){
                 bool checkStr = float.TryParse(value[0], out float distance);
-                if (checkStr && !joint.movementOption){
-                    joint.distanceFromGlobalOrigin(distance);
+                if (checkStr && !joint.movementOptionBool){
+                    joint.getDistanceFromGlobalOrigin(distance);
                 }
             }
         }
@@ -1959,7 +2130,7 @@ public class SourceCode:MonoBehaviour {
                 Axis globalAxis = joint.body.globalAxis;
                 Axis localAxis = joint.localAxis;
                 float length = localAxis.length(localAxis.origin-globalAxis.origin);
-                if (checkY && checkX && !joint.movementOption) {
+                if (checkY && checkX && !joint.movementOptionBool) {
                         joint.fromGlobalAxisY = y;
                         joint.fromGlobalAxisX = x;
                         if (radianOrDegree) {
@@ -1993,7 +2164,7 @@ public class SourceCode:MonoBehaviour {
                 bool checkX = float.TryParse(value[0], out float x);
                 bool checkY = float.TryParse(value[1], out float y);
                 bool checkZ = float.TryParse(value[2], out float z);
-                if (checkX && checkY && checkZ && joint.movementOption) {
+                if (checkX && checkY && checkZ && joint.movementOptionBool) {
                     Vector3 add = initilize? new Vector3(0,0,0):joint.localAxis.origin;
                     joint.moveJoint(new Vector3(x,y,z)-add);
                 }
@@ -2205,12 +2376,12 @@ public class SourceCode:MonoBehaviour {
         }
         void resetPastJointsInstruction(Joint joint,List<string> value){
             if (value.Count >0){
-                if (value[0]== "True") joint.resetPastJoints();
+                if (value[0]== "True") joint.resetPastJointHierarchies();
             }
         }
         void resetFutureJointsInstruction(Joint joint,List<string> value){
             if (value.Count >0){
-                if (value[0]== "True") joint.resetFutureJoints();
+                if (value[0]== "True") joint.resetFutureHierarchies();
             }
         }
         void pointCloudSizeInstruction(Joint joint,List<string> value){
@@ -2273,26 +2444,46 @@ public class SourceCode:MonoBehaviour {
         const string YFromLocalAxis = "YFromLocalAxis";
         const string radius = "Radius";
         const string colorRGBA = "ColorRGBA";
-        public void sphereInstructions(string jointKey,string collisionSphereKey, string instruction, List<string> value){
+        public void sphereInstructions(string jointKey,string collisionSphereKey, string instruction, string str){
             Joint joint = getJoint(jointKey);
             if (joint != null) { 
                 CollisionSphere collisionSphere = getCollisionSphere(joint,collisionSphereKey);
                 if (collisionSphere != null){
                     switch (instruction){
                         case distanceFromLocalOrigin:  
-                            distanceFromLocalAxisInstruction(collisionSphere, value);
+                            if (!str.Equals(collisionSphere.distanceFromLocalOrigin)){
+                                collisionSphere.distanceFromLocalOrigin = str;
+                                removeEmpty(str.Split(" "), out List<string> value);
+                                distanceFromLocalAxisInstruction(collisionSphere, value);
+                            }
                         break;
                         case YFromLocalAxis:
-                            YFromLocalAxisInstruction(collisionSphere,value);
+                            if (!str.Equals(collisionSphere.YFromLocalAxis)){
+                                collisionSphere.YFromLocalAxis = str;
+                                removeEmpty(str.Split(" "), out List<string> value);
+                                YFromLocalAxisInstruction(collisionSphere,value);
+                            }
                         break;
                         case XFromLocalAxis:
-                            XFromLocalAxisInstruction(collisionSphere,value);
+                            if (!str.Equals(collisionSphere.XFromLocalAxis)){
+                                collisionSphere.XFromLocalAxis = str;
+                                removeEmpty(str.Split(" "), out List<string> value);
+                                XFromLocalAxisInstruction(collisionSphere,value);
+                            }
                         break;
                         case radius:
-                            radiusInstruction(collisionSphere,value);
+                            if (!str.Equals(collisionSphere.radius)){
+                                collisionSphere.radius = str;
+                                removeEmpty(str.Split(" "), out List<string> value);
+                                radiusInstruction(collisionSphere,value);
+                            }
                         break;
                         case colorRGBA:
-                            colorRGBAInstruction(collisionSphere,value);
+                            if (!str.Equals(collisionSphere.color)){
+                                collisionSphere.color = str;
+                                removeEmpty(str.Split(" "), out List<string> value);
+                                colorRGBAInstruction(collisionSphere,value);
+                            }
                         break;
                     }
                 }

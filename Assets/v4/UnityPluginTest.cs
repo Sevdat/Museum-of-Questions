@@ -159,16 +159,14 @@ public class UnityPluginTest : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
-        exp.lol.editor.reader(count);
-        count++;
-        if (count>66) count = 0;
+        // exp.lol.editor.reader(0);
         // print(count);
-        // if (time > 0){
-        //     print(count);
-        //     exp.lol.editor.reader(count);
-        //     count++;
-        //     if (count>66) count = 0;
-        //     time = 0;
-        // } else time++;
+        if (time > 0){
+            print(count);
+            exp.lol.editor.reader(count);
+            count++;
+            if (count>66) count = 0;
+            time = 0;
+        } else time++;
     }
 }
