@@ -110,14 +110,17 @@ public class SourceCode:MonoBehaviour {
         }
 
         public void get(){
-            bool over180 = (angleY>Mathf.PI)? true:false;
-            axis.getPointAroundOrigin(sphere.origin,out float tempAngleY, out float tempAngleX);
-            if (!float.IsNaN(tempAngleY)&& !float.IsNaN(tempAngleX)){
-                angleY = tempAngleY;
-                if (!(angleY == 0f || angleY == Mathf.PI)) angleX = tempAngleX;
+            getPointAroundAxis(sphere.origin,out angleY, out angleX);
+        }
+        
+        public void getPointAroundAxis(Vector3 point,out float angleY, out float angleX){
+            bool over180 = (this.angleY > Mathf.PI)? true:false;
+            axis.getPointAroundOrigin(point,out angleY, out angleX);
+            if (!float.IsNaN(angleY)&& !float.IsNaN(angleX)){
+                if (angleY == 0f || angleY == Mathf.PI) angleX = this.angleX;
                 if (over180) {
-                    angleY = 2*Mathf.PI-angleY;
-                    angleX = (Mathf.PI+angleX)%(2*Mathf.PI);
+                    angleY = 2* Mathf.PI - angleY;
+                    angleX = (Mathf.PI + angleX)%(2* Mathf.PI);
                     };
             }
         }
@@ -1405,11 +1408,13 @@ public class SourceCode:MonoBehaviour {
         }
         public void updatePoint(){
             BakedMesh bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
+            AroundAxis aroundAxis = collisionSphere.aroundAxis;
+            Axis axis = aroundAxis.axis;
             Vector3 point = bakedMesh.worldPosition(indexInVertex);
-            collisionSphere.setOrigin(point);
-            collisionSphere.aroundAxis.distance = collisionSphere.aroundAxis.axis.length(point - collisionSphere.aroundAxis.axis.origin);
-            collisionSphere.aroundAxis.get();
-
+            aroundAxis.speed = aroundAxis.axis.length(point - axis.origin) - aroundAxis.distance;
+            aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
+            aroundAxis.sensitivitySpeedY = angleY - aroundAxis.angleY;
+            aroundAxis.sensitivitySpeedX = angleX - aroundAxis.angleX;
         }
     }
     public class CollisionSphere {
@@ -1458,8 +1463,12 @@ public class SourceCode:MonoBehaviour {
             aroundAxis.sphere.setRadius(newRadius);
         }
         public void updatePhysics(){
+            aroundAxis.distance += aroundAxis.speed;
+            aroundAxis.angleY += aroundAxis.sensitivitySpeedY;
+            aroundAxis.angleX += aroundAxis.sensitivitySpeedX;
             if (bakedMeshIndex != null) bakedMeshIndex.updatePoint();
             aroundAxis.updatePhysics(false);
+
         }
     }
     public class Sphere{

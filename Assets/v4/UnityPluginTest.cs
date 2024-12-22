@@ -165,7 +165,7 @@ public class UnityPluginTest : MonoBehaviour
             print(count);
             exp.lol.editor.reader(count);
             count++;
-            if (count>66) count = 0;
+            if (count>35) count = 0;
             time = 0;
         } else time++;
     }
