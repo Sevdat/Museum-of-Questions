@@ -626,7 +626,34 @@ public class SourceCode:MonoBehaviour {
             return bones[boneWeight.boneIndex0].gameObject;
         }
     }
+    public class AcceleratedArray{
+        public Body body;
+        public Vector3[] vertices;
+        public Color[] colors;
+        public int[] triangles;
 
+        public AcceleratedArray(){
+            vertices = new Vector3[0];
+            colors = new Color[0];
+            triangles = new int[0];
+        }
+        public void accaleratedArray(){
+            
+        }
+        public void updateAcceleratedArray(){
+            int count = 0;
+            for (int i = 0; i<body.bodyStructure.Length;i++){
+                Joint joint = body.bodyStructure[i];
+                if (joint !=null){
+                    int size = joint.pointCloud.collisionSpheres.Length;
+                    if (size>0){
+                        joint.pointCloud.startIndexInArray = count;
+                        count += joint.pointCloud.collisionSpheres.Length;
+                    }
+                }
+            }
+        }
+    }
     public class Body {
         public World world;
         public int worldKey;
@@ -640,6 +667,7 @@ public class SourceCode:MonoBehaviour {
         public string globalOriginLocation,globalAxisRotationXYZ,radianOrDegree,
             updateReadWrite,accuracyAmount,showAxis,globalAxisScale,
             bodyStructureSize,allJointsInBody;
+        public AcceleratedArray acceleratedArray;
 
         public Body(){}
         public Body(int worldKey){
@@ -652,6 +680,7 @@ public class SourceCode:MonoBehaviour {
             amountOfDigits = "0.000000";
             time = 0;
             timerStart = 20;
+            acceleratedArray = new AcceleratedArray();
         }
 
         public void newCountStart(int timerStart){
@@ -1233,6 +1262,7 @@ public class SourceCode:MonoBehaviour {
         public KeyGenerator keyGenerator;
         public CollisionSphere[] collisionSpheres;
         public string pointCloudSize,allSpheresInJoint;
+        public int startIndexInArray;
 
         public PointCloud(){}
         public PointCloud(Joint joint, int amountOfSpheres){
@@ -2536,34 +2566,6 @@ public class SourceCode:MonoBehaviour {
                 if (checkA) sphere.color.a = a;
                 sphere.resetColor();
             }
-        }
-    }
-
-    public class Triangle {
-        public int a,b,c;
-        public void setAll(int a,int b,int c){
-            this.a = a;
-            this.b = b;
-            this.c = c;
-        }
-    }
-
-    public class BodyMesh {
-        public List<Vector3> vertex;
-        public List<Triangle> indices;
-        public void setAll(List<Vector3> vertex,List<Triangle> indices){
-            this.vertex = vertex;
-            this.indices = indices;
-        }
-    }
-
-    public class Timer{
-        public float time;
-        public void setAll(float time){
-            this.time = time;
-        }
-        public void add(float time){
-            this.time += time;
         }
     }
 }

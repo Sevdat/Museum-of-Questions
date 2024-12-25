@@ -1,7 +1,9 @@
 using System.CodeDom.Compiler;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 public class UnityPluginTest : MonoBehaviour
@@ -136,10 +138,12 @@ public class UnityPluginTest : MonoBehaviour
             if (gotWorldAngleX < minWorldAngleX || maxWorldAngleX < gotWorldAngleX) print($"worldAngleX: expected {angleX} got {gotWorldAngleX}");
         }
     }
-    
+    Experiment exp = new Experiment();
     class Experiment:SourceCode{
         public Axis ax;
         public Body lol;
+        int count = 0;
+        int time = 0;
         public void strt(){
             lol = new Body(0);
         }
@@ -149,24 +153,62 @@ public class UnityPluginTest : MonoBehaviour
         public void trackWriter(){
             lol.editor.trackWriter();
         }
+        public void readTextFiles(){
+            if (time > 1){
+                print(count);
+                lol.editor.reader(count);
+                count++;
+                if (count>35) count = 0;
+                time = 0;
+            } else time++;
+        }
     }
-    Experiment exp = new Experiment();
-    void Start(){
-        exp.strt();
-    }
-    int count = 0;
-    int time = 0;
+    // void Start(){
+    //     // exp.strt();
+    // }
     // Update is called once per frame
+
+    Thread workerThread;
+    bool isRunning = false;
+    ConcurrentQueue<string> resultQueue = new ConcurrentQueue<string>();
+
+    void startThread(){
+        isRunning = true;
+        workerThread = new Thread(method);
+        workerThread.IsBackground = true;
+        workerThread.Start();
+    }
+    void method(){
+        while (isRunning){
+            for (int i = 0; i < 5000000; i++){
+                string[] result = "lool lol".Split('o');
+            }
+            resultQueue.Enqueue("result");
+            Thread.Sleep(100);
+        }
+    }
+    void stopThread(){
+        isRunning = false;
+        if (workerThread != null && workerThread.IsAlive){
+            workerThread.Join();
+        }
+    }
+    void OnDestroy(){
+        stopThread();
+    }
+    void OnApplicationQuit(){
+        stopThread();
+    }
+
+    void Start(){
+        startThread();
+    }
+    int oldSize = 0;
     void LateUpdate()
     {
-        // exp.lol.editor.reader(0);
-        // print(count);
-        if (time > 0){
-            print(count);
-            exp.lol.editor.reader(count);
-            count++;
-            if (count>35) count = 0;
-            time = 0;
-        } else time++;
+        if (oldSize!= resultQueue.Count) {
+            print(resultQueue.Count);
+            oldSize+=1;
+            };
     }
 }
