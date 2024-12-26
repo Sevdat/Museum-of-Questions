@@ -164,7 +164,7 @@ public class UnityPluginTest : MonoBehaviour
         }
     }
     // void Start(){
-    //     // exp.strt();
+    //     exp.strt();
     // }
     // Update is called once per frame
 
@@ -204,11 +204,10 @@ public class UnityPluginTest : MonoBehaviour
         startThread();
     }
     int oldSize = 0;
-    void LateUpdate()
-    {
-        if (oldSize!= resultQueue.Count) {
-            print(resultQueue.Count);
-            oldSize+=1;
-            };
-    }
+    // void LateUpdate(){
+    //     if (oldSize!= resultQueue.Count) {
+    //         print(resultQueue.Count);
+    //         oldSize+=1;
+    //     };
+    // }
 }

@@ -14,7 +14,20 @@ public class VertexVisualizer : MonoBehaviour
     SceneBuilder sceneBuilder;
     public class SceneBuilder:SourceCode{
         public Body body;
-        public int decreasePoints = 5;
+        class AssembleJoints{
+            public int jointIndex;
+            public List<BakedMeshIndex> bakedMeshIndex;
+            public List<GameObject> futureConnections;
+            public List<int> triangles;
+
+            public AssembleJoints(int jointIndex,List<GameObject> futureConnections){
+                this.jointIndex = jointIndex;
+                bakedMeshIndex = new List<BakedMeshIndex>();
+                this.futureConnections = futureConnections;
+                triangles = new List<int>();
+            }
+        }
+
         List<GameObject> allChildrenInParent(GameObject topParent){
             List<GameObject> allChildren = new List<GameObject>();
             for (int i = 0; i < topParent.transform.childCount; i++){
@@ -22,22 +35,7 @@ public class VertexVisualizer : MonoBehaviour
             }
             return allChildren;
         }
-        class AssembleJoints{
-            public int jointIndex;
-            public List<BakedMeshIndex> bakedMeshIndex;
-            public List<GameObject> futureConnections; // do comments
-
-            public AssembleJoints(int jointIndex,List<GameObject> futureConnections){
-                this.jointIndex = jointIndex;
-                bakedMeshIndex = new List<BakedMeshIndex>();
-                this.futureConnections = futureConnections;
-            }
-
-        }
-        public void loadModelToBody(GameObject topParent){
-            List<BakedMesh> bakedMeshes = new List<BakedMesh>();
-            Dictionary<GameObject,AssembleJoints> dictionary = new Dictionary<GameObject,AssembleJoints>();
-            List<GameObject> tree = new List<GameObject>(){topParent};
+        void createHierarchy(List<GameObject> tree,Dictionary<GameObject,AssembleJoints> dictionary,List<BakedMesh> bakedMeshes){
             int jointIndex = 0;
             for (int i = 0; i < tree.Count; i++){
                 GameObject root = tree[i];
@@ -46,18 +44,56 @@ public class VertexVisualizer : MonoBehaviour
                 SkinnedMeshRenderer skin = root.GetComponent<SkinnedMeshRenderer>();
                 if (!dictionary.ContainsKey(root)) dictionary[root] = new AssembleJoints(jointIndex,futureConnections);
                 if (skin) bakedMeshes.Add(new BakedMesh(skin));
-
                 jointIndex++;
             }
-            body = new Body(0);
             body.bakedMeshes = bakedMeshes;
             body.arraySizeManager(dictionary.Count);
+        }
+        void createMeshAccessForSpheres(List<BakedMesh> bakedMeshes,Dictionary<GameObject,AssembleJoints> dictionary){
             for (int i = 0; i<bakedMeshes.Count; i++){
                 BakedMesh bakedMesh = bakedMeshes[i];
                 for (int j = 0; j < bakedMesh.vertices.Length; j++){
                     dictionary[bakedMesh.getGameObject(j)].bakedMeshIndex.Add(new BakedMeshIndex(i,j));
                 }
             }
+        }
+        void renewedKeysForTriangles(Dictionary<GameObject,AssembleJoints> dictionary){
+            foreach (AssembleJoints bakedMesh in dictionary.Values){
+                int[] sortedNumbers = bakedMesh.triangles.ToArray();
+                Dictionary<int,int> newKeys = new Dictionary<int,int>();
+                int count = 0;
+                foreach (int key in sortedNumbers){
+                    if (!newKeys.ContainsKey(key)) {
+                        newKeys[key] = count;
+                        count++;
+                    }
+                }
+                for (int i = 0;i<bakedMesh.triangles.Count;i++){
+                    bakedMesh.triangles[i] = newKeys[bakedMesh.triangles[i]];
+                }
+                body.bodyStructure[bakedMesh.jointIndex].pointCloud.triangles = bakedMesh.triangles.ToArray();
+            }
+        }
+        void createTrianglesForPointClouds(List<BakedMesh> bakedMeshes,Dictionary<GameObject,AssembleJoints> dictionary){
+            foreach (BakedMesh bakedMesh in bakedMeshes){
+                int[] triangles = bakedMesh.mesh.triangles;
+                for (int i = 0; i < triangles.Length; i += 3){
+                    int vertexIndex1 = triangles[i];
+                    int vertexIndex2 = triangles[i + 1];
+                    int vertexIndex3 = triangles[i + 2];
+                    GameObject gameObject1 = bakedMesh.getGameObject(vertexIndex1);
+                    GameObject gameObject2 = bakedMesh.getGameObject(vertexIndex2);
+                    GameObject gameObject3 = bakedMesh.getGameObject(vertexIndex3);
+                    if (gameObject1 == gameObject2 && gameObject3 == gameObject2){
+                        dictionary[gameObject1].triangles.Add(vertexIndex1);
+                        dictionary[gameObject1].triangles.Add(vertexIndex2);
+                        dictionary[gameObject1].triangles.Add(vertexIndex3);
+                    }
+                }
+            }
+            renewedKeysForTriangles(dictionary);
+        }
+        void createPointCloud(Dictionary<GameObject,AssembleJoints> dictionary){
             foreach (GameObject gameObject in dictionary.Keys){
                 AssembleJoints assembleJoints = dictionary[gameObject];
                 int indexInBody = assembleJoints.jointIndex;
@@ -68,15 +104,15 @@ public class VertexVisualizer : MonoBehaviour
                 int pointCloudSize = assembleJoints.bakedMeshIndex.Count;
                 joint.pointCloud = new PointCloud(joint,pointCloudSize);
                 for (int i = 0;i < pointCloudSize;i++){
-                    if (i%decreasePoints == 0){
                     CollisionSphere collisionSphere = new CollisionSphere(joint,i,assembleJoints.bakedMeshIndex[i]);
                     collisionSphere.bakedMeshIndex = assembleJoints.bakedMeshIndex[i];
-                    collisionSphere.bakedMeshIndex.updatePoint();
+                    collisionSphere.bakedMeshIndex.setWorldPoint();
                     joint.pointCloud.collisionSpheres[i] = collisionSphere;
-                    }
                 }
                 body.bodyStructure[indexInBody] = joint;
             }
+        }
+        void createConnections(Dictionary<GameObject,AssembleJoints> dictionary){
             foreach (GameObject gameObject in dictionary.Keys){
                 AssembleJoints assembleJoints = dictionary[gameObject];
                 Joint joint = body.bodyStructure[assembleJoints.jointIndex];
@@ -87,10 +123,17 @@ public class VertexVisualizer : MonoBehaviour
                     joint.connection.connectThisFutureToPast(future,out _, out _);
                 }
             }
-            body.optimizeBody();
-            for (int i = 0; i<body.bodyStructure.Length;i++){
-                body.bodyStructure[i]?.pointCloud.optimizeCollisionSpheres();
-            }
+        }
+        public void loadModelToBody(GameObject topParent){
+            body = new Body(0);
+            List<BakedMesh> bakedMeshes = new List<BakedMesh>();
+            Dictionary<GameObject,AssembleJoints> dictionary = new Dictionary<GameObject,AssembleJoints>();
+            List<GameObject> tree = new List<GameObject>(){topParent};
+            createHierarchy(tree,dictionary,bakedMeshes);
+            createMeshAccessForSpheres(bakedMeshes,dictionary);
+            createPointCloud(dictionary);
+            createConnections(dictionary);
+            createTrianglesForPointClouds(bakedMeshes,dictionary);
         }
     }
     public class Terminal{
@@ -136,10 +179,33 @@ public class VertexVisualizer : MonoBehaviour
     //     // Process.Start(firefoxPath, url);
     // }
 
-    // void Start() {
-    //     sceneBuilder= new SceneBuilder();
-    //     sceneBuilder.loadModelToBody(fbx);
-    // }
+    void Start() {
+        sceneBuilder= new SceneBuilder();
+        sceneBuilder.loadModelToBody(fbx);
+        sceneBuilder.body.sendToGPU.updateAccaleratedArrays();
+        // for (int i = 0; i<sceneBuilder.body.sendToGPU.triangles.Length;i+=3){
+        //     print($"{sceneBuilder.body.sendToGPU.vertices[sceneBuilder.body.sendToGPU.triangles[i]]} {sceneBuilder.body.sendToGPU.vertices[sceneBuilder.body.sendToGPU.triangles[i+1]]} {sceneBuilder.body.sendToGPU.vertices[sceneBuilder.body.sendToGPU.triangles[i+2]]}");
+        // }
+        // foreach(SourceCode.CollisionSphere collisionSphere in sceneBuilder.body.bodyStructure[5].pointCloud.collisionSpheres){
+        //     print(collisionSphere.aroundAxis.sphere.origin);
+        // }
+        cube(sceneBuilder.body.sendToGPU.vertices,sceneBuilder.body.sendToGPU.triangles);
+    }
+    
+    void cube(Vector3[] vertices,int[] triangles){
+        GameObject cubeObject = new GameObject("Cube");
+        Mesh mesh = new Mesh();
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        mesh.UploadMeshData(false);
+        MeshFilter meshFilter = cubeObject.AddComponent<MeshFilter>();
+        meshFilter.mesh = mesh;
+        MeshRenderer meshRenderer = cubeObject.AddComponent<MeshRenderer>();
+        meshRenderer.material = new Material(Shader.Find("Standard"));
+        cubeObject.transform.position = new Vector3(0, 0, 0);
+    }
     // void LateUpdate() {
     //     sceneBuilder.body.editor.trackBody();
     // }

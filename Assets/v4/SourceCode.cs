@@ -601,8 +601,10 @@ public class SourceCode:MonoBehaviour {
         }
     }
     public class BakedMesh{
-        SkinnedMeshRenderer skinnedMeshRenderer;
-        Mesh mesh;
+        internal SkinnedMeshRenderer skinnedMeshRenderer;
+        internal Mesh mesh;
+        Transform[] bones;
+        BoneWeight[] boneWeights; 
         public Vector3[] vertices;
 
         public BakedMesh(SkinnedMeshRenderer skinnedMeshRenderer){
@@ -615,43 +617,63 @@ public class SourceCode:MonoBehaviour {
         public void bakeMesh(){
             skinnedMeshRenderer.BakeMesh(mesh);
             vertices = mesh.vertices;
+            bones = skinnedMeshRenderer.bones;
+            boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
         }
         public Vector3 worldPosition(int index){
             return skinnedMeshRenderer.transform.TransformPoint(vertices[index]);
         }
         public GameObject getGameObject(int index){
-            Transform[] bones = skinnedMeshRenderer.bones;
-            BoneWeight[] boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights; 
             BoneWeight boneWeight = boneWeights[index];
             return bones[boneWeight.boneIndex0].gameObject;
         }
     }
-    public class AcceleratedArray{
+    public class SendToGPU{
         public Body body;
         public Vector3[] vertices;
         public Color[] colors;
         public int[] triangles;
 
-        public AcceleratedArray(){
+        public SendToGPU(Body body){
             vertices = new Vector3[0];
             colors = new Color[0];
             triangles = new int[0];
+            this.body = body;
         }
-        public void accaleratedArray(){
-            
+        public void updateAccaleratedArrays(){
+            updatePointCloudStart();
+            int countTriangleIndex = 0;
+            foreach(Joint joint in body.bodyStructure){
+                PointCloud pointCloud = joint.pointCloud;
+                int startIndex = pointCloud.startIndexInArray;
+                CollisionSphere[] collisionSpheres = pointCloud.collisionSpheres;
+                for (int i = 0; i < collisionSpheres.Length;i++){
+                    vertices[i+startIndex] = collisionSpheres[i].aroundAxis.sphere.origin;
+                }
+                for (int i = 0; i < pointCloud.triangles.Length;i++){
+                    triangles[i+countTriangleIndex] = pointCloud.triangles[i]+startIndex;
+                }
+                countTriangleIndex += pointCloud.triangles.Length;
+            }
         }
-        public void updateAcceleratedArray(){
-            int count = 0;
+        
+        public void updatePointCloudStart(){
+            int maxVerticesSize = 0;
+            int maxTriangleSize = 0;
             for (int i = 0; i<body.bodyStructure.Length;i++){
                 Joint joint = body.bodyStructure[i];
                 if (joint !=null){
-                    int size = joint.pointCloud.collisionSpheres.Length;
-                    if (size>0){
-                        joint.pointCloud.startIndexInArray = count;
-                        count += joint.pointCloud.collisionSpheres.Length;
+                    int pointCloudSize = joint.pointCloud.collisionSpheres.Length;
+                    if (pointCloudSize>0){
+                        joint.pointCloud.startIndexInArray = maxVerticesSize;
+                        maxVerticesSize += pointCloudSize;
+                        maxTriangleSize += joint.pointCloud.triangles.Length;
                     }
                 }
             }
+            colors = new Color[maxVerticesSize];
+            vertices = new Vector3[maxVerticesSize];
+            triangles = new int[maxTriangleSize];
         }
     }
     public class Body {
@@ -667,7 +689,7 @@ public class SourceCode:MonoBehaviour {
         public string globalOriginLocation,globalAxisRotationXYZ,radianOrDegree,
             updateReadWrite,accuracyAmount,showAxis,globalAxisScale,
             bodyStructureSize,allJointsInBody;
-        public AcceleratedArray acceleratedArray;
+        public SendToGPU sendToGPU;
 
         public Body(){}
         public Body(int worldKey){
@@ -680,7 +702,7 @@ public class SourceCode:MonoBehaviour {
             amountOfDigits = "0.000000";
             time = 0;
             timerStart = 20;
-            acceleratedArray = new AcceleratedArray();
+            sendToGPU = new SendToGPU(this);
         }
 
         public void newCountStart(int timerStart){
@@ -1261,6 +1283,7 @@ public class SourceCode:MonoBehaviour {
         public Joint joint;
         public KeyGenerator keyGenerator;
         public CollisionSphere[] collisionSpheres;
+        public int[] triangles;
         public string pointCloudSize,allSpheresInJoint;
         public int startIndexInArray;
 
@@ -1269,6 +1292,7 @@ public class SourceCode:MonoBehaviour {
             collisionSpheres = new CollisionSphere[amountOfSpheres];
             keyGenerator = new KeyGenerator(amountOfSpheres);
             this.joint = joint;
+            triangles = new int[0];
         }
 
         public string savePointCloud(out List<int> indexes, out int listSize){
@@ -1446,6 +1470,11 @@ public class SourceCode:MonoBehaviour {
             aroundAxis.sensitivitySpeedY = angleY - aroundAxis.angleY;
             aroundAxis.sensitivitySpeedX = angleX - aroundAxis.angleX;
         }
+        public void setWorldPoint(){
+            BakedMesh bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
+            Vector3 point = bakedMesh.worldPosition(indexInVertex);
+            collisionSphere.setOrigin(point);
+        }
     }
     public class CollisionSphere {
         public Path path;
@@ -1505,19 +1534,14 @@ public class SourceCode:MonoBehaviour {
         public float radius;
         public Vector3 origin;
         public Color color;
-        public GameObject sphere;
         
         public Sphere(){
-            sphere = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            sphere.GetComponent<Collider>().enabled = false;
             setOrigin(new Vector3(0,0,0));
             setRadius(0.01f);
             setColor(new Color(1,1,1,1));
             updateColor(color);
         }
         public Sphere(Vector3 origin, float radius, Color color){
-            sphere = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            sphere.GetComponent<Collider>().enabled = false;
             setOrigin(origin);
             setRadius(radius);
             setColor(color);
@@ -1525,34 +1549,31 @@ public class SourceCode:MonoBehaviour {
         }
         public void setOrigin(Vector3 newOrigin){
             origin = newOrigin;
-            if (sphere != null) sphere.transform.position = newOrigin;
         }
         public void moveOrigin(Vector3 newOrigin){
             origin += newOrigin;
-            if (sphere != null)sphere.transform.position += newOrigin;
         }
         public void setRadius(float newRadius){
             radius = newRadius;
-            if (sphere != null) sphere.transform.localScale = new Vector3(radius, radius, radius);
         }
         public void setColor(Color newColor){
             color = newColor;
         }
         public void updateColor(Color newColor){
-            sphere.GetComponent<Renderer>().material.color = newColor;
+            // sphere.GetComponent<Renderer>().material.color = newColor;
         }
         public void resetColor(){
-            sphere.GetComponent<Renderer>().material.color = color;
+            // sphere.GetComponent<Renderer>().material.color = color;
         }  
         public void restoreSphere(){
-            sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            // sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             setOrigin(origin);
             setRadius(radius);
             setColor(color);
             updateColor(color);
         }     
         public void destroySphere(){
-            Destroy(sphere);
+            // Destroy(sphere);
         }
     }
 
