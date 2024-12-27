@@ -1473,7 +1473,11 @@ public class SourceCode:MonoBehaviour {
         public void setWorldPoint(){
             BakedMesh bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
             Vector3 point = bakedMesh.worldPosition(indexInVertex);
+            AroundAxis aroundAxis = collisionSphere.aroundAxis;
             collisionSphere.setOrigin(point);
+            aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
+            aroundAxis.angleY = angleY;
+            aroundAxis.angleX = angleX;
         }
     }
     public class CollisionSphere {

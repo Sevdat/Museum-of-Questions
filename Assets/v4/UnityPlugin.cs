@@ -18,13 +18,13 @@ public class VertexVisualizer : MonoBehaviour
             public int jointIndex;
             public List<BakedMeshIndex> bakedMeshIndex;
             public List<GameObject> futureConnections;
-            public List<int> triangles;
+            public List<List<int>> triangles;
 
             public AssembleJoints(int jointIndex,List<GameObject> futureConnections){
                 this.jointIndex = jointIndex;
                 bakedMeshIndex = new List<BakedMeshIndex>();
                 this.futureConnections = futureConnections;
-                triangles = new List<int>();
+                triangles = new List<List<int>>();
             }
         }
 
@@ -57,41 +57,60 @@ public class VertexVisualizer : MonoBehaviour
                 }
             }
         }
-        void renewedKeysForTriangles(Dictionary<GameObject,AssembleJoints> dictionary){
-            foreach (AssembleJoints bakedMesh in dictionary.Values){
-                int[] sortedNumbers = bakedMesh.triangles.ToArray();
-                Dictionary<int,int> newKeys = new Dictionary<int,int>();
-                int count = 0;
-                foreach (int key in sortedNumbers){
-                    if (!newKeys.ContainsKey(key)) {
-                        newKeys[key] = count;
-                        count++;
-                    }
-                }
-                for (int i = 0;i<bakedMesh.triangles.Count;i++){
-                    bakedMesh.triangles[i] = newKeys[bakedMesh.triangles[i]];
-                }
-                body.bodyStructure[bakedMesh.jointIndex].pointCloud.triangles = bakedMesh.triangles.ToArray();
-            }
-        }
         void createTrianglesForPointClouds(List<BakedMesh> bakedMeshes,Dictionary<GameObject,AssembleJoints> dictionary){
+            int count = 0;
             foreach (BakedMesh bakedMesh in bakedMeshes){
-                int[] triangles = bakedMesh.mesh.triangles;
-                for (int i = 0; i < triangles.Length; i += 3){
-                    int vertexIndex1 = triangles[i];
-                    int vertexIndex2 = triangles[i + 1];
-                    int vertexIndex3 = triangles[i + 2];
+                int[] trianglesInMesh = bakedMesh.mesh.triangles;
+                for (int i = 0; i < trianglesInMesh.Length; i += 3){
+                    int vertexIndex1 = trianglesInMesh[i];
+                    int vertexIndex2 = trianglesInMesh[i + 1];
+                    int vertexIndex3 = trianglesInMesh[i + 2];
                     GameObject gameObject1 = bakedMesh.getGameObject(vertexIndex1);
                     GameObject gameObject2 = bakedMesh.getGameObject(vertexIndex2);
                     GameObject gameObject3 = bakedMesh.getGameObject(vertexIndex3);
                     if (gameObject1 == gameObject2 && gameObject3 == gameObject2){
-                        dictionary[gameObject1].triangles.Add(vertexIndex1);
-                        dictionary[gameObject1].triangles.Add(vertexIndex2);
-                        dictionary[gameObject1].triangles.Add(vertexIndex3);
+                        if (bakedMeshes.Count>dictionary[gameObject1].triangles.Count){
+                            for (int j = 0;j<bakedMeshes.Count;j++){
+                                dictionary[gameObject1].triangles.Add(new List<int>());
+                            }
+                        }
+                        List<int> trianglesForSphere = dictionary[gameObject1].triangles[count];
+                        trianglesForSphere.Add(vertexIndex1);
+                        trianglesForSphere.Add(vertexIndex2);
+                        trianglesForSphere.Add(vertexIndex3); 
                     }
                 }
+                count++;
             }
-            renewedKeysForTriangles(dictionary);
+        }
+        void renewedKeysForTriangles(PointCloud pointCloud, List<List<int>> triangles){
+            CollisionSphere[] collisionspheres = pointCloud.collisionSpheres;
+            
+            Dictionary<int, Dictionary<int,int>> dictionary = new Dictionary<int, Dictionary<int,int>>();
+            int count = 0;
+            foreach (CollisionSphere collisionSphere in collisionspheres){
+                BakedMeshIndex bakedMesh = collisionSphere.bakedMeshIndex;
+                if (!dictionary.ContainsKey(bakedMesh.indexInBakedMesh)) 
+                    dictionary[bakedMesh.indexInBakedMesh] = new Dictionary<int,int>();
+                
+                if (!dictionary[bakedMesh.indexInBakedMesh].ContainsKey(bakedMesh.indexInVertex)){ 
+                    dictionary[bakedMesh.indexInBakedMesh][bakedMesh.indexInVertex] = count;
+                    count++;
+                }
+            }
+            
+            int size = 0;
+            foreach (List<int> triangleList in triangles) size += triangleList.Count;
+            pointCloud.triangles = new int[size];
+            size = 0;
+            for (int i = 0; i<triangles.Count;i++){
+                List<int> triangleList = triangles[i];
+                for (int j = 0; j<triangleList.Count;j++){
+                    print(j+size);
+                    pointCloud.triangles[j+size] = dictionary[i][triangleList[j]];
+                }
+                size += triangleList.Count;
+            }
         }
         void createPointCloud(Dictionary<GameObject,AssembleJoints> dictionary){
             foreach (GameObject gameObject in dictionary.Keys){
@@ -109,6 +128,7 @@ public class VertexVisualizer : MonoBehaviour
                     collisionSphere.bakedMeshIndex.setWorldPoint();
                     joint.pointCloud.collisionSpheres[i] = collisionSphere;
                 }
+                renewedKeysForTriangles(joint.pointCloud,assembleJoints.triangles);
                 body.bodyStructure[indexInBody] = joint;
             }
         }
@@ -131,9 +151,9 @@ public class VertexVisualizer : MonoBehaviour
             List<GameObject> tree = new List<GameObject>(){topParent};
             createHierarchy(tree,dictionary,bakedMeshes);
             createMeshAccessForSpheres(bakedMeshes,dictionary);
+            createTrianglesForPointClouds(bakedMeshes,dictionary);
             createPointCloud(dictionary);
             createConnections(dictionary);
-            createTrianglesForPointClouds(bakedMeshes,dictionary);
         }
     }
     public class Terminal{
