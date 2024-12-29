@@ -200,9 +200,9 @@ public class UnityPluginTest : MonoBehaviour
         stopThread();
     }
 
-    void Start(){
-        startThread();
-    }
+    // void Start(){
+    //     startThread();
+    // }
     int oldSize = 0;
     // void LateUpdate(){
     //     if (oldSize!= resultQueue.Count) {

@@ -85,7 +85,6 @@ public class VertexVisualizer : MonoBehaviour
         }
         void renewedKeysForTriangles(PointCloud pointCloud, List<List<int>> triangles){
             CollisionSphere[] collisionspheres = pointCloud.collisionSpheres;
-            
             Dictionary<int, Dictionary<int,int>> dictionary = new Dictionary<int, Dictionary<int,int>>();
             int count = 0;
             foreach (CollisionSphere collisionSphere in collisionspheres){
@@ -106,7 +105,6 @@ public class VertexVisualizer : MonoBehaviour
             for (int i = 0; i<triangles.Count;i++){
                 List<int> triangleList = triangles[i];
                 for (int j = 0; j<triangleList.Count;j++){
-                    print(j+size);
                     pointCloud.triangles[j+size] = dictionary[i][triangleList[j]];
                 }
                 size += triangleList.Count;
@@ -125,7 +123,7 @@ public class VertexVisualizer : MonoBehaviour
                 for (int i = 0;i < pointCloudSize;i++){
                     CollisionSphere collisionSphere = new CollisionSphere(joint,i,assembleJoints.bakedMeshIndex[i]);
                     collisionSphere.bakedMeshIndex = assembleJoints.bakedMeshIndex[i];
-                    collisionSphere.bakedMeshIndex.setWorldPoint();
+                    collisionSphere.bakedMeshIndex.setPoint();
                     joint.pointCloud.collisionSpheres[i] = collisionSphere;
                 }
                 renewedKeysForTriangles(joint.pointCloud,assembleJoints.triangles);
@@ -199,35 +197,43 @@ public class VertexVisualizer : MonoBehaviour
     //     // Process.Start(firefoxPath, url);
     // }
 
+    GameObject cubeObject;
+    Mesh mesh;
+    MeshFilter meshFilter;
     void Start() {
         sceneBuilder= new SceneBuilder();
         sceneBuilder.loadModelToBody(fbx);
         sceneBuilder.body.sendToGPU.updateAccaleratedArrays();
-        // for (int i = 0; i<sceneBuilder.body.sendToGPU.triangles.Length;i+=3){
-        //     print($"{sceneBuilder.body.sendToGPU.vertices[sceneBuilder.body.sendToGPU.triangles[i]]} {sceneBuilder.body.sendToGPU.vertices[sceneBuilder.body.sendToGPU.triangles[i+1]]} {sceneBuilder.body.sendToGPU.vertices[sceneBuilder.body.sendToGPU.triangles[i+2]]}");
-        // }
-        // foreach(SourceCode.CollisionSphere collisionSphere in sceneBuilder.body.bodyStructure[5].pointCloud.collisionSpheres){
-        //     print(collisionSphere.aroundAxis.sphere.origin);
-        // }
-        cube(sceneBuilder.body.sendToGPU.vertices,sceneBuilder.body.sendToGPU.triangles);
-    }
-    
-    void cube(Vector3[] vertices,int[] triangles){
-        GameObject cubeObject = new GameObject("Cube");
-        Mesh mesh = new Mesh();
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-        mesh.UploadMeshData(false);
-        MeshFilter meshFilter = cubeObject.AddComponent<MeshFilter>();
+        cubeObject = new GameObject("Cube");
+        mesh = new Mesh();
+        meshFilter = cubeObject.AddComponent<MeshFilter>();
         meshFilter.mesh = mesh;
         MeshRenderer meshRenderer = cubeObject.AddComponent<MeshRenderer>();
         meshRenderer.material = new Material(Shader.Find("Standard"));
         cubeObject.transform.position = new Vector3(0, 0, 0);
     }
-    // void LateUpdate() {
-    //     sceneBuilder.body.editor.trackBody();
-    // }
+    int count = 0;
+    int time = 0;
+    public void readTextFiles(){
+        if (time > 1){
+            print(count);
+            sceneBuilder.body.editor.reader(count);
+            count++;
+            if (count>11) count = 0;
+            time = 0;
+        } else time++;
+    }
+    void cube(Vector3[] vertices,int[] triangles){
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        mesh.UploadMeshData(false);
+    }
+    void LateUpdate() {
+        sceneBuilder.body.updatePhysics();
+        sceneBuilder.body.sendToGPU.updateArray();
+        cube(sceneBuilder.body.sendToGPU.vertices,sceneBuilder.body.sendToGPU.triangles);
+    }
 
 }
