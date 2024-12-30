@@ -703,7 +703,6 @@ public class SourceCode:MonoBehaviour {
             updateReadWriteString,accuracyAmountString,showAxisString,globalAxisScaleString,
             bodyStructureSizeString,allJointsInBodyString;
         public SendToGPU sendToGPU;
-        public bool connectionsDeleted;
 
         public Body(){}
         public Body(int worldKey){
@@ -717,7 +716,6 @@ public class SourceCode:MonoBehaviour {
             time = 0;
             timerStart = 20;
             sendToGPU = new SendToGPU(this);
-            connectionsDeleted = true;
         }
 
         public void newCountStart(int timerStart){
@@ -895,12 +893,6 @@ public class SourceCode:MonoBehaviour {
                 bodyStructure = newJointArray;
             }
         }
-        public void resetAllConnections(){
-            for (int i = 0; i<bodyStructure.Length;i++){
-                bodyStructure[i]?.resetAllConnections();
-            }
-            connectionsDeleted = true;
-        }
         public Dictionary<int,int> optimizeBody(){
             int max = bodyStructure.Length;
             int newSize = max - keyGenerator.availableKeys;
@@ -965,7 +957,6 @@ public class SourceCode:MonoBehaviour {
         }
         internal void disconnectFuture(int index){
             future[index].joint.connection.past.RemoveAll(e => e.joint == current);
-            if (!current.body.connectionsDeleted) current.body.resetAllConnections();
         } 
         public void disconnectAllFuture(){
             int size = future.Count;
@@ -976,7 +967,6 @@ public class SourceCode:MonoBehaviour {
         }
         internal void disconnectPast(int index){
             past[index].joint.connection.future.RemoveAll(e => e.joint == current);
-            if (!current.body.connectionsDeleted) current.body.resetAllConnections();
         }
         public void disconnectAllPast(){
             int size = past.Count;
@@ -1035,12 +1025,13 @@ public class SourceCode:MonoBehaviour {
             return nextConnections(true);
         }
 
-        public List<Joint> getAll(){
-            List<Joint> pastAndFuture = new List<Joint>();
+        public Joint[] getAll(){
+            int capacity = past.Count+future.Count; // Desired capacity
+            List<Joint> pastAndFuture = new List<Joint>(capacity);
             pastAndFuture.AddRange(getPast());
             used = false;
             pastAndFuture.AddRange(getFuture());
-            return pastAndFuture;
+            return pastAndFuture.ToArray();
         }
         public string pastToString(){
             string pastIndexes = "";
@@ -1075,8 +1066,6 @@ public class SourceCode:MonoBehaviour {
             moveFutureXString,moveFutureYString,moveFutureSpeedAndAccelerationString,
             pastConnectionsInBodyString,futureConnectionsInBodyString,
             resetPastJointsString,resetFutureJointsString;
-        public Joint[] allFutureJoints;
-        public Joint[] allPastJoints;
 
         public Joint(){}
         public Joint(Body body, int indexInBody){
@@ -1230,33 +1219,17 @@ public class SourceCode:MonoBehaviour {
         }
 
         internal void rotateHierarchy(Vector4 quat, bool pastOrFuture){
-            bool check = (allPastJoints == null && !pastOrFuture) || (allFutureJoints == null && pastOrFuture);
-            if (check){
-                initTree(pastOrFuture, out List<Joint> tree, out int size); 
-                Vector3 rotationOrigin = localAxis.origin;
-                if (pastOrFuture) tree[0].rotateJoint(quat,rotationOrigin);
-                for (int i = 1; i<size;i++){
-                    Joint joint = tree[i];
-                    List<Joint> joints = joint.connection.getAll();
-                    tree.AddRange(joints);
-                    size += joints.Count;
-                    joint.rotateJoint(quat,rotationOrigin);
-                } 
-                resetUsed(tree,size);
-                setAllPastOrFutureJoints(tree,pastOrFuture);
-            } else {
-                Joint[] tree = pastOrFuture? allFutureJoints:allPastJoints;
-                Vector3 rotationOrigin = localAxis.origin;
-                int size = tree.Length;
-                if (pastOrFuture) tree[0].rotateJoint(quat,rotationOrigin);
-                Parallel.For(1, size, i =>{
-                    tree[i].rotateJoint(quat,rotationOrigin);
-                });
-                resetUsed(tree,size);
-            }
-        }
-        public void setAllPastOrFutureJoints(List<Joint> tree,bool pastOrFuture){
-            if (pastOrFuture) allFutureJoints = tree.ToArray(); else allPastJoints = tree.ToArray();
+            initTree(pastOrFuture, out List<Joint> tree, out int size); 
+            Vector3 rotationOrigin = localAxis.origin;
+            if (pastOrFuture) tree[0].rotateJoint(quat,rotationOrigin);
+            for (int i = 1; i<size;i++){
+                Joint joint = tree[i];
+                Joint[] joints = joint.connection.getAll();
+                tree.AddRange(joints);
+                size += joints.Length;
+                joint.rotateJoint(quat,rotationOrigin);
+            } 
+            resetUsed(tree,size);
         }
 
         public void movePastHierarchy(){
@@ -1270,70 +1243,38 @@ public class SourceCode:MonoBehaviour {
             if (keepBodyTogetherBool) moveHierarchy(move, false);
         }
         internal void moveHierarchy(Vector3 newVec, bool pastOrFuture){
-            bool check = (allPastJoints == null && !pastOrFuture) || (allFutureJoints == null && pastOrFuture);
-            if (check){
-                initTree(pastOrFuture, out List<Joint> tree, out int size);  
-                if (pastOrFuture) tree[0].moveJoint(newVec);
-                for (int i = 1; i<size;i++){
-                    Joint joint = tree[i];
-                    List<Joint> joints = joint.connection.getAll();
-                    tree.AddRange(joints);
-                    size += joints.Count;
-                    joint.moveJoint(newVec);
-                }
-                resetUsed(tree,size);
-                setAllPastOrFutureJoints(tree,pastOrFuture);
-            } else {
-                Joint[] tree = pastOrFuture? allFutureJoints:allPastJoints;
-                int size = tree.Length;
-                if (pastOrFuture) tree[0].moveJoint(newVec);
-                Parallel.For(1, size, i =>{
-                    tree[i].moveJoint(newVec);
-                });
-                resetUsed(tree,size);
+            initTree(pastOrFuture, out List<Joint> tree, out int size);  
+            if (pastOrFuture) tree[0].moveJoint(newVec);
+            for (int i = 1; i<size;i++){
+                Joint joint = tree[i];
+                Joint[] joints = joint.connection.getAll();
+                tree.AddRange(joints);
+                size += joints.Length;
+                joint.moveJoint(newVec);
             }
+            resetUsed(tree,size);
         }
         public void resetPastJointHierarchies(){
-            if (allPastJoints == null){
-                initTree(false, out List<Joint> tree, out int size);  
-                for (int i = 0; i<size;i++){
-                    Joint joint = tree[i];
-                    List<Joint> joints = joint.connection.getAll();
-                    tree.AddRange(joints);
-                    size += joints.Count;
-                    joint.connection.resetPastLockPositions();
-                }
-                resetUsed(tree,size);
-                setAllPastOrFutureJoints(tree,false);
-            } else {
-                Joint[] tree = allPastJoints;
-                int size = tree.Length;
-                for (int i = 0; i<size;i++){
-                    tree[i].connection.resetPastLockPositions();
-                } 
-                resetUsed(tree,size);
+            initTree(false, out List<Joint> tree, out int size);  
+            for (int i = 0; i<size;i++){
+                Joint joint = tree[i];
+                Joint[] joints = joint.connection.getAll();
+                tree.AddRange(joints);
+                size += joints.Length;
+                joint.connection.resetPastLockPositions();
             }
+            resetUsed(tree,size);
         }
         public void resetFutureHierarchies(){
-            if (allFutureJoints == null){
-                initTree(true, out List<Joint> tree, out int size);  
-                for (int i = 0; i<size;i++){
-                    Joint joint = tree[i];
-                    List<Joint> joints = joint.connection.getAll();
-                    tree.AddRange(joints);
-                    size += joints.Count;
-                    joint.connection.resetFutureLockPositions();
-                }
-                resetUsed(tree,size);
-                setAllPastOrFutureJoints(tree,true);
-            } else {
-                Joint[] tree = allFutureJoints;
-                int size = tree.Length;
-                for (int i = 0; i<size;i++){
-                    tree[i].connection.resetFutureLockPositions();
-                } 
-                resetUsed(tree,size);
-            }      
+            initTree(true, out List<Joint> tree, out int size);  
+            for (int i = 0; i<size;i++){
+                Joint joint = tree[i];
+                Joint[] joints = joint.connection.getAll();
+                tree.AddRange(joints);
+                size += joints.Length;
+                joint.connection.resetFutureLockPositions();
+            }
+            resetUsed(tree,size); 
         }
         void initTree(bool pastOrFuture, out List<Joint> tree,out int size){
             tree = new List<Joint>{this};
@@ -1352,10 +1293,6 @@ public class SourceCode:MonoBehaviour {
             for (int i = 0; i<size;i++){
                 joints[i].connection.used = false;
             }
-        }
-        internal void resetAllConnections(){
-            allPastJoints = null;
-            allFutureJoints = null;
         }
     }
     public class PointCloud {
@@ -1429,7 +1366,6 @@ public class SourceCode:MonoBehaviour {
                     vec = joint.localAxis.quatRotate(vec,rotationOrigin,quat);
                     collisionSphere.setOrigin(vec);
                 }
-                collisionSphere?.aroundAxis.resetOrigin();
             }
         }
         public void moveSpheres(Vector3 move){
