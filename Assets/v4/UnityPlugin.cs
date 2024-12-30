@@ -200,6 +200,7 @@ public class VertexVisualizer : MonoBehaviour
     GameObject cubeObject;
     Mesh mesh;
     MeshFilter meshFilter;
+    long memoryBefore;
     void Start() {
         sceneBuilder= new SceneBuilder();
         sceneBuilder.loadModelToBody(fbx);
@@ -211,6 +212,10 @@ public class VertexVisualizer : MonoBehaviour
         MeshRenderer meshRenderer = cubeObject.AddComponent<MeshRenderer>();
         meshRenderer.material = new Material(Shader.Find("Standard"));
         cubeObject.transform.position = new Vector3(0, 0, 0);
+
+        // Measure memory before creating the tree
+        memoryBefore = Process.GetCurrentProcess().WorkingSet64;
+        print(memoryBefore);
     }
     int count = 0;
     int time = 0;
@@ -230,10 +235,13 @@ public class VertexVisualizer : MonoBehaviour
         mesh.RecalculateBounds();
         mesh.UploadMeshData(false);
     }
+
     void LateUpdate() {
+        DateTime old = DateTime.Now;
         sceneBuilder.body.updatePhysics();
         sceneBuilder.body.sendToGPU.updateArray();
         cube(sceneBuilder.body.sendToGPU.vertices,sceneBuilder.body.sendToGPU.triangles);
+        print(DateTime.Now - old);
     }
 
 }
