@@ -606,34 +606,7 @@ public class SourceCode:MonoBehaviour {
             availableKeys = 0;
         }
     }
-    public class BakedMesh{
-        internal SkinnedMeshRenderer skinnedMeshRenderer;
-        internal Mesh mesh;
-        Transform[] bones;
-        BoneWeight[] boneWeights; 
-        public Vector3[] vertices;
-
-        public BakedMesh(SkinnedMeshRenderer skinnedMeshRenderer){
-            this.skinnedMeshRenderer=skinnedMeshRenderer;
-            mesh = new Mesh(){
-                vertices = new Vector3[skinnedMeshRenderer.sharedMesh.vertices.Length]
-            };
-            bakeMesh();
-        }
-        public void bakeMesh(){
-            skinnedMeshRenderer.BakeMesh(mesh);
-            vertices = mesh.vertices;
-            bones = skinnedMeshRenderer.bones;
-            boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
-        }
-        public Vector3 worldPosition(int index){
-            return skinnedMeshRenderer.transform.TransformPoint(vertices[index]);
-        }
-        public GameObject getGameObject(int index){
-            BoneWeight boneWeight = boneWeights[index];
-            return bones[boneWeight.boneIndex0].gameObject;
-        }
-    }
+ 
     public class SendToGPU{
         public Body body;
         public Vector3[] vertices;
@@ -689,6 +662,14 @@ public class SourceCode:MonoBehaviour {
             }
         }
     }
+    public class MeshData {
+        public Vector3[] vertices;
+        public int[] triangles;
+        public MeshData(Vector3[] vertices,int[] triangles){
+            this.vertices = vertices;
+            this.triangles = triangles;
+        }
+    }
     public class Body {
         public World world;
         public int worldKey;
@@ -696,13 +677,14 @@ public class SourceCode:MonoBehaviour {
         public Joint[] bodyStructure;
         public KeyGenerator keyGenerator;
         public Editor editor;
-        public List<BakedMesh> bakedMeshes;
+        public List<MeshData> bakedMeshes;
         public string amountOfDigits; 
         public int timerStart, time;
         public string globalOriginLocationString,globalAxisRotationXYZString,radianOrDegreeString,
             updateReadWriteString,accuracyAmountString,showAxisString,globalAxisScaleString,
             bodyStructureSizeString,allJointsInBodyString;
         public SendToGPU sendToGPU;
+        public GameObject unityAxis;
 
         public Body(){}
         public Body(int worldKey){
@@ -711,11 +693,23 @@ public class SourceCode:MonoBehaviour {
             bodyStructure = new Joint[0];
             keyGenerator = new KeyGenerator(0);
             editor = new Editor(this);
-            // editor.initilizeBody();
+            editor.initilizeBody();
             amountOfDigits = "0.000000";
             time = 0;
             timerStart = 20;
             sendToGPU = new SendToGPU(this);
+        }
+        public Body(int worldKey, GameObject unityAxis){
+            this.worldKey = worldKey;
+            globalAxis = new Axis(this,new Vector3(0,0,0),1);
+            bodyStructure = new Joint[0];
+            keyGenerator = new KeyGenerator(0);
+            editor = new Editor(this);
+            amountOfDigits = "0.000000";
+            time = 0;
+            timerStart = 20;
+            sendToGPU = new SendToGPU(this);
+            this.unityAxis = unityAxis;
         }
 
         public void newCountStart(int timerStart){
@@ -860,10 +854,8 @@ public class SourceCode:MonoBehaviour {
             globalAxis.worldAngleY = globalAxis.convertTo360(globalAxis.worldAngleY +diffWorldAngleY)%(2*Mathf.PI);
         }
         public void updatePhysics(){
-            if (bakedMeshes != null){
-                for (int i = 0; i < bakedMeshes.Count;i++){
-                    bakedMeshes[i].bakeMesh();
-                }
+            if (unityAxis != null){          
+                globalAxis.placeAxis(unityAxis.transform.position);
             }
             for (int i = 0; i<bodyStructure.Length; i++){
                 bodyStructure[i]?.updatePhysics();
@@ -1389,10 +1381,10 @@ public class SourceCode:MonoBehaviour {
         }
         public void updatePhysics(){
             int sphereCount = collisionSpheres.Length;
-            for (int i = 0; i<sphereCount; i++){
+            for (int i = 0;i<sphereCount; i++){
                 collisionSpheres[i]?.aroundAxis.updatePhysics(false);
-                collisionSpheres[i]?.updatePhysics();
-            }            
+                collisionSpheres[i]?.updatePhysics(); 
+            };          
         }
         public List<CollisionSphere> arrayToList(){
             List<CollisionSphere> list = new List<CollisionSphere>();
@@ -1483,20 +1475,20 @@ public class SourceCode:MonoBehaviour {
             this.indexInVertex = indexInVertex;
         }
         public void updatePoint(){
-            BakedMesh bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
+            MeshData bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
             AroundAxis aroundAxis = collisionSphere.aroundAxis;
             Axis axis = aroundAxis.axis;
-            Vector3 point = bakedMesh.worldPosition(indexInVertex);
+            Vector3 point = collisionSphere.path.joint.body.globalAxis.origin+bakedMesh.vertices[indexInVertex];
             aroundAxis.speed = aroundAxis.axis.length(point - axis.origin) - aroundAxis.distance;
             aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
             aroundAxis.sensitivitySpeedY = angleY - aroundAxis.angleY;
             aroundAxis.sensitivitySpeedX = angleX - aroundAxis.angleX;
         }
         public void setPoint(){
-            BakedMesh bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
+            MeshData bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
             AroundAxis aroundAxis = collisionSphere.aroundAxis;
             Axis axis = aroundAxis.axis;
-            Vector3 point = bakedMesh.worldPosition(indexInVertex);
+            Vector3 point = collisionSphere.path.joint.body.globalAxis.origin+bakedMesh.vertices[indexInVertex];
             collisionSphere.setOrigin(point);
             aroundAxis.distance = aroundAxis.axis.length(point - axis.origin);
             aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
@@ -1551,7 +1543,7 @@ public class SourceCode:MonoBehaviour {
             aroundAxis.sphere.setRadius(newRadius);
         }
         public void updatePhysics(){
-            if (bakedMeshIndex != null) bakedMeshIndex.updatePoint();
+            if (bakedMeshIndex != null && path.body.bakedMeshes != null) bakedMeshIndex.updatePoint();
             aroundAxis.updatePhysics(false);
         }
     }

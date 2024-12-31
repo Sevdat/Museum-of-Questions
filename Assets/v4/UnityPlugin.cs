@@ -14,6 +14,37 @@ public class VertexVisualizer : MonoBehaviour
     SceneBuilder sceneBuilder;
     public class SceneBuilder:SourceCode{
         public Body body;
+        List<BakedMesh> bakedMeshes = new List<BakedMesh>();
+        internal class BakedMesh{
+            internal SkinnedMeshRenderer skinnedMeshRenderer;
+            internal Mesh mesh;
+            Transform transform;
+            Transform[] bones;
+            BoneWeight[] boneWeights; 
+            public Vector3[] vertices;
+
+            public BakedMesh(SkinnedMeshRenderer skinnedMeshRenderer){
+                this.skinnedMeshRenderer=skinnedMeshRenderer;
+                mesh = new Mesh(){
+                    vertices = new Vector3[skinnedMeshRenderer.sharedMesh.vertices.Length]
+                };
+                bakeMesh();
+            }
+            public void bakeMesh(){
+                skinnedMeshRenderer.BakeMesh(mesh);
+                vertices = mesh.vertices;
+                bones = skinnedMeshRenderer.bones;
+                boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
+                transform = skinnedMeshRenderer.transform;
+            }
+            public Vector3 worldPosition(int index){
+                return transform.TransformPoint(vertices[index]);
+            }
+            public GameObject getGameObject(int index){
+                BoneWeight boneWeight = boneWeights[index];
+                return bones[boneWeight.boneIndex0].gameObject;
+            }
+        }
         class AssembleJoints{
             public int jointIndex;
             public List<BakedMeshIndex> bakedMeshIndex;
@@ -35,6 +66,14 @@ public class VertexVisualizer : MonoBehaviour
             }
             return allChildren;
         }
+        public List<MeshData> getMeshData(){
+            List<MeshData> meshDatas = new List<MeshData>();
+            foreach (BakedMesh bakedMesh in bakedMeshes){
+                bakedMesh.bakeMesh();
+                meshDatas.Add(new MeshData(bakedMesh.mesh.vertices,bakedMesh.mesh.triangles));
+            }
+            return meshDatas;
+        }
         void createHierarchy(List<GameObject> tree,Dictionary<GameObject,AssembleJoints> dictionary,List<BakedMesh> bakedMeshes){
             int jointIndex = 0;
             for (int i = 0; i < tree.Count; i++){
@@ -46,7 +85,11 @@ public class VertexVisualizer : MonoBehaviour
                 if (skin) bakedMeshes.Add(new BakedMesh(skin));
                 jointIndex++;
             }
-            body.bakedMeshes = bakedMeshes;
+            List<MeshData> meshDatas = new List<MeshData>();
+            foreach (BakedMesh bakedMesh in bakedMeshes){
+                meshDatas.Add(new MeshData(bakedMesh.mesh.vertices,bakedMesh.mesh.triangles));
+            }
+            body.bakedMeshes = meshDatas;
             body.arraySizeManager(dictionary.Count);
         }
         void createMeshAccessForSpheres(List<BakedMesh> bakedMeshes,Dictionary<GameObject,AssembleJoints> dictionary){
@@ -143,8 +186,8 @@ public class VertexVisualizer : MonoBehaviour
             }
         }
         public void loadModelToBody(GameObject topParent){
-            body = new Body(0);
-            List<BakedMesh> bakedMeshes = new List<BakedMesh>();
+            body = new Body(0, topParent);
+            body.globalAxis.placeAxis(topParent.transform.position);
             Dictionary<GameObject,AssembleJoints> dictionary = new Dictionary<GameObject,AssembleJoints>();
             List<GameObject> tree = new List<GameObject>(){topParent};
             createHierarchy(tree,dictionary,bakedMeshes);
@@ -216,6 +259,8 @@ public class VertexVisualizer : MonoBehaviour
         // Measure memory before creating the tree
         memoryBefore = Process.GetCurrentProcess().WorkingSet64;
         print(memoryBefore);
+
+        sceneBuilder.body.bakedMeshes = null; 
     }
     int count = 0;
     int time = 0;
