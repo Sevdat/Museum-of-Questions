@@ -614,7 +614,7 @@ public class SourceCode:MonoBehaviour {
             triangles = new int[0];
             this.body = body;
         }
-        public void updateAccaleratedArrays(){
+        public void init(){
             updatePointCloudStart();
             int countTriangleIndex = 0;
             foreach(Joint joint in body.bodyStructure){
@@ -652,8 +652,7 @@ public class SourceCode:MonoBehaviour {
         }
         public void updateArray(){
             for (int i = 0; i<body.bodyStructure.Length;i++){
-                Joint joint = body.bodyStructure[i];
-                if (joint != null) joint.pointCloud.updateGPUArray();
+                body.bodyStructure[i]?.pointCloud.updateGPUArray();
             }
         }
     }
@@ -683,19 +682,15 @@ public class SourceCode:MonoBehaviour {
 
         public Body(){}
         public Body(int worldKey){
+            init();
             this.worldKey = worldKey;
-            globalAxis = new Axis(this,new Vector3(0,0,0),1);
-            bodyStructure = new Joint[0];
-            keyGenerator = new KeyGenerator(0);
-            editor = new Editor(this);
-            editor.initilizeBody();
-            amountOfDigits = "0.000000";
-            time = 0;
-            timerStart = 20;
-            sendToGPU = new SendToGPU(this);
         }
         public Body(int worldKey, UnityAxis unityAxis){
+            init();
             this.worldKey = worldKey;
+            this.unityAxis = unityAxis;
+        }
+        void init(){
             globalAxis = new Axis(this,new Vector3(0,0,0),1);
             bodyStructure = new Joint[0];
             keyGenerator = new KeyGenerator(0);
@@ -704,7 +699,6 @@ public class SourceCode:MonoBehaviour {
             time = 0;
             timerStart = 20;
             sendToGPU = new SendToGPU(this);
-            this.unityAxis = unityAxis;
         }
 
         public void newCountStart(int timerStart){
@@ -1482,7 +1476,7 @@ public class SourceCode:MonoBehaviour {
             MeshData bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
             AroundAxis aroundAxis = collisionSphere.aroundAxis;
             Axis axis = aroundAxis.axis;
-            Vector3 point = collisionSphere.path.joint.body.globalAxis.origin+bakedMesh.vertices[indexInVertex];
+            Vector3 point = collisionSphere.path.joint.body.bodyStructure[0].localAxis.origin+bakedMesh.vertices[indexInVertex];
             aroundAxis.speed = aroundAxis.axis.length(point - axis.origin) - aroundAxis.distance;
             aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
             aroundAxis.sensitivitySpeedY = angleY - aroundAxis.angleY;
@@ -1492,7 +1486,7 @@ public class SourceCode:MonoBehaviour {
             MeshData bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
             AroundAxis aroundAxis = collisionSphere.aroundAxis;
             Axis axis = aroundAxis.axis;
-            Vector3 point = collisionSphere.path.joint.body.globalAxis.origin+bakedMesh.vertices[indexInVertex];
+            Vector3 point = collisionSphere.path.joint.body.bodyStructure[0].localAxis.origin+bakedMesh.vertices[indexInVertex];
             collisionSphere.setOrigin(point);
             aroundAxis.distance = aroundAxis.axis.length(point - axis.origin);
             aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);

@@ -72,6 +72,23 @@ public class VertexVisualizer : MonoBehaviour
         internal List<BakedMesh> bakedMeshes = new List<BakedMesh>();
         internal AxisData globalAxis;
         internal AxisData[] localAxis;
+        GameObject fbxObject;
+        Mesh mesh;
+        MeshFilter meshFilter;
+
+        public SceneBuilder(GameObject fbxObject){
+            this.fbxObject = fbxObject; 
+            loadModelToBody(fbxObject);
+            body.sendToGPU.init();
+            fbxObject = new GameObject(fbxObject.name);
+            mesh = new Mesh();
+            meshFilter = fbxObject.AddComponent<MeshFilter>();
+            meshFilter.mesh = mesh;
+            MeshRenderer meshRenderer = fbxObject.AddComponent<MeshRenderer>();
+            meshRenderer.material = new Material(Shader.Find("Standard"));
+            fbxObject.transform.position = fbxObject.transform.position;
+            drawMesh(body.sendToGPU.vertices,body.sendToGPU.triangles);
+        }
 
         class AssembleJoints {
             public int jointIndex;
@@ -247,6 +264,13 @@ public class VertexVisualizer : MonoBehaviour
             }
             body.bakedMeshes = meshDatas;
         }
+        void drawMesh(Vector3[] vertices,int[] triangles){
+            mesh.vertices = vertices;
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            mesh.UploadMeshData(false);
+        }
         public void updateBodyPositions(){
             for (int i = 0; i<localAxis.Length;i++){
                 int index = localAxis[i].jointIndex;
@@ -262,6 +286,7 @@ public class VertexVisualizer : MonoBehaviour
             updateBodyPositions();
             body.updatePhysics();
             body.sendToGPU.updateArray();
+            drawMesh(body.sendToGPU.vertices,body.sendToGPU.triangles);
         }
     }
     public class Terminal{
@@ -307,22 +332,9 @@ public class VertexVisualizer : MonoBehaviour
     //     // Process.Start(firefoxPath, url);
     // }
 
-    GameObject cubeObject;
-    Mesh mesh;
-    MeshFilter meshFilter;
     long memoryBefore;
     void Start() {
-        sceneBuilder= new SceneBuilder();
-        sceneBuilder.loadModelToBody(fbx);
-        sceneBuilder.body.sendToGPU.updateAccaleratedArrays();
-        cubeObject = new GameObject("Cube");
-        mesh = new Mesh();
-        meshFilter = cubeObject.AddComponent<MeshFilter>();
-        meshFilter.mesh = mesh;
-        MeshRenderer meshRenderer = cubeObject.AddComponent<MeshRenderer>();
-        meshRenderer.material = new Material(Shader.Find("Standard"));
-        cubeObject.transform.position = new Vector3(0, 0, 0);
-
+        sceneBuilder = new SceneBuilder(fbx);
         // Measure memory before creating the tree
         memoryBefore = Process.GetCurrentProcess().WorkingSet64;
         print(sceneBuilder.bakedMeshes[0].mesh.colors.Length);
@@ -340,18 +352,10 @@ public class VertexVisualizer : MonoBehaviour
             time = 0;
         } else time++;
     }
-    void cube(Vector3[] vertices,int[] triangles){
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-        mesh.UploadMeshData(false);
-    }
 
     void LateUpdate() {
         DateTime old = DateTime.Now;
         sceneBuilder.updateBody();
-        cube(sceneBuilder.body.sendToGPU.vertices,sceneBuilder.body.sendToGPU.triangles);
         print(DateTime.Now - old);
     }
 
