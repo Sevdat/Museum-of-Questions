@@ -525,17 +525,12 @@ public class SourceCode:MonoBehaviour {
             quat = quatMul(to, inverseQuat(from));
             convertAngleAxis(quat,out angle, out axis);
         }
-        public void alignRotationTo(GameObject unityAxis, out float angle, out Vector3 axis, out Vector4 quat){
+        public void alignRotationTo(Vector4 to, out float angle, out Vector3 axis, out Vector4 quat){
             Vector4 from = matrixToQuat(rotationMatrix(this));
-            Vector4 to = new Vector4(
-                    unityAxis.transform.rotation.x,
-                    unityAxis.transform.rotation.y,
-                    unityAxis.transform.rotation.z,
-                    unityAxis.transform.rotation.w
-                );
             quat = quatMul(to, inverseQuat(from));
             convertAngleAxis(quat,out angle, out axis);
         }
+
         Matrix4x4 rotationMatrix(Axis axis){
             Vector3 right = direction(axis.x,axis.origin);
             Vector3 up = direction(axis.y,axis.origin);
@@ -684,7 +679,7 @@ public class SourceCode:MonoBehaviour {
             updateReadWriteString,accuracyAmountString,showAxisString,globalAxisScaleString,
             bodyStructureSizeString,allJointsInBodyString;
         public SendToGPU sendToGPU;
-        public GameObject unityAxis;
+        public UnityAxis unityAxis;
 
         public Body(){}
         public Body(int worldKey){
@@ -699,7 +694,7 @@ public class SourceCode:MonoBehaviour {
             timerStart = 20;
             sendToGPU = new SendToGPU(this);
         }
-        public Body(int worldKey, GameObject unityAxis){
+        public Body(int worldKey, UnityAxis unityAxis){
             this.worldKey = worldKey;
             globalAxis = new Axis(this,new Vector3(0,0,0),1);
             bodyStructure = new Joint[0];
@@ -855,7 +850,7 @@ public class SourceCode:MonoBehaviour {
         }
         public void updatePhysics(){
             if (unityAxis != null){          
-                globalAxis.placeAxis(unityAxis.transform.position);
+                globalAxis.placeAxis(unityAxis.origin);
             }
             for (int i = 0; i<bodyStructure.Length; i++){
                 bodyStructure[i]?.updatePhysics();
@@ -1017,13 +1012,13 @@ public class SourceCode:MonoBehaviour {
             return nextConnections(true);
         }
 
-        public Joint[] getAll(){
+        public List<Joint> getAll(){
             int capacity = past.Count+future.Count; // Desired capacity
             List<Joint> pastAndFuture = new List<Joint>(capacity);
             pastAndFuture.AddRange(getPast());
             used = false;
             pastAndFuture.AddRange(getFuture());
-            return pastAndFuture.ToArray();
+            return pastAndFuture;
         }
         public string pastToString(){
             string pastIndexes = "";
@@ -1042,6 +1037,15 @@ public class SourceCode:MonoBehaviour {
             return futureIndexes;
         }
     }
+    public class UnityAxis{
+        public Vector3 origin;
+        public Vector4 quat;
+        public UnityAxis(){}
+        public UnityAxis(Vector3 origin, Vector4 quat){
+            this.origin = origin;
+            this.quat = quat;
+        }
+    }
     public class Joint {
         public Body body;
         public Axis localAxis;
@@ -1049,7 +1053,7 @@ public class SourceCode:MonoBehaviour {
         public PointCloud pointCloud;
         public float fromGlobalAxisY,fromGlobalAxisX,distanceFromGlobalAxis;
         public bool movementOptionBool,keepBodyTogetherBool;
-        public GameObject unityAxis;
+        public UnityAxis unityAxis;
         public string movementOptionString,distanceFromGlobalOriginString,YXFromGlobalAxisString,localAxisRotationString,localOriginLocationString,
             activeString,showAxisString,keepBodyTogetherString,localAxisScaleString,
             spinPastXString,spinPastYString,spinPastSpeedAndAccelerationString,
@@ -1063,7 +1067,7 @@ public class SourceCode:MonoBehaviour {
         public Joint(Body body, int indexInBody){
             init(body, indexInBody);
         }
-        public Joint(Body body, int indexInBody, GameObject unityAxis){
+        public Joint(Body body, int indexInBody, UnityAxis unityAxis){
             init(body, indexInBody);
             this.unityAxis = unityAxis;
         }
@@ -1190,10 +1194,10 @@ public class SourceCode:MonoBehaviour {
             localAxis.movePast.updatePhysics(true);
             localAxis.moveFuture.updatePhysics(true);   
             if (unityAxis != null){          
-                Vector3 move = unityAxis.transform.position - localAxis.origin;
+                Vector3 move = unityAxis.origin - localAxis.origin;
                 moveHierarchy(move, true);
-                localAxis.alignRotationTo(unityAxis, out float angle, out Vector3 axis, out Vector4 quat);
-                localAxis.spinFuture.sphere.setOrigin(unityAxis.transform.position+axis*localAxis.axisDistance);
+                localAxis.alignRotationTo(unityAxis.quat, out float angle, out Vector3 axis, out Vector4 quat);
+                localAxis.spinFuture.sphere.setOrigin(unityAxis.origin+axis*localAxis.axisDistance);
                 localAxis.spinFuture.get();
                 localAxis.spinFuture.speed = angle;
                 rotateHierarchy(quat, true);
@@ -1216,9 +1220,9 @@ public class SourceCode:MonoBehaviour {
             if (pastOrFuture) tree[0].rotateJoint(quat,rotationOrigin);
             for (int i = 1; i<size;i++){
                 Joint joint = tree[i];
-                Joint[] joints = joint.connection.getAll();
+                List<Joint> joints = joint.connection.getAll();
                 tree.AddRange(joints);
-                size += joints.Length;
+                size += joints.Count;
                 joint.rotateJoint(quat,rotationOrigin);
             } 
             resetUsed(tree,size);
@@ -1239,9 +1243,9 @@ public class SourceCode:MonoBehaviour {
             if (pastOrFuture) tree[0].moveJoint(newVec);
             for (int i = 1; i<size;i++){
                 Joint joint = tree[i];
-                Joint[] joints = joint.connection.getAll();
+                List<Joint> joints = joint.connection.getAll();
                 tree.AddRange(joints);
-                size += joints.Length;
+                size += joints.Count;
                 joint.moveJoint(newVec);
             }
             resetUsed(tree,size);
@@ -1250,9 +1254,9 @@ public class SourceCode:MonoBehaviour {
             initTree(false, out List<Joint> tree, out int size);  
             for (int i = 0; i<size;i++){
                 Joint joint = tree[i];
-                Joint[] joints = joint.connection.getAll();
+                List<Joint> joints = joint.connection.getAll();
                 tree.AddRange(joints);
-                size += joints.Length;
+                size += joints.Count;
                 joint.connection.resetPastLockPositions();
             }
             resetUsed(tree,size);
@@ -1261,9 +1265,9 @@ public class SourceCode:MonoBehaviour {
             initTree(true, out List<Joint> tree, out int size);  
             for (int i = 0; i<size;i++){
                 Joint joint = tree[i];
-                Joint[] joints = joint.connection.getAll();
+                List<Joint> joints = joint.connection.getAll();
                 tree.AddRange(joints);
-                size += joints.Length;
+                size += joints.Count;
                 joint.connection.resetFutureLockPositions();
             }
             resetUsed(tree,size); 
@@ -1384,7 +1388,7 @@ public class SourceCode:MonoBehaviour {
             for (int i = 0;i<sphereCount; i++){
                 collisionSpheres[i]?.aroundAxis.updatePhysics(false);
                 collisionSpheres[i]?.updatePhysics(); 
-            };          
+            }
         }
         public List<CollisionSphere> arrayToList(){
             List<CollisionSphere> list = new List<CollisionSphere>();
