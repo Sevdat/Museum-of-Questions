@@ -6,12 +6,14 @@ using System.IO;
 using System;
 using System.Linq;
 using UnityEngine.UI;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 public class VertexVisualizer : MonoBehaviour
 {
     public GameObject fbx;
     public static GameObject staticTerminal;
-    SceneBuilder sceneBuilder;
+    public SceneBuilder sceneBuilder;
 
     public class BakedMesh {
         internal SkinnedMeshRenderer skinnedMeshRenderer;
@@ -72,21 +74,20 @@ public class VertexVisualizer : MonoBehaviour
         internal List<BakedMesh> bakedMeshes = new List<BakedMesh>();
         internal AxisData globalAxis;
         internal AxisData[] localAxis;
-        GameObject fbxObject;
+        GameObject processedFBX;
         Mesh mesh;
         MeshFilter meshFilter;
 
-        public SceneBuilder(GameObject fbxObject){
-            this.fbxObject = fbxObject; 
-            loadModelToBody(fbxObject);
+        public SceneBuilder(GameObject fbxGameObject){ 
+            processedFBX = new GameObject(fbxGameObject.name);
+            loadModelToBody(fbxGameObject);
             body.sendToGPU.init();
-            fbxObject = new GameObject(fbxObject.name);
             mesh = new Mesh();
-            meshFilter = fbxObject.AddComponent<MeshFilter>();
+            meshFilter = processedFBX.AddComponent<MeshFilter>();
             meshFilter.mesh = mesh;
-            MeshRenderer meshRenderer = fbxObject.AddComponent<MeshRenderer>();
+            MeshRenderer meshRenderer = processedFBX.AddComponent<MeshRenderer>();
             meshRenderer.material = new Material(Shader.Find("Standard"));
-            fbxObject.transform.position = fbxObject.transform.position;
+            processedFBX.transform.position = processedFBX.transform.position;
             drawMesh(body.sendToGPU.vertices,body.sendToGPU.triangles);
         }
 
@@ -281,14 +282,19 @@ public class VertexVisualizer : MonoBehaviour
                 unityAxis.quat = quat;
             }
         }
-        public void updateBody(){
+        public void updateUnityData(){
             updateMeshData();
             updateBodyPositions();
+        }
+        public void updateBody(){
             body.updatePhysics();
             body.sendToGPU.updateArray();
+        }
+        public void drawBody(){
             drawMesh(body.sendToGPU.vertices,body.sendToGPU.triangles);
         }
     }
+
     public class Terminal{
         GameObject terminal;
         PathScript path;
@@ -331,32 +337,86 @@ public class VertexVisualizer : MonoBehaviour
     //     // string url = "https://www.google.com";
     //     // Process.Start(firefoxPath, url);
     // }
+    MultiThread multiThread;
+    static ConcurrentQueue<MultiThread> resultQueue = new ConcurrentQueue<MultiThread>();
 
-    long memoryBefore;
-    void Start() {
+    public class MultiThread {
+        public bool isRunning, updateBody;
+        public SceneBuilder sceneBuilder;
+        public MultiThread(SceneBuilder sceneBuilder){
+            this.sceneBuilder = sceneBuilder;
+            isRunning = true;
+            updateBody = true;
+            RunBackgroundTask();
+        }
+        public async Task RunBackgroundTask(){
+            while (isRunning){
+                if (updateBody){
+                    await Task.Run(() =>{
+                        sceneBuilder.updateBody();
+                    });
+                    stopUpdate();
+                }
+                await Task.Delay(10); // Simulate delay
+            }
+        }
+        public void wait(){
+            isRunning = false;
+        }
+        public void StopTask(){
+            isRunning = false;
+        } 
+        public void updateUnityData(){
+            sceneBuilder.drawBody();
+            sceneBuilder.updateUnityData();
+            updateBody = true;
+        }
+        public void stopUpdate(){
+            updateBody = false;
+            resultQueue.Enqueue(this);
+            print(resultQueue.Count);
+        }
+    }
+
+    void OnDestroy(){
+        multiThread?.StopTask();
+    }
+
+    void OnApplicationQuit(){
+        multiThread?.StopTask();
+    }
+    bool lol = false;
+    void Start(){
         sceneBuilder = new SceneBuilder(fbx);
-        // Measure memory before creating the tree
-        memoryBefore = Process.GetCurrentProcess().WorkingSet64;
-        print(sceneBuilder.bakedMeshes[0].mesh.colors.Length);
-
-        // sceneBuilder.body.bakedMeshes = null; 
+        multiThread = new MultiThread(sceneBuilder);
+        lol = true;
     }
-    int count = 0;
-    int time = 0;
-    public void readTextFiles(){
-        if (time > 1){
-            print(count);
-            sceneBuilder.body.editor.reader(count);
-            count++;
-            if (count>11) count = 0;
-            time = 0;
-        } else time++;
-    }
-
     void LateUpdate() {
         DateTime old = DateTime.Now;
-        sceneBuilder.updateBody();
+        while (resultQueue.TryDequeue(out MultiThread result)){
+            result.updateUnityData();
+        }
         print(DateTime.Now - old);
     }
+    // long memoryBefore;
+    // void Start() {
+    //     sceneBuilder = new SceneBuilder(fbx);
+    //     // Measure memory before creating the tree
+    //     memoryBefore = Process.GetCurrentProcess().WorkingSet64;
+    //     print(sceneBuilder.bakedMeshes[0].mesh.colors.Length);
+
+    //     // sceneBuilder.body.bakedMeshes = null; 
+    // }
+    // int count = 0;
+    // int time = 0;
+    // public void readTextFiles(){
+    //     if (time > 1){
+    //         print(count);
+    //         sceneBuilder.body.editor.reader(count);
+    //         count++;
+    //         if (count>11) count = 0;
+    //         time = 0;
+    //     } else time++;
+    // }
 
 }

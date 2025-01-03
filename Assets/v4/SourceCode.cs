@@ -1032,12 +1032,24 @@ public class SourceCode:MonoBehaviour {
         }
     }
     public class UnityAxis{
+        public Joint joint;
         public Vector3 origin;
         public Vector4 quat;
+
         public UnityAxis(){}
         public UnityAxis(Vector3 origin, Vector4 quat){
             this.origin = origin;
             this.quat = quat;
+        }
+
+        public void updateJoint(){
+            Vector3 move = joint.unityAxis.origin - joint.localAxis.origin;
+            joint.moveHierarchy(move, true);
+            joint.localAxis.alignRotationTo(joint.unityAxis.quat, out float angle, out Vector3 axis, out Vector4 quat);
+            joint.localAxis.spinFuture.sphere.setOrigin(joint.unityAxis.origin+axis*joint.localAxis.axisDistance);
+            joint.localAxis.spinFuture.get();
+            joint.localAxis.spinFuture.speed = angle;
+            joint.rotateHierarchy(quat, true);
         }
     }
     public class Joint {
@@ -1063,6 +1075,7 @@ public class SourceCode:MonoBehaviour {
         }
         public Joint(Body body, int indexInBody, UnityAxis unityAxis){
             init(body, indexInBody);
+            unityAxis.joint = this;
             this.unityAxis = unityAxis;
         }
         void init(Body body, int indexInBody){
@@ -1187,15 +1200,7 @@ public class SourceCode:MonoBehaviour {
             localAxis.spinPast.updatePhysics(false);
             localAxis.movePast.updatePhysics(true);
             localAxis.moveFuture.updatePhysics(true);   
-            if (unityAxis != null){          
-                Vector3 move = unityAxis.origin - localAxis.origin;
-                moveHierarchy(move, true);
-                localAxis.alignRotationTo(unityAxis.quat, out float angle, out Vector3 axis, out Vector4 quat);
-                localAxis.spinFuture.sphere.setOrigin(unityAxis.origin+axis*localAxis.axisDistance);
-                localAxis.spinFuture.get();
-                localAxis.spinFuture.speed = angle;
-                rotateHierarchy(quat, true);
-            }
+            unityAxis?.updateJoint();
             pointCloud.updatePhysics();  
         }
 
@@ -1335,8 +1340,7 @@ public class SourceCode:MonoBehaviour {
         public void resetAllSphereOrigins(){
             int sphereCount = collisionSpheres.Length;
             for (int i = 0; i<sphereCount; i++){
-                CollisionSphere collisionSphere = collisionSpheres[i];
-                collisionSphere?.aroundAxis.resetOrigin();
+                collisionSpheres[i]?.aroundAxis.resetOrigin();
             }
         }
         public void updateGPUArray(){
@@ -1380,7 +1384,6 @@ public class SourceCode:MonoBehaviour {
         public void updatePhysics(){
             int sphereCount = collisionSpheres.Length;
             for (int i = 0;i<sphereCount; i++){
-                collisionSpheres[i]?.aroundAxis.updatePhysics(false);
                 collisionSpheres[i]?.updatePhysics(); 
             }
         }

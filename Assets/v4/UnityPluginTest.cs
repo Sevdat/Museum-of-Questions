@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class UnityPluginTest : MonoBehaviour
@@ -168,46 +169,10 @@ public class UnityPluginTest : MonoBehaviour
     // }
     // Update is called once per frame
 
-    Thread workerThread;
-    bool isRunning = false;
-    ConcurrentQueue<string> resultQueue = new ConcurrentQueue<string>();
 
-    void startThread(){
-        isRunning = true;
-        workerThread = new Thread(method);
-        workerThread.IsBackground = true;
-        workerThread.Start();
-    }
-    void method(){
-        while (isRunning){
-            for (int i = 0; i < 5000000; i++){
-                string[] result = "lool lol".Split('o');
-            }
-            resultQueue.Enqueue("result");
-            Thread.Sleep(100);
-        }
-    }
-    void stopThread(){
-        isRunning = false;
-        if (workerThread != null && workerThread.IsAlive){
-            workerThread.Join();
-        }
-    }
-    void OnDestroy(){
-        stopThread();
-    }
-    void OnApplicationQuit(){
-        stopThread();
-    }
-
-    // void Start(){
-    //     startThread();
-    // }
-    int oldSize = 0;
     // void LateUpdate(){
-    //     if (oldSize!= resultQueue.Count) {
-    //         print(resultQueue.Count);
-    //         oldSize+=1;
-    //     };
+    //     while (resultQueue.TryDequeue(out string result)){
+    //         Debug.Log($"Processed result: {result}");
+    //     }
     // }
 }
