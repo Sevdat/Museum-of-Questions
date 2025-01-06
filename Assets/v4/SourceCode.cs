@@ -1195,6 +1195,9 @@ public class SourceCode:MonoBehaviour {
                 $"{stringPath}{showAxis}:{showAxisString}" + 
                 $"{stringPath}{keepBodyTogether}:{keepBodyTogetherString}" + 
                 $"{stringPath}{localAxisScale}:{localAxisScaleString}" +
+                $"{stringPath}{pastConnectionsInBody}:{pastConnectionsInBodyString}" + 
+                $"{stringPath}{futureConnectionsInBody}:{futureConnectionsInBodyString}" + 
+                resetPastJointsString + resetFutureJointsString +
                 $"{stringPath}{spinPastX}:{spinPastXString}" + 
                 $"{stringPath}{spinPastY}:{spinPastYString}" + 
                 $"{stringPath}{spinPastSpeedAndAcceleration}:{spinPastSpeedAndAccelerationString}" +
@@ -1206,10 +1209,7 @@ public class SourceCode:MonoBehaviour {
                 $"{stringPath}{movePastSpeedAndAcceleration}:{movePastSpeedAndAccelerationString}" +
                 $"{stringPath}{moveFutureX}:{moveFutureXString}" + 
                 $"{stringPath}{moveFutureY}:{moveFutureYString}" + 
-                $"{stringPath}{moveFutureSpeedAndAcceleration}:{moveFutureSpeedAndAccelerationString}" +
-                $"{stringPath}{pastConnectionsInBody}:{pastConnectionsInBodyString}" + 
-                $"{stringPath}{futureConnectionsInBody}:{futureConnectionsInBodyString}" + 
-                resetPastJointsString + resetFutureJointsString;
+                $"{stringPath}{moveFutureSpeedAndAcceleration}:{moveFutureSpeedAndAccelerationString}";
         }
 
         public void deleteJoint(){
@@ -1342,18 +1342,18 @@ public class SourceCode:MonoBehaviour {
         public Joint joint;
         public KeyGenerator keyGenerator;
         public CollisionSphere[] collisionSpheres;
-        public string pointCloudSizeString,allSpheresInJointString;
+        public string pointCloudSizeString,allSpheresInJointString,triangleString;
         public int startIndexInArray;
         public int[] triangles;
 
         public PointCloud(){}
         public PointCloud(Joint joint){
             collisionSpheres = null;
-            keyGenerator = new KeyGenerator(0);
             this.joint = joint;
-
+            triangles = new int[0];
             pointCloudSizeString = "";
             allSpheresInJointString = "";
+            triangleString = "";
         }
 
         public string savePointCloud(out List<int> indexes, out int listSize){
@@ -1372,11 +1372,20 @@ public class SourceCode:MonoBehaviour {
                         listSize++;
                     }
                 }
+                for (int i = 0; i<triangles.Length; i+=3){
+                    int index1 = triangles[i];
+                    int index2 = triangles[i+1];
+                    int index3 = triangles[i+2];
+                    bool check = index1<triangles.Length || index2<triangles.Length || index3<triangles.Length;
+                    if (check)triangleString += $" {index1} {index2} {index3}";
+                }                
                 return $"{stringPath}{pointCloudSize}:{pointCloudSizeString}"+ 
-                    $"{stringPath}{allSpheresInJoint}:{allSpheresInJointString}\n";
+                    $"{stringPath}{allSpheresInJoint}:{allSpheresInJointString}\n"+ 
+                    $"{stringPath}{trianglesInPointCloud}:{triangleString}\n";
             }
             return $"{stringPath}{pointCloudSize}: {0}\n"+ 
-                    $"{stringPath}{allSpheresInJoint}:\n";
+                    $"{stringPath}{allSpheresInJoint}:\n"+ 
+                    $"{stringPath}{trianglesInPointCloud}:\n";
         }
         public void deleteSphere(int key){
             CollisionSphere remove = collisionSpheres[key];
@@ -1704,6 +1713,7 @@ public class SourceCode:MonoBehaviour {
     const string resetFutureJoints = "ResetFutureJoints";
     const string pointCloudSize = "PointCloudSize";
     const string allSpheresInJoint = "AllSpheresInJoint";
+    const string trianglesInPointCloud = "TrianglesInPointCloud";
 
     const string distanceFromLocalOrigin = "DistanceFromLocalOrigin";
     const string XFromLocalAxis = "XFromLocalAxis";
