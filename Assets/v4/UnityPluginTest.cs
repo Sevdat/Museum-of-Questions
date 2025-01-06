@@ -2,6 +2,7 @@ using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -164,15 +165,32 @@ public class UnityPluginTest : MonoBehaviour
             } else time++;
         }
     }
+    class MyData {
+        public string name;
+        public int score;
+        public bool isActive;
+    }
+
+    void Start(){
+        exp.strt();
+    }
+    void LateUpdate(){
+        exp.readWrite();
+    }
+
+
+
     // void Start(){
-    //     exp.strt();
-    // }
-    // Update is called once per frame
+    //     // Create an instance of your data class
+    //     MyData data = new MyData {
+    //         name = "Player1",
+    //         score = 100,
+    //         isActive = true
+    //     };
 
-
-    // void LateUpdate(){
-    //     while (resultQueue.TryDequeue(out string result)){
-    //         Debug.Log($"Processed result: {result}");
-    //     }
+    //     string json = JsonUtility.ToJson(data, true);
+    //     string path = Path.Combine(Application.dataPath, "MyData.json");
+    //     File.WriteAllText(path, json);
+    //     print("JSON file created at: " + path);
     // }
 }

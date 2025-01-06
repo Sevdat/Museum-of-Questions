@@ -207,7 +207,8 @@ public class VertexVisualizer : MonoBehaviour
                 joint.localAxis.placeAxis(gameObject.transform.position);
                 joint.localAxis.rotate(quat,gameObject.transform.position);
                 int pointCloudSize = assembleJoints.bakedMeshIndex.Count;
-                joint.pointCloud = new PointCloud(joint,pointCloudSize);
+                joint.pointCloud = new PointCloud(joint);
+                joint.pointCloud.collisionSpheres = new CollisionSphere[pointCloudSize];
                 for (int i = 0;i < pointCloudSize;i++){
                     CollisionSphere collisionSphere = new CollisionSphere(joint,i,assembleJoints.bakedMeshIndex[i]);
                     collisionSphere.bakedMeshIndex = assembleJoints.bakedMeshIndex[i];
@@ -347,9 +348,9 @@ public class VertexVisualizer : MonoBehaviour
             this.sceneBuilder = sceneBuilder;
             isRunning = true;
             updateBody = true;
-            RunBackgroundTask();
+            runBackgroundTask();
         }
-        public async Task RunBackgroundTask(){
+        public async Task runBackgroundTask(){
             while (isRunning){
                 if (updateBody){
                     await Task.Run(() =>{
@@ -385,28 +386,35 @@ public class VertexVisualizer : MonoBehaviour
     void OnApplicationQuit(){
         multiThread?.StopTask();
     }
-    bool lol = false;
-    void Start(){
-        sceneBuilder = new SceneBuilder(fbx);
-        multiThread = new MultiThread(sceneBuilder);
-        lol = true;
-    }
-    void LateUpdate() {
-        DateTime old = DateTime.Now;
-        while (resultQueue.TryDequeue(out MultiThread result)){
-            result.updateUnityData();
-        }
-        print(DateTime.Now - old);
-    }
+
+    // void Start(){
+    //     sceneBuilder = new SceneBuilder(fbx);
+    //     multiThread = new MultiThread(sceneBuilder);
+    // }
+    // void LateUpdate() {
+    //     DateTime old = DateTime.Now;
+    //     while (resultQueue.TryDequeue(out MultiThread result)){
+    //         result.updateUnityData();
+    //     }
+    //     print(DateTime.Now - old);
+    // }
+
     // long memoryBefore;
     // void Start() {
     //     sceneBuilder = new SceneBuilder(fbx);
-    //     // Measure memory before creating the tree
     //     memoryBefore = Process.GetCurrentProcess().WorkingSet64;
-    //     print(sceneBuilder.bakedMeshes[0].mesh.colors.Length);
 
     //     // sceneBuilder.body.bakedMeshes = null; 
     // }
+    // void LateUpdate() {
+    //     DateTime old = DateTime.Now;
+    //     sceneBuilder.updateBodyPositions();
+    //     sceneBuilder.updateUnityData();
+    //     sceneBuilder.updateBody();
+    //     sceneBuilder.drawBody();
+    //     // print(DateTime.Now - old);
+    // }
+
     // int count = 0;
     // int time = 0;
     // public void readTextFiles(){
