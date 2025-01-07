@@ -142,23 +142,25 @@ public class VertexVisualizer : MonoBehaviour
             int count = 0;
             foreach (BakedMesh bakedMesh in bakedMeshes){
                 int[] trianglesInMesh = bakedMesh.mesh.triangles;
-                for (int i = 0; i < trianglesInMesh.Length; i += 3){
-                    int vertexIndex1 = trianglesInMesh[i];
-                    int vertexIndex2 = trianglesInMesh[i + 1];
-                    int vertexIndex3 = trianglesInMesh[i + 2];
-                    GameObject gameObject1 = bakedMesh.getGameObject(vertexIndex1);
-                    GameObject gameObject2 = bakedMesh.getGameObject(vertexIndex2);
-                    GameObject gameObject3 = bakedMesh.getGameObject(vertexIndex3);
-                    if (gameObject1 == gameObject2 && gameObject3 == gameObject2){
-                        if (bakedMeshes.Count>dictionary[gameObject1].triangles.Count){
-                            for (int j = 0;j<bakedMeshes.Count;j++){
-                                dictionary[gameObject1].triangles.Add(new List<int>());
+                if (trianglesInMesh.Length>3){
+                    for (int i = 0; i < trianglesInMesh.Length; i += 3){
+                        int vertexIndex1 = trianglesInMesh[i];
+                        int vertexIndex2 = trianglesInMesh[i + 1];
+                        int vertexIndex3 = trianglesInMesh[i + 2];
+                        GameObject gameObject1 = bakedMesh.getGameObject(vertexIndex1);
+                        GameObject gameObject2 = bakedMesh.getGameObject(vertexIndex2);
+                        GameObject gameObject3 = bakedMesh.getGameObject(vertexIndex3);
+                        if (gameObject1 == gameObject2 && gameObject3 == gameObject2){
+                            if (bakedMeshes.Count>dictionary[gameObject1].triangles.Count){
+                                for (int j = 0;j<bakedMeshes.Count;j++){
+                                    dictionary[gameObject1].triangles.Add(new List<int>());
+                                }
                             }
+                            List<int> trianglesForSphere = dictionary[gameObject1].triangles[count];
+                            trianglesForSphere.Add(vertexIndex1);
+                            trianglesForSphere.Add(vertexIndex2);
+                            trianglesForSphere.Add(vertexIndex3); 
                         }
-                        List<int> trianglesForSphere = dictionary[gameObject1].triangles[count];
-                        trianglesForSphere.Add(vertexIndex1);
-                        trianglesForSphere.Add(vertexIndex2);
-                        trianglesForSphere.Add(vertexIndex3); 
                     }
                 }
                 count++;
