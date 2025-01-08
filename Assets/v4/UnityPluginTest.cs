@@ -158,7 +158,7 @@ public class UnityPluginTest : MonoBehaviour
         public void readTextFiles(){
             if (time > 1){
                 print(count);
-                lol.editor.reader(count);
+                // lol.editor.reader(count);
                 count++;
                 if (count>35) count = 0;
                 time = 0;
