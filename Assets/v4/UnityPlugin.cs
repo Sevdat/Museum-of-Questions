@@ -206,11 +206,13 @@ public class VertexVisualizer : MonoBehaviour
                     );
                 UnityAxis unityAxis = new UnityAxis(transform.position,quat);
                 Joint joint = new Joint(body,indexInBody,unityAxis);
+                joint.jointNameString = gameObject.name;
                 joint.localAxis.placeAxis(gameObject.transform.position);
                 joint.localAxis.rotate(quat,gameObject.transform.position);
                 int pointCloudSize = assembleJoints.bakedMeshIndex.Count;
                 joint.pointCloud = new PointCloud(joint);
                 joint.pointCloud.collisionSpheres = new CollisionSphere[pointCloudSize];
+                joint.pointCloud.keyGenerator = new KeyGenerator(pointCloudSize);
                 for (int i = 0;i < pointCloudSize;i++){
                     CollisionSphere collisionSphere = new CollisionSphere(joint,i,assembleJoints.bakedMeshIndex[i]);
                     collisionSphere.bakedMeshIndex = assembleJoints.bakedMeshIndex[i];
@@ -414,7 +416,7 @@ public class VertexVisualizer : MonoBehaviour
     //     sceneBuilder.updateUnityData();
     //     sceneBuilder.updateBody();
     //     sceneBuilder.drawBody();
-    //     // print(DateTime.Now - old);
+    //     print(DateTime.Now - old);
     // }
 
     // int count = 0;
