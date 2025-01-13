@@ -1,3 +1,4 @@
+using System;
 using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -22,9 +23,6 @@ public class UnityPluginTest : MonoBehaviour
         public void readWrite(){
             lol.editor.readWrite();
         }
-        public void trackWriter(){
-            lol.editor.trackWriter();
-        }
         public void readTextFiles(){
             if (time > 1){
                 print(count);
@@ -41,11 +39,28 @@ public class UnityPluginTest : MonoBehaviour
         public bool isActive;
     }
 
+    public void write(StreamWriter streamWriter){
+        streamWriter.Write("lol");
+    }
+    public void writer(){
+        using (StreamReader reader = new StreamReader(Console.OpenStandardInput())){
+            using (StreamWriter writer = new StreamWriter("lol.txt")){
+                char[] buffer = new char[4096]; // Larger buffer for better performance
+                int charsRead;
+                while ((charsRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    // Write the current chunk to the file
+                    writer.Write(buffer, 0, charsRead);
+                }
+            }
+        }
+    }
     void Start(){
-        exp.strt();
+        // exp.strt();
+        // writer();
     }
     void LateUpdate(){
-        exp.readWrite();
+        // exp.readWrite();
     }
 
 

@@ -74,11 +74,13 @@ public class VertexVisualizer : MonoBehaviour
         internal List<BakedMesh> bakedMeshes = new List<BakedMesh>();
         internal AxisData globalAxis;
         internal AxisData[] localAxis;
+        GameObject fbx;
         GameObject processedFBX;
         Mesh mesh;
         MeshFilter meshFilter;
 
         public SceneBuilder(GameObject fbxGameObject){ 
+            fbx = fbxGameObject;
             processedFBX = new GameObject(fbxGameObject.name);
             loadModelToBody(fbxGameObject);
             body.sendToGPU.init();
@@ -230,8 +232,8 @@ public class VertexVisualizer : MonoBehaviour
                 List<GameObject> list = assembleJoints.futureConnections;
                 for (int i = 0; i<list.Count;i++){
                     int index = dictionary[list[i]].jointIndex;
-                    Joint future = body.bodyStructure[index];
-                    joint.connection.connectThisFutureToPast(future,out _, out _);
+                    Joint futureJoint = body.bodyStructure[index];
+                    joint.connection.connectThisFutureToPast(futureJoint);
                 }
             }
         }
@@ -278,6 +280,7 @@ public class VertexVisualizer : MonoBehaviour
             mesh.UploadMeshData(false);
         }
         public void updateBodyPositions(){
+            body.unityAxis.origin = fbx.transform.position;
             for (int i = 0; i<localAxis.Length;i++){
                 int index = localAxis[i].jointIndex;
                 Vector3 origin = localAxis[i].getPosition();
@@ -403,21 +406,23 @@ public class VertexVisualizer : MonoBehaviour
     //     print(DateTime.Now - old);
     // }
 
-    // long memoryBefore;
-    // void Start() {
-    //     sceneBuilder = new SceneBuilder(fbx);
-    //     memoryBefore = Process.GetCurrentProcess().WorkingSet64;
+    long memoryBefore;
+    void Start() {
+        sceneBuilder = new SceneBuilder(fbx);
+        print(sceneBuilder.body.bodyStructure[3].pointCloud.triangles.Length);
+        memoryBefore = Process.GetCurrentProcess().WorkingSet64;
 
-    //     // sceneBuilder.body.bakedMeshes = null; 
-    // }
-    // void LateUpdate() {
-    //     DateTime old = DateTime.Now;
-    //     sceneBuilder.updateBodyPositions();
-    //     sceneBuilder.updateUnityData();
-    //     sceneBuilder.updateBody();
-    //     sceneBuilder.drawBody();
-    //     print(DateTime.Now - old);
-    // }
+        // sceneBuilder.body.bakedMeshes = null; 
+    }
+    void LateUpdate() {
+        DateTime old = DateTime.Now;
+        sceneBuilder.updateBodyPositions();
+        sceneBuilder.updateUnityData();
+        sceneBuilder.updateBody();
+        sceneBuilder.drawBody();
+        sceneBuilder.body.editor.writer();
+        print(DateTime.Now - old);
+    }
 
     // int count = 0;
     // int time = 0;
