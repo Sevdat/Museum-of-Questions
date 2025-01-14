@@ -224,7 +224,7 @@ public class SourceCode:MonoBehaviour {
             return (angle<0)? (2*Mathf.PI - (Mathf.Abs(angle) % (2*Mathf.PI))) : Mathf.Abs(angle) % (2*Mathf.PI);
         }
 
-        internal void getAngle(Vector3 point,Vector3 origin, Vector3 x, Vector3 y, Vector3 z, out float yAngle,out float xAngle){
+        void getAngle(Vector3 point,Vector3 origin, Vector3 x, Vector3 y, Vector3 z, out float yAngle,out float xAngle){
             Vector3 dirX = direction(x,origin);
             Vector3 dirY = direction(y,origin);
             Vector3 dirZ = direction(z,origin);
@@ -464,7 +464,7 @@ public class SourceCode:MonoBehaviour {
         public Editor editor;
         public List<MeshData> bakedMeshes;
         public string amountOfDigits; 
-        public int timerStart, time;
+        public int asyncDelay, time;
         public SendToGPU sendToGPU;
         public UnityAxis unityAxis;
 
@@ -485,14 +485,14 @@ public class SourceCode:MonoBehaviour {
             editor = new Editor(this);
             editor.initilizeBody();
             amountOfDigits = "0.000000";
-            time = 0;
-            timerStart = 20;
+            asyncDelay = 20;
             sendToGPU = new SendToGPU(this);
+            time = 0;
         }
 
         public void newCountStart(int timerStart){
             if (timerStart<1) timerStart = 1;
-            this.timerStart = timerStart;    
+            this.asyncDelay = timerStart;    
         }
         public void newAccuracy(int amount){
             string newString;
@@ -508,19 +508,15 @@ public class SourceCode:MonoBehaviour {
         public string accuracyAmount(float num){
             return num.ToString(amountOfDigits);
         }
-        public void saveBodyPosition(StreamWriter writer, bool radianOrDegree){
-            Vector3 globalOrigin = globalAxis.origin;
-            Vector4 quat = globalAxis.getQuat();
-            string stringPath = $"{bodyDepth},{worldKey}";
-            writer.Write(
-                $"{stringPath},{globalOriginLocation},3,{accuracyAmount(globalOrigin.x)},{accuracyAmount(globalOrigin.y)},{accuracyAmount(globalOrigin.z)}{Environment.NewLine}" + 
-                $"{stringPath},{globalAxisQuaternion},4,{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)}{Environment.NewLine}" + 
-                $"{stringPath}{radianOrAngle},1,{radianOrDegree}{Environment.NewLine}"
-            );
-        }
         public void saveBodyStructure(StreamWriter writer){
             string stringPath = $"{bodyDepth},{worldKey}";
+            saveTimeStamp(writer,stringPath);
             saveJointsInBody(writer,stringPath);
+        }
+        public void saveTimeStamp(StreamWriter writer,string stringPath){
+            string str = $"{stringPath},{timeStamp},1,{time}{Environment.NewLine}";
+            writer.Write(str);
+            time++;
         }
         public void saveJointsInBody(StreamWriter writer, string stringPath){
             string str = $"{stringPath},{allJointsInBody},{bodyStructure.Length}";
@@ -531,10 +527,20 @@ public class SourceCode:MonoBehaviour {
                 if (joint != null){
                     str = (i+1 != bodyStructure.Length)? 
                         $"{i},":
-                        $"{i}{Environment.NewLine}";
+                        $"{i}{Environment.NewLine}{Environment.NewLine}";
                     writer.Write(str);
                 }
             }
+        }
+        public void saveBodyPosition(StreamWriter writer, bool radianOrDegree){
+            Vector3 globalOrigin = globalAxis.origin;
+            Vector4 quat = globalAxis.getQuat();
+            string stringPath = $"{bodyDepth},{worldKey}";
+            writer.Write(
+                $"{stringPath},{globalOriginLocation},3,{accuracyAmount(globalOrigin.x)},{accuracyAmount(globalOrigin.y)},{accuracyAmount(globalOrigin.z)}{Environment.NewLine}" + 
+                $"{stringPath},{globalAxisQuaternion},4,{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)}{Environment.NewLine}" + 
+                $"{stringPath},{radianOrAngle},1,{radianOrDegree}{Environment.NewLine}"
+            );
         }
         public void updatePhysics(){
             if (unityAxis != null){          
@@ -726,7 +732,7 @@ public class SourceCode:MonoBehaviour {
                 $"{stringPath},{distanceFromGlobalOrigin},1,{body.accuracyAmount(distanceFromOrigin)}{Environment.NewLine}" +
                 $"{stringPath},{YXFromGlobalAxis},2,{body.accuracyAmount(fromGlobalAxis.angleY*convert)},{body.accuracyAmount(fromGlobalAxis.angleX*convert)}{Environment.NewLine}" +
                 $"{stringPath},{localOriginLocation},3,{body.accuracyAmount(localAxis.origin.x)},{body.accuracyAmount(localAxis.origin.y)},{body.accuracyAmount(localAxis.origin.z)}{Environment.NewLine}"+
-                $"{stringPath},{localAxisQuaternion},4,{body.accuracyAmount(quat.x)},{body.accuracyAmount(quat.y)},{body.accuracyAmount(quat.z)},{body.accuracyAmount(quat.z)},{Environment.NewLine}"
+                $"{stringPath},{localAxisQuaternion},4,{body.accuracyAmount(quat.x)},{body.accuracyAmount(quat.y)},{body.accuracyAmount(quat.z)},{body.accuracyAmount(quat.z)}{Environment.NewLine}"
             );
             connection.savePastConnections(writer,stringPath);
             writer.WriteLine("");
@@ -1017,6 +1023,7 @@ public class SourceCode:MonoBehaviour {
             float convert = radianOrAngle? 180f/Mathf.PI:1;
             string stringPath = $"{sphereDepth},{path.body.worldKey},{path.joint.connection.indexInBody},{path.collisionSphereKey}";
             writer.Write(
+                $"{stringPath},{sphereOriginInLocalAxis},1,{body.accuracyAmount(aroundAxis.distance)}{Environment.NewLine}" + 
                 $"{stringPath},{distanceFromLocalOrigin},1,{body.accuracyAmount(aroundAxis.distance)}{Environment.NewLine}" + 
                 $"{stringPath},{YXFromLocalAxis},2,{body.accuracyAmount(aroundAxis.angleY*convert)},{body.accuracyAmount(aroundAxis.angleX*convert)}{Environment.NewLine}" + 
                 $"{stringPath},{radius},1,{body.accuracyAmount(sphere.radius)}\n" + 
@@ -1074,7 +1081,8 @@ public class SourceCode:MonoBehaviour {
         allJointsInBody = "AllJointsInBody",
         globalOriginLocation = "GlobalOriginLocation",
         globalAxisQuaternion = "GlobalAxisQuaternion",
-        radianOrAngle = "RadianOrAngle";
+        radianOrAngle = "RadianOrAngle",
+        timeStamp = "TimeStamp";
 
     const string jointDepth = "3",
         jointName = "JointName",
@@ -1090,6 +1098,7 @@ public class SourceCode:MonoBehaviour {
         trianglesInPointCloud = "TrianglesInPointCloud";
 
     const string sphereDepth = "4",
+        sphereOriginInLocalAxis = "SphereOriginInLocalAxis",
         distanceFromLocalOrigin = "DistanceFromLocalOrigin",
         YXFromLocalAxis = "YXFromLocalAxis",
         radius = "Radius",
@@ -1150,9 +1159,10 @@ public class SourceCode:MonoBehaviour {
             }
             body.saveBodyPosition(writetext,radianOrDegree);
         }
+        
         internal void writer(){
             using(StreamWriter writeText = new StreamWriter($"{pathToFolder}/{count}.txt")) {
-                write(writeText); 
+                write(writeText);                 
             }
         }
 
@@ -1160,17 +1170,6 @@ public class SourceCode:MonoBehaviour {
             initilize = true;
             read(0);
             initilize = false;
-        }
-        public void readWrite(){
-            if (body.time == 0){
-                read(0);
-                if (body.bodyStructure != null){
-                    writer();
-                }
-                body.time = body.timerStart;
-            } else {
-                body.time -=1;
-            }
         }
         internal void removeEmpty(string[] strArray, out List<string> list){
             list = new List<string>();

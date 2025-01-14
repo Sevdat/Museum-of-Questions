@@ -20,9 +20,6 @@ public class UnityPluginTest : MonoBehaviour
         public void strt(){
             lol = new Body(0);
         }
-        public void readWrite(){
-            lol.editor.readWrite();
-        }
         public void readTextFiles(){
             if (time > 1){
                 print(count);
