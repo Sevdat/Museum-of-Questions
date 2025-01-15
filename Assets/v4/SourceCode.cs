@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -492,7 +493,7 @@ public class SourceCode:MonoBehaviour {
 
         public void newCountStart(int timerStart){
             if (timerStart<1) timerStart = 1;
-            this.asyncDelay = timerStart;    
+            asyncDelay = timerStart;    
         }
         public void newAccuracy(int amount){
             string newString;
@@ -508,28 +509,36 @@ public class SourceCode:MonoBehaviour {
         public string accuracyAmount(float num){
             return num.ToString(amountOfDigits);
         }
-        public void saveBodyStructure(StreamWriter writer){
+        public void saveBodyStructure(StreamWriter writer, int chunkSize){
             string stringPath = $"{bodyDepth},{worldKey}";
             saveTimeStamp(writer,stringPath);
-            saveJointsInBody(writer,stringPath);
+            saveJointsInBody(writer,stringPath,chunkSize);
         }
         public void saveTimeStamp(StreamWriter writer,string stringPath){
             string str = $"{stringPath},{timeStamp},1,{time}{Environment.NewLine}";
             writer.Write(str);
             time++;
         }
-        public void saveJointsInBody(StreamWriter writer, string stringPath){
-            string str = $"{stringPath},{allJointsInBody},{bodyStructure.Length}";
-            writer.Write(str);
+        void saveJointsInBody(StreamWriter writer, string stringPath, int chunkSize){
+            writer.Write($"{stringPath},{allJointsInBody},{bodyStructure.Length}");
             if (bodyStructure.Length>0) writer.Write(",");
-            for (int i = 0; i<bodyStructure.Length;i++){
-                Joint joint = bodyStructure[i];
-                if (joint != null){
-                    str = (i+1 != bodyStructure.Length)? 
-                        $"{i},":
-                        $"{i}{Environment.NewLine}{Environment.NewLine}";
-                    writer.Write(str);
+            int offset = 0;
+            StringBuilder sb = new StringBuilder();
+            while (offset < bodyStructure.Length){
+                int elementsToWrite = Math.Min(bodyStructure.Length-offset, chunkSize);
+                for (int i = 0; i < elementsToWrite; i+=1){
+                    Joint joint = bodyStructure[i];
+                    if (joint != null) {
+                        sb.Append($"{i},");
+                    }
                 }
+                offset += elementsToWrite;
+                if (offset == bodyStructure.Length) {
+                    sb.Remove(sb.Length - 1, 1);
+                    sb.Append(Environment.NewLine);
+                };
+                writer.WriteLine(sb.ToString());
+                sb.Clear();
             }
         }
         public void saveBodyPosition(StreamWriter writer, bool radianOrDegree){
@@ -782,45 +791,65 @@ public class SourceCode:MonoBehaviour {
             triangles = new int[0];
         }
 
-        public void savePointCloud(StreamWriter writer){
+        public void savePointCloud(StreamWriter writer,int chunkSize){
             if (collisionSpheres != null){
                 string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
-                saveExistingSpheresIndexes(writer,stringPath);
-                saveTriangles(writer,stringPath);
+                saveAllSpheresInJoint(writer,stringPath,chunkSize);
+                saveTriangles(writer,stringPath, chunkSize);
             }
         }
         public void savePointCloudSize(StreamWriter writer,string stringPath){
             writer.WriteLine($"{stringPath},{pointCloudSize},{collisionSpheres.Length}");
         }
-        void saveExistingSpheresIndexes(StreamWriter writer,string stringPath){
-            writer.Write($"{stringPath},{allSpheresInJoint},{collisionSpheres.Length}");
-            if (collisionSpheres.Length>0) writer.Write(",");
-            for (int i = 0; i<collisionSpheres.Length; i++){
-                CollisionSphere collisionSphere = collisionSpheres[i];
-                if (collisionSphere != null) {
-                    string str = (i+1 != collisionSpheres.Length)? $"{i},":$"{i}";
-                    writer.Write(str);
+        void saveAllSpheresInJoint(StreamWriter writer, string stringPath, int chunkSize){
+                writer.Write($"{stringPath},{allSpheresInJoint},{collisionSpheres.Length}");
+                if (collisionSpheres.Length>0) writer.Write(",");
+                int offset = 0;
+                StringBuilder sb = new StringBuilder();
+                while (offset < collisionSpheres.Length){
+                    int elementsToWrite = Math.Min(collisionSpheres.Length-offset, chunkSize);
+                    for (int i = 0; i < elementsToWrite; i+=1){
+                        CollisionSphere collisionSphere = collisionSpheres[i];
+                        if (collisionSphere != null) {
+                            sb.Append($"{i},");
+                        }
+                    }
+                    offset += elementsToWrite;
+                    if (offset == collisionSpheres.Length) {
+                        sb.Remove(sb.Length - 1, 1);
+                        sb.Append(Environment.NewLine);
+                        };
+                    writer.Write(sb.ToString());
+                    sb.Clear();
                 }
-            }
-            writer.WriteLine("");
         }
-        void saveTriangles(StreamWriter writer, string stringPath){
-            writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length}");
-            if (triangles.Length>0) writer.Write(",");
+        void saveTriangles(StreamWriter writer, string stringPath, int chunkSize){
             if (triangles.Length>3){
-                for (int i = 0; i<triangles.Length; i+=3){
-                    int index1 = triangles[i];
-                    int index2 = triangles[i+1];
-                    int index3 = triangles[i+2];
-                    bool check = index1<triangles.Length || index2<triangles.Length || index3<triangles.Length;
-                    if (check) {
-                        string str = (i+1 != collisionSpheres.Length)? 
-                            $"{index1},{index2},{index3},":
-                            $"{index1},{index2},{index3}";
-                        writer.Write(str);
+                writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length},");
+                int offset = 0;
+                StringBuilder sb = new StringBuilder();
+                while (offset < triangles.Length){
+                    int elementsToWrite = Math.Min(triangles.Length-offset, chunkSize);
+                    elementsToWrite = elementsToWrite / 3 * 3;
+                    for (int i = 0; i < elementsToWrite; i+=3){
+                        int index1 = triangles[offset + i];
+                        int index2 = triangles[offset + i + 1];
+                        int index3 = triangles[offset + i + 2];
+                        bool check = index1<triangles.Length && index2<triangles.Length && index3<triangles.Length;
+                        if (check) {
+                            sb.Append($"{index1},{index2},{index3},");
+                        };
+                    }
+                    offset += elementsToWrite;
+                    if (offset == triangles.Length) {
+                        sb.Remove(sb.Length - 1, 1);
+                        sb.Append(Environment.NewLine);
                     };
+                    writer.Write(sb.ToString());
+                    sb.Clear();
                 }
-                writer.WriteLine("");
+            } else {
+                writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length}");
             }
         }
         public void saveBakedMeshes(StreamWriter writer){
@@ -1023,7 +1052,7 @@ public class SourceCode:MonoBehaviour {
             float convert = radianOrAngle? 180f/Mathf.PI:1;
             string stringPath = $"{sphereDepth},{path.body.worldKey},{path.joint.connection.indexInBody},{path.collisionSphereKey}";
             writer.Write(
-                $"{stringPath},{sphereOriginInLocalAxis},1,{body.accuracyAmount(aroundAxis.distance)}{Environment.NewLine}" + 
+                $"{stringPath},{sphereOriginInLocalAxis},3,{body.accuracyAmount(aroundAxis.sphere.origin.x)},{body.accuracyAmount(aroundAxis.sphere.origin.y)},{body.accuracyAmount(aroundAxis.sphere.origin.z)}{Environment.NewLine}" + 
                 $"{stringPath},{distanceFromLocalOrigin},1,{body.accuracyAmount(aroundAxis.distance)}{Environment.NewLine}" + 
                 $"{stringPath},{YXFromLocalAxis},2,{body.accuracyAmount(aroundAxis.angleY*convert)},{body.accuracyAmount(aroundAxis.angleX*convert)}{Environment.NewLine}" + 
                 $"{stringPath},{radius},1,{body.accuracyAmount(sphere.radius)}\n" + 
@@ -1071,13 +1100,14 @@ public class SourceCode:MonoBehaviour {
             color = newColor;
         } 
     }
-              
-    const string bodyDepth = "2",
+
+    const string worldDepth = "1",
         worldVertices = "WorldVertices",
-        worldTriangles = "WorldTriangles",
+        worldTriangles = "WorldTriangles";
+
+    const string bodyDepth = "2",
         processedVertices = "ProcessedVertices",
         processedTriangles = "ProcessedTriangles",
-        bodyStructureSize = "BodyStructureSize",
         allJointsInBody = "AllJointsInBody",
         globalOriginLocation = "GlobalOriginLocation",
         globalAxisQuaternion = "GlobalAxisQuaternion",
@@ -1113,6 +1143,7 @@ public class SourceCode:MonoBehaviour {
         internal Dictionary<int,List<int>> deleted = new Dictionary<int, List<int>>();
         internal int count = 0;
         internal string pathToFolder;
+        internal int chunkSize = 10000;
 
         public Editor(){}
         public Editor(Body body){
@@ -1142,13 +1173,13 @@ public class SourceCode:MonoBehaviour {
         }
         void write(StreamWriter writetext){
             body.updatePhysics();
-            body.saveBodyStructure(writetext);
+            body.saveBodyStructure(writetext,chunkSize);
             int size = body.bodyStructure.Length;
             for (int i = 0; i<size; i++){
                 Joint joint = body.bodyStructure[i];
                 if (joint != null){
                     joint.saveJointPosition(writetext,radianOrDegree);
-                    joint.pointCloud.savePointCloud(writetext);
+                    joint.pointCloud.savePointCloud(writetext,chunkSize);
                     CollisionSphere[] collisionSpheres = joint.pointCloud.collisionSpheres;
                     for (int j = 0; j<collisionSpheres.Length;j++){
                         collisionSpheres[j]?.saveCollisionSphere(writetext,radianOrDegree);

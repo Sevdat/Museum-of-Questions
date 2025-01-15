@@ -362,10 +362,11 @@ public class VertexVisualizer : MonoBehaviour
                 if (updateBody){
                     await Task.Run(() =>{
                         sceneBuilder.updateBody();
+                        sceneBuilder.body.editor.writer();
                     });
                     stopUpdate();
                 }
-                await Task.Delay(10); // Simulate delay
+                await Task.Delay(30); // Simulate delay
             }
         }
         public void wait(){
