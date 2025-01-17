@@ -378,7 +378,6 @@ public class VertexVisualizer : MonoBehaviour
         public void stopUpdate(){
             updateBody = false;
             resultQueue.Enqueue(this);
-            print(resultQueue.Count);
         }
     }
 
