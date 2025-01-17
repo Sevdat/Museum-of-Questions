@@ -21,18 +21,20 @@ public class VertexVisualizer : MonoBehaviour
         Transform transform;
         Transform[] bones;
         BoneWeight[] boneWeights; 
-        public Vector3[] vertices;
+        public List<Vector3> vertices;
 
         public BakedMesh(SkinnedMeshRenderer skinnedMeshRenderer){
             this.skinnedMeshRenderer=skinnedMeshRenderer;
-            mesh = new Mesh(){
-                vertices = new Vector3[skinnedMeshRenderer.sharedMesh.vertices.Length]
-            };
-            bakeMesh();
+            mesh = new Mesh();
+            skinnedMeshRenderer.BakeMesh(mesh);
+            vertices = mesh.vertices.ToList();
+            bones = skinnedMeshRenderer.bones;
+            boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
+            transform = skinnedMeshRenderer.transform;
         }
         public void bakeMesh(){
             skinnedMeshRenderer.BakeMesh(mesh);
-            vertices = mesh.vertices;
+            mesh.GetVertices(vertices);
             bones = skinnedMeshRenderer.bones;
             boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
             transform = skinnedMeshRenderer.transform;
@@ -125,17 +127,13 @@ public class VertexVisualizer : MonoBehaviour
                 if (skin) bakedMeshes.Add(new BakedMesh(skin));
                 jointIndex++;
             }
-            List<MeshData> meshDatas = new List<MeshData>();
-            foreach (BakedMesh bakedMesh in bakedMeshes){
-                meshDatas.Add(new MeshData(bakedMesh.mesh.vertices,bakedMesh.mesh.triangles));
-            }
-            body.bakedMeshes = meshDatas;
+            body.bakedMeshes = bakedMeshes;
             body.arraySizeManager(dictionary.Count);
         }
         void createMeshAccessForSpheres(List<BakedMesh> bakedMeshes,Dictionary<GameObject,AssembleJoints> dictionary){
             for (int i = 0; i<bakedMeshes.Count; i++){
                 BakedMesh bakedMesh = bakedMeshes[i];
-                for (int j = 0; j < bakedMesh.vertices.Length; j++){
+                for (int j = 0; j < bakedMesh.vertices.Count; j++){
                     dictionary[bakedMesh.getGameObject(j)].bakedMeshIndex.Add(new BakedMeshIndex(i,j));
                 }
             }
@@ -265,12 +263,9 @@ public class VertexVisualizer : MonoBehaviour
             }
         }
         public void updateMeshData(){
-            List<MeshData> meshDatas = new List<MeshData>();
-            foreach (BakedMesh bakedMesh in bakedMeshes){
-                bakedMesh.bakeMesh();
-                meshDatas.Add(new MeshData(bakedMesh.mesh.vertices,bakedMesh.mesh.triangles));
+            for (int i = 0; i< body.bakedMeshes.Count;i++){
+                body.bakedMeshes[i].bakeMesh();
             }
-            body.bakedMeshes = meshDatas;
         }
         void drawMesh(Vector3[] vertices,int[] triangles){
             mesh.vertices = vertices;
@@ -421,7 +416,7 @@ public class VertexVisualizer : MonoBehaviour
         sceneBuilder.updateUnityData();
         sceneBuilder.updateBody();
         sceneBuilder.drawBody();
-        sceneBuilder.body.editor.writer();
+        // sceneBuilder.body.editor.writer();
         print(DateTime.Now - old);
     }
 

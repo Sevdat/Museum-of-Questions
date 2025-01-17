@@ -52,13 +52,13 @@ public class UnityPluginTest : MonoBehaviour
             }
         }
     }
-    void Start(){
-        // exp.strt();
-        // writer();
-    }
-    void LateUpdate(){
-        // exp.readWrite();
-    }
+    // void Start(){
+    //     // exp.strt();
+    //     // writer();
+    // }
+    // void LateUpdate(){
+    //     // exp.readWrite();
+    // }
 
 
 
