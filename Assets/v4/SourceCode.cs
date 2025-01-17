@@ -150,13 +150,19 @@ public class SourceCode:MonoBehaviour {
                 z = origin + distanceFromOrigin(z,origin,axisDistance);
             }
         }
+        public static float fastInverseSqrt(float x) {
+            float xhalf = 0.5f * x;
+            int i = BitConverter.SingleToInt32Bits(x); // Treat float's bits as an integer
+            i = 0x5f3759df - (i >> 1); // Initial guess for Newton's method
+            x = BitConverter.Int32BitsToSingle(i); // Treat integer's bits as a float
+            x = x * (1.5f - xhalf * x * x); // One iteration of Newton's method
+            return x;
+        }
         public float length(Vector3 vectorDirections){
-            float radius = Mathf.Sqrt(
-                Mathf.Pow(vectorDirections.x,2.0f)+
-                Mathf.Pow(vectorDirections.y,2.0f)+
-                Mathf.Pow(vectorDirections.z,2.0f)
-            );
-            return radius;
+            float x = vectorDirections.x;
+            float y = vectorDirections.y;
+            float z = vectorDirections.z;
+            return fastInverseSqrt(x * x + y * y + z * z);
         }
         public Vector3 normalize(Vector3 vec){    
             float radius = length(vec);
@@ -168,13 +174,11 @@ public class SourceCode:MonoBehaviour {
             return vec;
         }
         public float length(Vector4 vectorDirections){
-            float radius = Mathf.Sqrt(
-                Mathf.Pow(vectorDirections.x,2.0f)+
-                Mathf.Pow(vectorDirections.y,2.0f)+
-                Mathf.Pow(vectorDirections.z,2.0f)+
-                Mathf.Pow(vectorDirections.w,2.0f)
-            );
-            return radius;
+            float x = vectorDirections.x;
+            float y = vectorDirections.y;
+            float z = vectorDirections.z;
+            float w = vectorDirections.w;
+            return fastInverseSqrt(x * x + y * y + z * z + w * w);
         }
         public Vector4 normalize(Vector4 vec){    
             float radius = length(vec);
