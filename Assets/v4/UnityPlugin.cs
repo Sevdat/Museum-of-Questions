@@ -357,7 +357,7 @@ public class VertexVisualizer : MonoBehaviour
                 if (updateBody){
                     await Task.Run(() =>{
                         sceneBuilder.updateBody();
-                        sceneBuilder.body.editor.writer();
+                        // sceneBuilder.body.editor.writer();
                     });
                     stopUpdate();
                 }
@@ -415,7 +415,7 @@ public class VertexVisualizer : MonoBehaviour
         sceneBuilder.updateUnityData();
         sceneBuilder.updateBody();
         sceneBuilder.drawBody();
-        // sceneBuilder.body.editor.writer();
+        sceneBuilder.body.editor.writer();
         print(DateTime.Now - old);
     }
 

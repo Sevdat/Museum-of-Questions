@@ -456,6 +456,7 @@ public class SourceCode:MonoBehaviour {
         public int asyncDelay, time;
         public SendToGPU sendToGPU;
         public UnityAxis unityAxis;
+        StringBuilder sb = new StringBuilder();
 
         public Body(){}
         public Body(int worldKey){
@@ -503,16 +504,15 @@ public class SourceCode:MonoBehaviour {
             saveJointsInBody(writer,stringPath,chunkSize);
         }
         public void saveTimeStamp(StreamWriter writer,string stringPath){
-            string str = $"{stringPath},{timeStamp},1,{time}{Environment.NewLine}";
+            string str = $"{stringPath},{timeStamp},1,1,{time}{Environment.NewLine}";
             writer.Write(str);
             time++;
         }
         void saveJointsInBody(StreamWriter writer, string stringPath, int chunkSize){
-            writer.Write($"{stringPath},{allJointsInBody},{bodyStructure.Length}");
+            writer.Write($"{stringPath},{allJointsInBody},{bodyStructure.Length},1");
             if (bodyStructure.Length>0) {
                 writer.Write(",");
                 int offset = 0;
-                StringBuilder sb = new StringBuilder();
                 while (offset < bodyStructure.Length){
                     int elementsToWrite = Math.Min(bodyStructure.Length-offset, chunkSize);
                     for (int i = 0; i < elementsToWrite; i+=1){
@@ -533,9 +533,9 @@ public class SourceCode:MonoBehaviour {
             Vector4 quat = globalAxis.getQuat();
             string stringPath = $"{bodyDepth},{worldKey}";
             writer.Write(
-                $"{stringPath},{globalOriginLocation},3,{accuracyAmount(globalOrigin.x)},{accuracyAmount(globalOrigin.y)},{accuracyAmount(globalOrigin.z)}{Environment.NewLine}" + 
-                $"{stringPath},{globalAxisQuaternion},4,{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)}{Environment.NewLine}" + 
-                $"{stringPath},{radianOrAngle},1,{radianOrDegree}{Environment.NewLine}"
+                $"{stringPath},{globalOriginLocation},1,3,{accuracyAmount(globalOrigin.x)},{accuracyAmount(globalOrigin.y)},{accuracyAmount(globalOrigin.z)}{Environment.NewLine}" + 
+                $"{stringPath},{globalAxisQuaternion},1,4,{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)}{Environment.NewLine}" + 
+                $"{stringPath},{radianOrAngle},1,1,{radianOrDegree}{Environment.NewLine}"
             );
         }
         public void updatePhysics(){
@@ -643,7 +643,7 @@ public class SourceCode:MonoBehaviour {
         }
 
         public void savePastConnections(StreamWriter writer, string stringPath){
-            writer.Write($"{stringPath},{pastConnectionsInBody},{past.Count}");
+            writer.Write($"{stringPath},{pastConnectionsInBody},{past.Count},1");
             if (past.Count>0) writer.Write(",");
             for (int i = 0; i<past.Count;i++){
                 string str = (i+1 != past.Count)? 
@@ -653,7 +653,7 @@ public class SourceCode:MonoBehaviour {
             }
         }
         public void saveFutureConnections(StreamWriter writer, string stringPath){
-            writer.Write($"{stringPath},{futureConnectionsInBody},{future.Count}");
+            writer.Write($"{stringPath},{futureConnectionsInBody},{future.Count},1");
             if (future.Count>0) writer.Write(",");
             for (int i = 0; i<future.Count;i++){
                 string str = (i+1 != future.Count)? 
@@ -724,11 +724,11 @@ public class SourceCode:MonoBehaviour {
             fromGlobalAxis.get();
             string stringPath = $"{jointDepth},{body.worldKey},{connection.indexInBody}";
             writer.Write(
-                $"{stringPath},{jointName},{jointNameString.Length},{jointNameString}{Environment.NewLine}" +
-                $"{stringPath},{distanceFromGlobalOrigin},1,{body.accuracyAmount(distanceFromOrigin)}{Environment.NewLine}" +
-                $"{stringPath},{YXFromGlobalAxis},2,{body.accuracyAmount(fromGlobalAxis.angleY*convert)},{body.accuracyAmount(fromGlobalAxis.angleX*convert)}{Environment.NewLine}" +
-                $"{stringPath},{localOriginLocation},3,{body.accuracyAmount(localAxis.origin.x)},{body.accuracyAmount(localAxis.origin.y)},{body.accuracyAmount(localAxis.origin.z)}{Environment.NewLine}"+
-                $"{stringPath},{localAxisQuaternion},4,{body.accuracyAmount(quat.x)},{body.accuracyAmount(quat.y)},{body.accuracyAmount(quat.z)},{body.accuracyAmount(quat.z)}{Environment.NewLine}"
+                $"{stringPath},{jointName},{jointNameString.Length},1,{jointNameString}{Environment.NewLine}" +
+                $"{stringPath},{distanceFromGlobalOrigin},1,1,{body.accuracyAmount(distanceFromOrigin)}{Environment.NewLine}" +
+                $"{stringPath},{YXFromGlobalAxis},1,2,{body.accuracyAmount(fromGlobalAxis.angleY*convert)},{body.accuracyAmount(fromGlobalAxis.angleX*convert)}{Environment.NewLine}" +
+                $"{stringPath},{localOriginLocation},1,3,{body.accuracyAmount(localAxis.origin.x)},{body.accuracyAmount(localAxis.origin.y)},{body.accuracyAmount(localAxis.origin.z)}{Environment.NewLine}"+
+                $"{stringPath},{localAxisQuaternion},1,4,{body.accuracyAmount(quat.x)},{body.accuracyAmount(quat.y)},{body.accuracyAmount(quat.z)},{body.accuracyAmount(quat.z)}{Environment.NewLine}"
             );
             connection.savePastConnections(writer,stringPath);
             writer.WriteLine("");
@@ -770,7 +770,7 @@ public class SourceCode:MonoBehaviour {
         public CollisionSphere[] collisionSpheres;
         public int startIndexInArray;
         public int[] triangles;
-
+        StringBuilder sb = new StringBuilder();
         public PointCloud(){}
         public PointCloud(Joint joint){
             collisionSpheres = null;
@@ -781,65 +781,40 @@ public class SourceCode:MonoBehaviour {
         public void savePointCloud(StreamWriter writer,int chunkSize){
             if (collisionSpheres != null){
                 string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
-                saveAllSpheresInJoint(writer,stringPath,chunkSize);
                 savePointCloudPositions(writer,stringPath,chunkSize);
                 saveTriangles(writer,stringPath, chunkSize);
             }
         }
         void savePointCloudPositions(StreamWriter writer, string stringPath, int chunkSize){
-                writer.Write($"{stringPath},{pointCloudPositions},4,{collisionSpheres.Length}");
-                if (collisionSpheres.Length>0) {
-                    writer.Write(","); 
-                    int offset = 0;
-                    StringBuilder sb = new StringBuilder();
-                    while (offset < collisionSpheres.Length){
-                        int elementsToWrite = Math.Min(collisionSpheres.Length-offset, chunkSize);
-                        for (int i = 0; i < elementsToWrite; i+=1){
-                            CollisionSphere collisionSphere = collisionSpheres[i];
-                            if (collisionSphere != null) {
-                                Vector3 vec = collisionSphere.aroundAxis.sphere.origin;
-                                sb.Append($"{i},{vec.x},{vec.y},{vec.z},");
-                            }
+            writer.Write($"{stringPath},{pointCloudSphereDatas},{collisionSpheres.Length},11");
+            if (collisionSpheres.Length>0) {
+                writer.Write(","); 
+                int offset = 0;
+                while (offset < collisionSpheres.Length){
+                    int elementsToWrite = Math.Min(collisionSpheres.Length-offset, chunkSize);
+                    for (int i = 0; i < elementsToWrite; i+=1){
+                        CollisionSphere collisionSphere = collisionSpheres[i];
+                        if (collisionSphere != null) {
+                            Vector3 vec = collisionSphere.aroundAxis.sphere.origin;
+                            Color col = collisionSphere.aroundAxis.sphere.color;
+                            AroundAxis aroundAxis = collisionSphere.aroundAxis;
+                            sb.Append($"{i},{vec.x},{vec.y},{vec.z},{aroundAxis.distance},{aroundAxis.angleY},{aroundAxis.angleX},{col.r},{col.g},{col.b},{col.a},");
                         }
-                        offset += elementsToWrite;
-                        if (offset == collisionSpheres.Length) {
-                            sb.Remove(sb.Length - 1, 1);
-                            sb.Append(Environment.NewLine);
-                            };
-                        writer.Write(sb.ToString());
-                        sb.Clear();
-                    }        
-                } else writer.WriteLine("");
-        }
-        void saveAllSpheresInJoint(StreamWriter writer, string stringPath, int chunkSize){
-                writer.Write($"{stringPath},{allSpheresInJoint},{collisionSpheres.Length}");
-                if (collisionSpheres.Length>0) {
-                    writer.Write(","); 
-                    int offset = 0;
-                    StringBuilder sb = new StringBuilder();
-                    while (offset < collisionSpheres.Length){
-                        int elementsToWrite = Math.Min(collisionSpheres.Length-offset, chunkSize);
-                        for (int i = 0; i < elementsToWrite; i+=1){
-                            CollisionSphere collisionSphere = collisionSpheres[i];
-                            if (collisionSphere != null) {
-                                sb.Append($"{i},");
-                            }
-                        }
-                        offset += elementsToWrite;
-                        if (offset == collisionSpheres.Length) {
-                            sb.Remove(sb.Length - 1, 1);
-                            sb.Append(Environment.NewLine);
-                            };
-                        writer.Write(sb.ToString());
-                        sb.Clear();
-                    }        
-                } else writer.WriteLine("");
+                    }
+                    offset += elementsToWrite;
+                    if (offset == collisionSpheres.Length) {
+                        sb.Remove(sb.Length - 1, 1);
+                        sb.Append(Environment.NewLine);
+                        };
+                    writer.Write(sb.ToString());
+                    sb.Clear();
+                }        
+            } else writer.WriteLine("");
         }
         void saveTriangles(StreamWriter writer, string stringPath, int chunkSize){
             if (triangles.Length>3){
-                writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length},");
+                writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length/3},3,");
                 int offset = 0;
-                StringBuilder sb = new StringBuilder();
                 while (offset < triangles.Length){
                     int elementsToWrite = Math.Min(triangles.Length-offset, chunkSize);
                     elementsToWrite = elementsToWrite / 3 * 3;
@@ -861,12 +836,12 @@ public class SourceCode:MonoBehaviour {
                     sb.Clear();
                 }
             } else {
-                writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length}");
+                writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length},3{Environment.NewLine}");
             }
         }
         public void saveBakedMeshes(StreamWriter writer){
             string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
-            writer.Write($"{stringPath},{bakedMeshIndex},");
+            writer.Write($"{stringPath},{bakedMeshIndex},2,{collisionSpheres.Length/2},");
             if (collisionSpheres != null){
                 for (int i = 0;i<collisionSpheres.Length;i++){
                     CollisionSphere collisionSphere = collisionSpheres[i];
@@ -1058,19 +1033,6 @@ public class SourceCode:MonoBehaviour {
             aroundAxis = new AroundAxis(joint.localAxis,new Sphere());
             joint.pointCloud.keyGenerator.getKey();
         }
-        public void saveCollisionSphere(StreamWriter writer,bool radianOrAngle){
-            Body body = path.body;
-            Sphere sphere = aroundAxis.sphere;
-            float convert = radianOrAngle? 180f/Mathf.PI:1;
-            string stringPath = $"{sphereDepth},{path.body.worldKey},{path.joint.connection.indexInBody},{path.collisionSphereKey}";
-            writer.Write(
-                $"{stringPath},{sphereOriginInLocalAxis},3,{body.accuracyAmount(aroundAxis.sphere.origin.x)},{body.accuracyAmount(aroundAxis.sphere.origin.y)},{body.accuracyAmount(aroundAxis.sphere.origin.z)}{Environment.NewLine}" + 
-                $"{stringPath},{distanceFromLocalOrigin},1,{body.accuracyAmount(aroundAxis.distance)}{Environment.NewLine}" + 
-                $"{stringPath},{YXFromLocalAxis},2,{body.accuracyAmount(aroundAxis.angleY*convert)},{body.accuracyAmount(aroundAxis.angleX*convert)}{Environment.NewLine}" + 
-                $"{stringPath},{radius},1,{body.accuracyAmount(sphere.radius)}\n" + 
-                $"{stringPath},{colorRGBA},4,{body.accuracyAmount(sphere.color.r)},{body.accuracyAmount(sphere.color.g)},{body.accuracyAmount(sphere.color.b)},{body.accuracyAmount(sphere.color.a)}{Environment.NewLine}"
-            );
-        }
         public void setOrigin(Vector3 newOrigin){
             aroundAxis.sphere.setOrigin(newOrigin);
         }
@@ -1113,13 +1075,7 @@ public class SourceCode:MonoBehaviour {
         } 
     }
 
-    const string worldDepth = "1",
-        worldVertices = "WorldVertices",
-        worldTriangles = "WorldTriangles";
-
     const string bodyDepth = "2",
-        processedVertices = "ProcessedVertices",
-        processedTriangles = "ProcessedTriangles",
         allJointsInBody = "AllJointsInBody",
         globalOriginLocation = "GlobalOriginLocation",
         globalAxisQuaternion = "GlobalAxisQuaternion",
@@ -1135,16 +1091,8 @@ public class SourceCode:MonoBehaviour {
         pastConnectionsInBody = "PastConnectionsInBody",
         futureConnectionsInBody = "FutureConnectionsInBody",
         bakedMeshIndex = "BakedMeshIndex",
-        pointCloudPositions = "PointCloudPositions",
-        allSpheresInJoint = "AllSpheresInJoint",
+        pointCloudSphereDatas = "PointCloudSphereDatas",
         trianglesInPointCloud = "TrianglesInPointCloud";
-
-    const string sphereDepth = "4",
-        sphereOriginInLocalAxis = "SphereOriginInLocalAxis",
-        distanceFromLocalOrigin = "DistanceFromLocalOrigin",
-        YXFromLocalAxis = "YXFromLocalAxis",
-        radius = "Radius",
-        colorRGBA = "ColorRGBA";
 
     public class Editor {
         internal bool radianOrDegree = false;
@@ -1192,11 +1140,6 @@ public class SourceCode:MonoBehaviour {
                 if (joint != null){
                     joint.saveJointPosition(writetext,radianOrDegree);
                     joint.pointCloud.savePointCloud(writetext,chunkSize);
-                    CollisionSphere[] collisionSpheres = joint.pointCloud.collisionSpheres;
-                    for (int j = 0; j<collisionSpheres.Length;j++){
-                        collisionSpheres[j]?.saveCollisionSphere(writetext,radianOrDegree);
-                    }
-                    writetext.WriteLine("");
                     writetext.WriteLine("");
                 } 
             }
