@@ -22,6 +22,7 @@ public class VertexVisualizer : MonoBehaviour
         Transform[] bones;
         BoneWeight[] boneWeights; 
         public List<Vector3> vertices;
+        public List<Color> colors;
 
         public BakedMesh(SkinnedMeshRenderer skinnedMeshRenderer){
             this.skinnedMeshRenderer=skinnedMeshRenderer;
@@ -45,6 +46,37 @@ public class VertexVisualizer : MonoBehaviour
         public GameObject getGameObject(int index){
             BoneWeight boneWeight = boneWeights[index];
             return bones[boneWeight.boneIndex0].gameObject;
+        }
+        public void calculateFinalColors(){
+            Mesh mesh = skinnedMeshRenderer.sharedMesh;
+            Material material = skinnedMeshRenderer.sharedMaterial;
+
+            // Get the material's base color
+            Color baseColor = material.HasProperty("_Color") ? material.color : Color.white;
+
+            // Check if the material uses a texture
+            Texture2D mainTexture = null;
+            if (material.HasProperty("_MainTex") && material.mainTexture != null){
+                mainTexture = (Texture2D) material.mainTexture;
+            }
+
+            // Get UV coordinates
+            Vector2[] uvs = mesh.uv;
+
+            // Calculate final color for each vertex
+            for (int i = 0; i < mesh.vertexCount; i++)
+            {
+                Color finalColor = baseColor;
+
+                // Sample texture if it exists
+                if (mainTexture != null && uvs != null && uvs.Length > i)
+                {
+                    Vector2 uv = uvs[i];
+                    finalColor *= mainTexture.GetPixelBilinear(uv.x, uv.y);
+                }
+
+                print($"Final Color for Vertex {i}: {finalColor}");
+            }
         }
     }
     public class AxisData{
@@ -415,6 +447,7 @@ public class VertexVisualizer : MonoBehaviour
         sceneBuilder.updateBody();
         sceneBuilder.drawBody();
         print(DateTime.Now - old);
+        sceneBuilder.bakedMeshes[0].calculateFinalColors();
         sceneBuilder.body.editor.writer();
     }
 

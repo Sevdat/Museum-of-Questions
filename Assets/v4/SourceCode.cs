@@ -484,7 +484,7 @@ public class SourceCode:MonoBehaviour {
         }
         void saveJointsInBody(StreamWriter writer, bool radianOrAngle, string stringPath, int chunkSize){
             float convert = radianOrAngle? 180f/Mathf.PI:1;
-            writer.Write($"{stringPath},{allJointsInBody},{bodyStructure.Length},11");
+            writer.Write($"{stringPath},{jointData},{bodyStructure.Length},11");
             if (bodyStructure.Length>0) {
                 writer.Write(",");
                 int offset = 0;
@@ -512,9 +512,7 @@ public class SourceCode:MonoBehaviour {
             Vector4 quat = globalAxis.getQuat();
             string stringPath = $"{bodyDepth},{worldKey}";
             writer.Write(
-                $"{stringPath},{globalOriginLocation},1,3,{accuracyAmount(globalOrigin.x)},{accuracyAmount(globalOrigin.y)},{accuracyAmount(globalOrigin.z)}{Environment.NewLine}" + 
-                $"{stringPath},{globalAxisQuaternion},1,4,{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)}{Environment.NewLine}" + 
-                $"{stringPath},{radianOrAngle},1,1,{radianOrDegree}{Environment.NewLine}"
+                $"{stringPath},{globalData},1,8,{accuracyAmount(globalOrigin.x)},{accuracyAmount(globalOrigin.y)},{accuracyAmount(globalOrigin.z)}{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)},{radianOrDegree}{Environment.NewLine}"
             );
         }
 
@@ -912,10 +910,8 @@ public class SourceCode:MonoBehaviour {
     }
 
     const string bodyDepth = "2",
-        allJointsInBody = "AllJointsInBody",
-        globalOriginLocation = "GlobalOriginLocation",
-        globalAxisQuaternion = "GlobalAxisQuaternion",
-        radianOrAngle = "RadianOrAngle",
+        jointData = "JointData",
+        globalData = "GlobalData",
         timeStamp = "TimeStamp";
 
     const string jointDepth = "3",
