@@ -357,7 +357,7 @@ public class VertexVisualizer : MonoBehaviour
                 if (updateBody){
                     await Task.Run(() =>{
                         sceneBuilder.updateBody();
-                        // sceneBuilder.body.editor.writer();
+                        sceneBuilder.body.editor.writer();
                     });
                     stopUpdate();
                 }
@@ -389,35 +389,35 @@ public class VertexVisualizer : MonoBehaviour
         multiThread?.StopTask();
     }
 
-    // void Start(){
-    //     sceneBuilder = new SceneBuilder(fbx);
-    //     multiThread = new MultiThread(sceneBuilder);
-    // }
-    // void LateUpdate() {
-    //     DateTime old = DateTime.Now;
-    //     while (resultQueue.TryDequeue(out MultiThread result)){
-    //         result.updateUnityData();
-    //     }
-    //     print(DateTime.Now - old);
-    // }
-
-    long memoryBefore;
-    void Start() {
+    void Start(){
         sceneBuilder = new SceneBuilder(fbx);
-        print(sceneBuilder.body.bodyStructure[3].pointCloud.triangles.Length);
-        memoryBefore = Process.GetCurrentProcess().WorkingSet64;
-
-        // sceneBuilder.body.bakedMeshes = null; 
+        multiThread = new MultiThread(sceneBuilder);
     }
     void LateUpdate() {
         DateTime old = DateTime.Now;
-        sceneBuilder.updateBodyPositions();
-        sceneBuilder.updateUnityData();
-        sceneBuilder.updateBody();
-        sceneBuilder.drawBody();
-        sceneBuilder.body.editor.writer();
+        while (resultQueue.TryDequeue(out MultiThread result)){
+            result.updateUnityData();
+        }
         print(DateTime.Now - old);
     }
+
+    // long memoryBefore;
+    // void Start() {
+    //     sceneBuilder = new SceneBuilder(fbx);
+    //     print(sceneBuilder.body.bodyStructure[3].pointCloud.triangles.Length);
+    //     memoryBefore = Process.GetCurrentProcess().WorkingSet64;
+
+    //     // sceneBuilder.body.bakedMeshes = null; 
+    // }
+    // void LateUpdate() {
+    //     DateTime old = DateTime.Now;
+    //     sceneBuilder.updateBodyPositions();
+    //     sceneBuilder.updateUnityData();
+    //     sceneBuilder.updateBody();
+    //     sceneBuilder.drawBody();
+    //     sceneBuilder.body.editor.writer();
+    //     print(DateTime.Now - old);
+    // }
 
     // int count = 0;
     // int time = 0;

@@ -498,25 +498,30 @@ public class SourceCode:MonoBehaviour {
         public string accuracyAmount(float num){
             return num.ToString(amountOfDigits);
         }
-        public void saveBodyStructure(StreamWriter writer, int chunkSize){
+        public void saveBodyStructure(StreamWriter writer, bool radianOrAngle,int chunkSize){
             string stringPath = $"{bodyDepth},{worldKey}";
             saveTimeStamp(writer,stringPath);
-            saveJointsInBody(writer,stringPath,chunkSize);
+            saveJointsInBody(writer,radianOrAngle,stringPath,chunkSize);
         }
         public void saveTimeStamp(StreamWriter writer,string stringPath){
             string str = $"{stringPath},{timeStamp},1,1,{time}{Environment.NewLine}";
             writer.Write(str);
             time++;
         }
-        void saveJointsInBody(StreamWriter writer, string stringPath, int chunkSize){
-            writer.Write($"{stringPath},{allJointsInBody},{bodyStructure.Length},1");
+        void saveJointsInBody(StreamWriter writer, bool radianOrAngle, string stringPath, int chunkSize){
+            float convert = radianOrAngle? 180f/Mathf.PI:1;
+            writer.Write($"{stringPath},{allJointsInBody},{bodyStructure.Length},11");
             if (bodyStructure.Length>0) {
                 writer.Write(",");
                 int offset = 0;
                 while (offset < bodyStructure.Length){
                     int elementsToWrite = Math.Min(bodyStructure.Length-offset, chunkSize);
                     for (int i = 0; i < elementsToWrite; i+=1){
-                        if (bodyStructure[i] != null) sb.Append($"{i},");
+                        Joint joint = bodyStructure[i];
+                        if (joint != null) {
+                            Vector4 quat = joint.localAxis.getQuat();
+                            sb.Append($"{i},{accuracyAmount(joint.localAxis.origin.x)},{accuracyAmount(joint.localAxis.origin.y)},{accuracyAmount(joint.localAxis.origin.z)},{accuracyAmount(joint.fromGlobalAxis.distance)},{accuracyAmount(joint.fromGlobalAxis.angleY*convert)},{accuracyAmount(joint.fromGlobalAxis.angleX*convert)},{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)},");
+                        }
                     }
                     offset += elementsToWrite;
                     if (offset == bodyStructure.Length) {
@@ -538,6 +543,7 @@ public class SourceCode:MonoBehaviour {
                 $"{stringPath},{radianOrAngle},1,1,{radianOrDegree}{Environment.NewLine}"
             );
         }
+
         public void updatePhysics(){
             if (unityAxis != null){          
                 globalAxis.placeAxis(unityAxis.origin);
@@ -679,6 +685,11 @@ public class SourceCode:MonoBehaviour {
             joint.moveJoint(move);
             joint.localAxis.alignRotationTo(joint.unityAxis.quat, out _, out _, out Vector4 quat);
             joint.rotateJoint(quat);
+            Vector3 jointOrigin = joint.localAxis.origin;
+            Vector3 globalOrigin = joint.body.globalAxis.origin;
+            joint.fromGlobalAxis.sphere.setOrigin(joint.localAxis.origin);
+            joint.fromGlobalAxis.distance = joint.body.globalAxis.length(jointOrigin-globalOrigin);
+            joint.fromGlobalAxis.get();
         }
     }
     public class Joint {
@@ -713,22 +724,10 @@ public class SourceCode:MonoBehaviour {
             jointNameString = "";
         }
 
-        public void saveJointPosition(StreamWriter writer, bool radianOrAngle){
-            float convert = radianOrAngle? 180f/Mathf.PI:1;
-            Vector3 jointOrigin = localAxis.origin;
-            Vector3 globalOrigin = body.globalAxis.origin;
-            Vector4 quat = localAxis.getQuat();
-            float distanceFromOrigin = body.globalAxis.length(jointOrigin-globalOrigin);
-            fromGlobalAxis.distance = distanceFromOrigin;
-            fromGlobalAxis.sphere.setOrigin(localAxis.origin);
-            fromGlobalAxis.get();
+        public void saveJointPosition(StreamWriter writer){
             string stringPath = $"{jointDepth},{body.worldKey},{connection.indexInBody}";
             writer.Write(
-                $"{stringPath},{jointName},{jointNameString.Length},1,{jointNameString}{Environment.NewLine}" +
-                $"{stringPath},{distanceFromGlobalOrigin},1,1,{body.accuracyAmount(distanceFromOrigin)}{Environment.NewLine}" +
-                $"{stringPath},{YXFromGlobalAxis},1,2,{body.accuracyAmount(fromGlobalAxis.angleY*convert)},{body.accuracyAmount(fromGlobalAxis.angleX*convert)}{Environment.NewLine}" +
-                $"{stringPath},{localOriginLocation},1,3,{body.accuracyAmount(localAxis.origin.x)},{body.accuracyAmount(localAxis.origin.y)},{body.accuracyAmount(localAxis.origin.z)}{Environment.NewLine}"+
-                $"{stringPath},{localAxisQuaternion},1,4,{body.accuracyAmount(quat.x)},{body.accuracyAmount(quat.y)},{body.accuracyAmount(quat.z)},{body.accuracyAmount(quat.z)}{Environment.NewLine}"
+                $"{stringPath},{jointName},{jointNameString.Length},1,{jointNameString}{Environment.NewLine}"
             );
             connection.savePastConnections(writer,stringPath);
             writer.WriteLine("");
@@ -1133,12 +1132,12 @@ public class SourceCode:MonoBehaviour {
         }
         void write(StreamWriter writetext){
             body.updatePhysics();
-            body.saveBodyStructure(writetext,chunkSize);
+            body.saveBodyStructure(writetext,radianOrDegree,chunkSize);
             int size = body.bodyStructure.Length;
             for (int i = 0; i<size; i++){
                 Joint joint = body.bodyStructure[i];
                 if (joint != null){
-                    joint.saveJointPosition(writetext,radianOrDegree);
+                    joint.saveJointPosition(writetext);
                     joint.pointCloud.savePointCloud(writetext,chunkSize);
                     writetext.WriteLine("");
                 } 
