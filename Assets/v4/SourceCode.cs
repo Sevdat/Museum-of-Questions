@@ -21,7 +21,6 @@ public class SourceCode:MonoBehaviour {
     public class World {
         public Body[] bodiesInWorld;
         public SphericalOctTree sphereOctTree;
-        public KeyGenerator keyGenerator;
     }
     public class AroundAxis{
         public Sphere sphere;
@@ -367,29 +366,6 @@ public class SourceCode:MonoBehaviour {
                 );
         }
     }
-
-    public class KeyGenerator{
-        public int availableKeys;
-
-        public KeyGenerator(){}
-        public KeyGenerator(int amountOfKeys){
-            generateKeys(amountOfKeys);
-        }
-
-        public void generateKeys(int increaseKeysBy){
-            availableKeys += increaseKeysBy;
-        }
-        public void getKey(){
-            availableKeys -= 1;
-        }
-        public void returnKey(){
-            availableKeys +=1;
-        }
-        public void resetGenerator(){
-            availableKeys = 0;
-        }
-    }
- 
     public class SendToGPU{
         public Body body;
         public Vector3[] vertices;
@@ -449,7 +425,6 @@ public class SourceCode:MonoBehaviour {
         public int worldKey;
         public Axis globalAxis;
         public Joint[] bodyStructure;
-        public KeyGenerator keyGenerator;
         public Editor editor;
         public List<VertexVisualizer.BakedMesh> bakedMeshes;
         public string amountOfDigits; 
@@ -471,7 +446,6 @@ public class SourceCode:MonoBehaviour {
         void init(){
             globalAxis = new Axis(this,new Vector3(0,0,0),1);
             bodyStructure = null;
-            keyGenerator = null;
             editor = new Editor(this);
             editor.initilizeBody();
             amountOfDigits = "0.000000";
@@ -551,54 +525,6 @@ public class SourceCode:MonoBehaviour {
             for(int i = 0;i< bodyStructure.Length; i++){
                 bodyStructure[i]?.updatePhysics();
             }     
-        }
-        public Dictionary<int,int> arraySizeManager(int amount){
-            Dictionary<int,int> newKeys = new Dictionary<int,int>();
-            if (bodyStructure != null){
-                if (amount > bodyStructure.Length){
-                    resizeArray(amount);
-                } else if (amount < bodyStructure.Length){
-                    newKeys = optimizeBody();
-                }
-            } else {
-                bodyStructure = new Joint[amount];
-                keyGenerator = new KeyGenerator(amount);
-            }
-            return newKeys;
-        }
-        public void resizeArray(int maxKey){
-            int limitCheck = bodyStructure.Length - maxKey;
-            if(limitCheck <= 0) {
-                int newMax = bodyStructure.Length + Mathf.Abs(limitCheck)+1;
-                keyGenerator.generateKeys(Mathf.Abs(limitCheck)+1);
-                Joint[] newJointArray = new Joint[newMax];
-                for (int i = 0; i<bodyStructure.Length; i++){
-                    Joint joint = bodyStructure[i];
-                    if (joint != null){
-                        newJointArray[i] = joint;
-                    }
-                }
-                bodyStructure = newJointArray;
-            }
-        }
-        public Dictionary<int,int> optimizeBody(){
-            int max = bodyStructure.Length;
-            int newSize = max - keyGenerator.availableKeys;
-            Joint[] orginizedJoints = new Joint[newSize];
-            int newIndex = 0;
-            Dictionary<int,int> newKeys = new Dictionary<int,int>();
-            for (int i = 0; i < max; i++){
-                Joint joint = bodyStructure[i];
-                if (joint != null){
-                    newKeys.Add(joint.connection.indexInBody,newIndex);
-                    joint.connection.indexInBody = newIndex;
-                    orginizedJoints[newIndex] = joint; 
-                    newIndex++;
-                }
-            }
-            bodyStructure = orginizedJoints;
-            keyGenerator.resetGenerator();
-            return newKeys;
         }
     }
 
@@ -715,7 +641,6 @@ public class SourceCode:MonoBehaviour {
             localAxis = new Axis(body,new Vector3(0,0,0),1);
             connection = new Connection(this,indexInBody);
             pointCloud = new PointCloud(this);
-            body.keyGenerator.getKey();
             movementOptionBool = false;
             keepBodyTogetherBool = true;
             Sphere sphere = new Sphere();
@@ -736,7 +661,6 @@ public class SourceCode:MonoBehaviour {
         }
 
         public void deleteJoint(){
-            body.keyGenerator.returnKey();
             connection.disconnectAllFuture();
             connection.disconnectAllPast();
             pointCloud.deleteAllSpheres();
@@ -765,7 +689,6 @@ public class SourceCode:MonoBehaviour {
     }
     public class PointCloud {
         public Joint joint;
-        public KeyGenerator keyGenerator;
         public CollisionSphere[] collisionSpheres;
         public int startIndexInArray;
         public int[] triangles;
@@ -859,7 +782,6 @@ public class SourceCode:MonoBehaviour {
         public void deleteSphere(int key){
             CollisionSphere remove = collisionSpheres[key];
             if(remove != null){
-                keyGenerator.returnKey();
                 collisionSpheres[key] = null;
             }
         }
@@ -907,88 +829,6 @@ public class SourceCode:MonoBehaviour {
                 collisionSpheres[i]?.updatePhysics(); 
             }
         }
-        public List<CollisionSphere> arrayToList(){
-            List<CollisionSphere> list = new List<CollisionSphere>();
-            int sphereCount = collisionSpheres.Length;
-            for (int i = 0; i<sphereCount; i++){
-                CollisionSphere collisionSphere = collisionSpheres[i];
-                if (collisionSphere != null){
-                    list.Add(collisionSphere);
-                }
-            }
-            return list;
-        }
-        public Dictionary<int,int> arraySizeManager(int amount){
-            Dictionary<int,int> newKeys = new Dictionary<int,int>();
-            if (collisionSpheres != null){
-                if (amount > collisionSpheres.Length){
-                    resizeArray(amount);
-                } else if (amount < collisionSpheres.Length){
-                    newKeys = optimizeCollisionSpheres();
-                }
-            } else {
-                collisionSpheres = new CollisionSphere[amount];
-                keyGenerator = new KeyGenerator(amount);
-            }
-            return newKeys;
-        }
-        public void resizeArray(int maxKey){
-            int limitCheck = collisionSpheres.Length - maxKey;
-            if(limitCheck <= 0) {
-                int newMax = collisionSpheres.Length + Mathf.Abs(limitCheck)+1;
-                keyGenerator.generateKeys(Mathf.Abs(limitCheck)+1);
-                CollisionSphere[] newCollisionSpheresArray = new CollisionSphere[newMax];
-                for (int i = 0; i<collisionSpheres.Length; i++){
-                    CollisionSphere collisionSphere = collisionSpheres[i];
-                    if (collisionSphere != null){
-                        newCollisionSpheresArray[i] = collisionSphere;
-                    }
-                }
-                collisionSpheres = newCollisionSpheresArray;
-            }
-        }
-        public Dictionary<int,int> optimizeCollisionSpheres(){
-            int maxKeys = collisionSpheres.Length;
-            int used = maxKeys - keyGenerator.availableKeys;
-            CollisionSphere[] newCollision = new CollisionSphere[used];
-            Dictionary<int,int> newKeys = new Dictionary<int,int>();
-            int count = 0;
-            for (int j = 0; j<maxKeys; j++){
-                CollisionSphere collision = collisionSpheres[j];
-                if (collision != null){
-                    newKeys.Add(collision.path.collisionSphereKey,count);
-                    collision.path.setCollisionSphereKey(count);
-                    newCollision[count] = collision;
-                    count++;
-                }
-            }
-            collisionSpheres = newCollision;
-            keyGenerator.resetGenerator();
-            return newKeys;
-        }
-    }
-
-    public class Path {
-        public Body body;
-        public Joint joint;
-        public int collisionSphereKey;
-
-        public Path(){}
-        public Path(Body body, Joint joint, int collisionSphereKey){
-            this.body=body;
-            this.joint=joint;
-            this.collisionSphereKey=collisionSphereKey;
-        }
-
-        public void setBody(Body body){
-            this.body=body;
-        }
-        public void setJoint(Joint joint){
-            this.joint = joint;
-        }
-        public void setCollisionSphereKey(int collisionSphereKey){
-            this.collisionSphereKey = collisionSphereKey;
-        }
     }
 
     public class BakedMeshIndex{
@@ -1002,10 +842,10 @@ public class SourceCode:MonoBehaviour {
         }
 
         public void setPoint(){
-            VertexVisualizer.BakedMesh bakedMesh = collisionSphere.path.body.bakedMeshes[indexInBakedMesh];
+            VertexVisualizer.BakedMesh bakedMesh = collisionSphere.aroundAxis.axis.body.bakedMeshes[indexInBakedMesh];
             AroundAxis aroundAxis = collisionSphere.aroundAxis;
             Axis axis = aroundAxis.axis;
-            Vector3 point = collisionSphere.path.joint.body.globalAxis.origin+bakedMesh.vertices[indexInVertex];
+            Vector3 point = aroundAxis.axis.body.globalAxis.origin+bakedMesh.vertices[indexInVertex];
             collisionSphere.setOrigin(point);
             aroundAxis.distance = aroundAxis.axis.length(point - axis.origin);
             aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
@@ -1014,23 +854,20 @@ public class SourceCode:MonoBehaviour {
         }
     }
     public class CollisionSphere {
-        public Path path;
         public AroundAxis aroundAxis;
         public BakedMeshIndex bakedMeshIndex;
 
         public CollisionSphere(){}
-        public CollisionSphere(Joint joint, int sphereIndex){
-            init(joint, sphereIndex);
+        public CollisionSphere(Joint joint){
+            init(joint);
         }
-        public CollisionSphere(Joint joint, int sphereIndex,BakedMeshIndex bakedMeshIndex){
-            init(joint, sphereIndex);
+        public CollisionSphere(Joint joint,BakedMeshIndex bakedMeshIndex){
+            init(joint);
             this.bakedMeshIndex = bakedMeshIndex;
             bakedMeshIndex.collisionSphere = this;
         }
-        void init(Joint joint, int sphereIndex){
-            path = new Path(joint.body,joint,sphereIndex);
+        void init(Joint joint){
             aroundAxis = new AroundAxis(joint.localAxis,new Sphere());
-            joint.pointCloud.keyGenerator.getKey();
         }
         public void setOrigin(Vector3 newOrigin){
             aroundAxis.sphere.setOrigin(newOrigin);
@@ -1042,7 +879,7 @@ public class SourceCode:MonoBehaviour {
             aroundAxis.sphere.setRadius(newRadius);
         }
         public void updatePhysics(){
-            if (bakedMeshIndex != null && path.body.bakedMeshes != null) bakedMeshIndex.setPoint();
+            if (bakedMeshIndex != null) bakedMeshIndex.setPoint();
         }
     }
     public class Sphere{
@@ -1083,10 +920,6 @@ public class SourceCode:MonoBehaviour {
 
     const string jointDepth = "3",
         jointName = "JointName",
-        distanceFromGlobalOrigin = "DistanceFromGlobalOrigin",
-        YXFromGlobalAxis = "YXFromGlobalAxis",
-        localOriginLocation = "LocalOriginLocation",
-        localAxisQuaternion = "LocalAxisQuaternion",
         pastConnectionsInBody = "PastConnectionsInBody",
         futureConnectionsInBody = "FutureConnectionsInBody",
         bakedMeshIndex = "BakedMeshIndex",
@@ -1150,7 +983,19 @@ public class SourceCode:MonoBehaviour {
                 write(writeText);                 
             }
         }
-
+        internal void writerBinary() {
+            using (FileStream fs = new FileStream($"{pathToFolder}/{count}.txt", FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 65536))
+            using (BinaryWriter writer = new BinaryWriter(fs)) {
+                foreach (VertexVisualizer.BakedMesh bakedMesh in body.bakedMeshes){
+                    writer.Write(bakedMesh.vertices.Count);
+                    foreach (Vector3 vec in bakedMesh.vertices) {
+                        writer.Write(vec.x);
+                        writer.Write(vec.y);
+                        writer.Write(vec.z);
+                    }
+                }
+            }
+        }
         public void initilizeBody(){
             initilize = true;
             read(0);

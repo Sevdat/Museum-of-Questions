@@ -128,7 +128,7 @@ public class VertexVisualizer : MonoBehaviour
                 jointIndex++;
             }
             body.bakedMeshes = bakedMeshes;
-            body.arraySizeManager(dictionary.Count);
+            body.bodyStructure = new Joint[dictionary.Count];
         }
         void createMeshAccessForSpheres(List<BakedMesh> bakedMeshes,Dictionary<GameObject,AssembleJoints> dictionary){
             for (int i = 0; i<bakedMeshes.Count; i++){
@@ -212,9 +212,8 @@ public class VertexVisualizer : MonoBehaviour
                 int pointCloudSize = assembleJoints.bakedMeshIndex.Count;
                 joint.pointCloud = new PointCloud(joint);
                 joint.pointCloud.collisionSpheres = new CollisionSphere[pointCloudSize];
-                joint.pointCloud.keyGenerator = new KeyGenerator(pointCloudSize);
                 for (int i = 0;i < pointCloudSize;i++){
-                    CollisionSphere collisionSphere = new CollisionSphere(joint,i,assembleJoints.bakedMeshIndex[i]);
+                    CollisionSphere collisionSphere = new CollisionSphere(joint,assembleJoints.bakedMeshIndex[i]);
                     collisionSphere.bakedMeshIndex = assembleJoints.bakedMeshIndex[i];
                     collisionSphere.bakedMeshIndex.setPoint();
                     joint.pointCloud.collisionSpheres[i] = collisionSphere;
@@ -389,35 +388,35 @@ public class VertexVisualizer : MonoBehaviour
         multiThread?.StopTask();
     }
 
-    void Start(){
-        sceneBuilder = new SceneBuilder(fbx);
-        multiThread = new MultiThread(sceneBuilder);
-    }
-    void LateUpdate() {
-        DateTime old = DateTime.Now;
-        while (resultQueue.TryDequeue(out MultiThread result)){
-            result.updateUnityData();
-        }
-        print(DateTime.Now - old);
-    }
-
-    // long memoryBefore;
-    // void Start() {
+    // void Start(){
     //     sceneBuilder = new SceneBuilder(fbx);
-    //     print(sceneBuilder.body.bodyStructure[3].pointCloud.triangles.Length);
-    //     memoryBefore = Process.GetCurrentProcess().WorkingSet64;
-
-    //     // sceneBuilder.body.bakedMeshes = null; 
+    //     multiThread = new MultiThread(sceneBuilder);
     // }
     // void LateUpdate() {
     //     DateTime old = DateTime.Now;
-    //     sceneBuilder.updateBodyPositions();
-    //     sceneBuilder.updateUnityData();
-    //     sceneBuilder.updateBody();
-    //     sceneBuilder.drawBody();
-    //     sceneBuilder.body.editor.writer();
+    //     while (resultQueue.TryDequeue(out MultiThread result)){
+    //         result.updateUnityData();
+    //     }
     //     print(DateTime.Now - old);
     // }
+
+    long memoryBefore;
+    void Start() {
+        sceneBuilder = new SceneBuilder(fbx);
+        print(sceneBuilder.body.bodyStructure[3].pointCloud.triangles.Length);
+        memoryBefore = Process.GetCurrentProcess().WorkingSet64;
+
+        // sceneBuilder.body.bakedMeshes = null; 
+    }
+    void LateUpdate() {
+        DateTime old = DateTime.Now;
+        sceneBuilder.updateBodyPositions();
+        sceneBuilder.updateUnityData();
+        sceneBuilder.updateBody();
+        sceneBuilder.drawBody();
+        print(DateTime.Now - old);
+        sceneBuilder.body.editor.writer();
+    }
 
     // int count = 0;
     // int time = 0;
