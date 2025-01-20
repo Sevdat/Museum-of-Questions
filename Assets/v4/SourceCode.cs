@@ -13,9 +13,9 @@ public class SourceCode:MonoBehaviour {
         public SphericalOctTree sphereOctTree;
         public int depth;
         public Vector3 origin;
-        public List<CollisionSphere> root;
-        public List<CollisionSphere> a,b,c,d;
-        public List<CollisionSphere> e,f,g,h;
+        public List<Vector3> root;
+        public List<Vector3> a,b,c,d;
+        public List<Vector3> e,f,g,h;
     }
 
     public class World {
@@ -23,33 +23,19 @@ public class SourceCode:MonoBehaviour {
         public SphericalOctTree sphereOctTree;
     }
     public class AroundAxis{
-        public Sphere sphere;
         public Axis axis;
         public float angleY,angleX,distance;
         
         public AroundAxis(){}
-        public AroundAxis(Axis axis, Sphere sphere){
-            this.sphere = sphere;
+        public AroundAxis(Axis axis, Vector3 vec){
             this.axis = axis;
             angleY = 0; angleX = 0;
-            distance = axis.length(sphere.origin-axis.origin);
-            sphere.setOrigin(axis.origin + new Vector3(0,distance,0));
+            distance = axis.length(vec-axis.origin);
+            get(vec);
         }
-        public void scale(float newDistance){
-            if (newDistance>0){
-                distance = Mathf.Abs(newDistance);
-                Vector3 add = (sphere.origin != axis.origin) ? axis.distanceFromOrigin(sphere.origin,axis.origin,distance) : new Vector3(0,0,0);
-                sphere.origin = axis.origin + add;
-            } else {
-                distance = 0;
-                sphere.origin = axis.origin;
-            }
+        public void get(Vector3 vec){
+            getPointAroundAxis(vec,out angleY, out angleX);
         }
-
-        public void get(){
-            getPointAroundAxis(sphere.origin,out angleY, out angleX);
-        }
-        
         public void getPointAroundAxis(Vector3 point,out float angleY, out float angleX){
             float tempY = this.angleY;
             float tempX = this.angleX;
@@ -67,53 +53,6 @@ public class SourceCode:MonoBehaviour {
             }
         } 
 
-        void set(float angleY,float angleX){
-            sphere.origin = axis.setPointAroundOrigin(angleY,angleX,distance);
-            this.angleY = axis.convertTo360(angleY);
-            this.angleX = axis.convertTo360(angleX);
-        }
-        public void resetOrigin(){
-            set(angleY,angleX);
-        }
-        public void getInRadians(out float angleY,out float angleX){
-            get();
-            angleY = this.angleY;
-            angleX = this.angleX;
-        }
-        public void setInRadians(float angleY,float angleX){
-            set(angleY, angleX);
-        }
-        public void getInDegrees(out float angleY,out float angleX){
-            float radianToDegree = 180/Mathf.PI;
-            get();
-            angleY = this.angleY*radianToDegree;
-            angleX = this.angleX*radianToDegree;
-        }
-        public void setInDegrees(float angleY,float angleX){
-            float degreeToRadian = Mathf.PI/180;
-            angleY *= degreeToRadian;
-            angleX *= degreeToRadian;
-            set(angleY, angleX);
-        }
-
-        public Vector4 quat(float radian){
-            return axis.angledAxis(radian,sphere.origin);
-        }
-        public Vector4 quatInDegrees(float angle){
-            float degreeToRadian = Mathf.PI/180;
-            return axis.angledAxis(angle*degreeToRadian,sphere.origin);
-        }
-         
-        public void rotationY(){
-            float abs = Mathf.Abs(angleY) % (2*Mathf.PI);
-            angleY = axis.convertTo360(abs);
-            set(angleY,angleX);
-        }
-
-        public void rotationX(){
-            angleX = axis.convertTo360(angleX);
-            set(angleY,angleX);
-        }
     }
     public class Axis {
         public Body body;
@@ -366,60 +305,7 @@ public class SourceCode:MonoBehaviour {
                 );
         }
     }
-    public class SendToGPU{
-        public Body body;
-        public Vector3[] vertices;
-        public Color[] colors;
-        public int[] triangles;
 
-        public SendToGPU(Body body){
-            vertices = new Vector3[0];
-            colors = new Color[0];
-            triangles = new int[0];
-            this.body = body;
-        }
-        public void init(){
-            updatePointCloudStart();
-            int countTriangleIndex = 0;
-            foreach(Joint joint in body.bodyStructure){
-                if (joint != null){
-                    PointCloud pointCloud = joint.pointCloud;
-                    int startIndex = pointCloud.startIndexInArray;
-                    CollisionSphere[] collisionSpheres = pointCloud.collisionSpheres;
-                    for (int i = 0; i < collisionSpheres.Length;i++){
-                        vertices[i+startIndex] = collisionSpheres[i].aroundAxis.sphere.origin;
-                    }
-                    for (int i = 0; i < pointCloud.triangles.Length;i++){
-                        triangles[i+countTriangleIndex] = pointCloud.triangles[i]+startIndex;
-                    }
-                    countTriangleIndex += pointCloud.triangles.Length;
-                }
-            }
-        }
-        public void updatePointCloudStart(){
-            int maxVerticesSize = 0;
-            int maxTriangleSize = 0;
-            for (int i = 0; i<body.bodyStructure.Length;i++){
-                Joint joint = body.bodyStructure[i];
-                if (joint !=null){
-                    int pointCloudSize = joint.pointCloud.collisionSpheres.Length;
-                    if (pointCloudSize>0){
-                        joint.pointCloud.startIndexInArray = maxVerticesSize;
-                        maxVerticesSize += pointCloudSize;
-                        maxTriangleSize += joint.pointCloud.triangles.Length;
-                    }
-                }
-            }
-            colors = new Color[maxVerticesSize];
-            vertices = new Vector3[maxVerticesSize];
-            triangles = new int[maxTriangleSize];
-        }
-        public void updateArray(){
-            for (int i = 0; i<body.bodyStructure.Length;i++){
-                body.bodyStructure[i]?.pointCloud.updateGPUArray();
-            }
-        }
-    }
     public class Body {
         public World world;
         public int worldKey;
@@ -429,7 +315,6 @@ public class SourceCode:MonoBehaviour {
         public List<VertexVisualizer.BakedMesh> bakedMeshes;
         public string amountOfDigits; 
         public int asyncDelay, time;
-        public SendToGPU sendToGPU;
         public UnityAxis unityAxis;
         StringBuilder sb = new StringBuilder();
 
@@ -450,7 +335,6 @@ public class SourceCode:MonoBehaviour {
             editor.initilizeBody();
             amountOfDigits = "0.000000";
             asyncDelay = 20;
-            sendToGPU = new SendToGPU(this);
             time = 0;
         }
 
@@ -611,9 +495,8 @@ public class SourceCode:MonoBehaviour {
             joint.rotateJoint(quat);
             Vector3 jointOrigin = joint.localAxis.origin;
             Vector3 globalOrigin = joint.body.globalAxis.origin;
-            joint.fromGlobalAxis.sphere.setOrigin(joint.localAxis.origin);
             joint.fromGlobalAxis.distance = joint.body.globalAxis.length(jointOrigin-globalOrigin);
-            joint.fromGlobalAxis.get();
+            joint.fromGlobalAxis.get(jointOrigin);
         }
     }
     public class Joint {
@@ -638,12 +521,12 @@ public class SourceCode:MonoBehaviour {
             this.body = body;
             localAxis = new Axis(body,new Vector3(0,0,0),1);
             connection = new Connection(this,indexInBody);
-            pointCloud = new PointCloud(this);
+            pointCloud = new PointCloud(this,0);
             movementOptionBool = false;
             keepBodyTogetherBool = true;
             Sphere sphere = new Sphere();
             sphere.setOrigin(localAxis.origin);
-            fromGlobalAxis = new AroundAxis(body.globalAxis,sphere);
+            fromGlobalAxis = new AroundAxis(body.globalAxis,localAxis.origin);
             jointNameString = "";
         }
 
@@ -661,7 +544,6 @@ public class SourceCode:MonoBehaviour {
         public void deleteJoint(){
             connection.disconnectAllFuture();
             connection.disconnectAllPast();
-            pointCloud.deleteAllSpheres();
             body.bodyStructure[connection.indexInBody] = null;
         }
         public void getDistanceFromGlobalOrigin(float newDistance){
@@ -674,55 +556,85 @@ public class SourceCode:MonoBehaviour {
 
         public void moveJoint(Vector3 add){
             localAxis.moveAxis(add);
-            if (pointCloud.collisionSpheres != null) pointCloud.moveSpheres(add);
+            if (pointCloud != null) pointCloud.moveSpheres(add);
         }
         public void rotateJoint(Vector4 quat){
             localAxis.rotate(quat,localAxis.origin);
-            if (pointCloud.collisionSpheres != null) pointCloud.rotateAllSpheres(quat,localAxis.origin);
+            if (pointCloud != null) pointCloud.rotateAllSpheres(quat,localAxis.origin);
         }
         public void updatePhysics(){ 
             unityAxis?.updateJoint();
-            if (pointCloud.collisionSpheres != null) pointCloud.updatePhysics();  
+            if (pointCloud != null) pointCloud.updatePhysics();  
+        }
+    }
+
+    public class RenderPointCloud{
+        public PointCloud pointCloud;
+        GameObject processedFBX;
+        Mesh mesh;
+        MeshFilter meshFilter;
+        public RenderPointCloud(){}
+        public RenderPointCloud(PointCloud pointCloud, string name){
+            this.pointCloud = pointCloud;
+            processedFBX = new GameObject(name);
+            mesh = new Mesh();
+            meshFilter = processedFBX.AddComponent<MeshFilter>();
+            meshFilter.mesh = mesh;
+            MeshRenderer meshRenderer = processedFBX.AddComponent<MeshRenderer>();
+            meshRenderer.material = new Material(Shader.Find("Standard"));
+            processedFBX.transform.position = processedFBX.transform.position;
+        }
+        public void drawMesh(){
+            mesh.vertices = pointCloud.vertexes;
+            mesh.triangles = pointCloud.triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            mesh.UploadMeshData(false);
         }
     }
     public class PointCloud {
         public Joint joint;
-        public CollisionSphere[] collisionSpheres;
-        public int startIndexInArray;
+        public AroundAxis[] aroundAxis;
+        public BakedMeshIndex[] bakedMeshIndex;
+        public Vector3[] vertexes;
+        public Color[] color;
         public int[] triangles;
+        public RenderPointCloud renderPointCloud;
+
         StringBuilder sb = new StringBuilder();
         public PointCloud(){}
-        public PointCloud(Joint joint){
-            collisionSpheres = null;
+        public PointCloud(Joint joint, int size){
             this.joint = joint;
+            aroundAxis = new AroundAxis[size];
+            bakedMeshIndex = new BakedMeshIndex[size];
+            vertexes = new Vector3[size];
+            color = new Color[size];
             triangles = new int[0];
+            renderPointCloud = new RenderPointCloud(this,joint.jointNameString);
         }
 
         public void savePointCloud(StreamWriter writer,int chunkSize){
-            if (collisionSpheres != null){
-                string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
-                savePointCloudPositions(writer,stringPath,chunkSize);
-                saveTriangles(writer,stringPath, chunkSize);
-            }
+            string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
+            savePointCloudPositions(writer,stringPath,chunkSize);
+            saveTriangles(writer,stringPath, chunkSize);
         }
         void savePointCloudPositions(StreamWriter writer, string stringPath, int chunkSize){
-            writer.Write($"{stringPath},{pointCloudSphereDatas},{collisionSpheres.Length},11");
-            if (collisionSpheres.Length>0) {
+            writer.Write($"{stringPath},{pointCloudSphereDatas},{vertexes.Length},11");
+            if (vertexes.Length>0) {
                 writer.Write(","); 
                 int offset = 0;
-                while (offset < collisionSpheres.Length){
-                    int elementsToWrite = Math.Min(collisionSpheres.Length-offset, chunkSize);
+                while (offset < vertexes.Length){
+                    int elementsToWrite = Math.Min(vertexes.Length-offset, chunkSize);
                     for (int i = 0; i < elementsToWrite; i+=1){
-                        CollisionSphere collisionSphere = collisionSpheres[i];
-                        if (collisionSphere != null) {
-                            Vector3 vec = collisionSphere.aroundAxis.sphere.origin;
-                            Color col = collisionSphere.aroundAxis.sphere.color;
-                            AroundAxis aroundAxis = collisionSphere.aroundAxis;
+                        AroundAxis aroundAxis = this.aroundAxis[i];
+                        if (aroundAxis != null) {
+                            Vector3 vec = vertexes[i];
+                            Color col = color[i];
                             sb.Append($"{i},{vec.x},{vec.y},{vec.z},{aroundAxis.distance},{aroundAxis.angleY},{aroundAxis.angleX},{col.r},{col.g},{col.b},{col.a},");
                         }
                     }
                     offset += elementsToWrite;
-                    if (offset == collisionSpheres.Length) {
+                    if (offset == vertexes.Length) {
                         sb.Remove(sb.Length - 1, 1);
                         sb.Append(Environment.NewLine);
                         };
@@ -761,123 +673,63 @@ public class SourceCode:MonoBehaviour {
         }
         public void saveBakedMeshes(StreamWriter writer){
             string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
-            writer.Write($"{stringPath},{bakedMeshIndex},2,{collisionSpheres.Length/2},");
-            if (collisionSpheres != null){
-                for (int i = 0;i<collisionSpheres.Length;i++){
-                    CollisionSphere collisionSphere = collisionSpheres[i];
-                    if (collisionSphere != null) {
-                        BakedMeshIndex bakedMeshIndex = collisionSphere.bakedMeshIndex;
-                        if (bakedMeshIndex != null) {
-                            string str = (i+1 != collisionSpheres.Length)? 
-                                $"{bakedMeshIndex.indexInBakedMesh},{bakedMeshIndex.indexInVertex},":
-                                $"{bakedMeshIndex.indexInBakedMesh},{bakedMeshIndex.indexInVertex}{Environment.NewLine}";
-                            writer.Write(str);
-                        }
+            writer.Write($"{stringPath},{bakedMeshIndex},2,{vertexes.Length/2},");
+            if (vertexes != null){
+                for (int i = 0;i<vertexes.Length;i++){
+                    AroundAxis aroundAxis = this.aroundAxis[i];
+                    if (aroundAxis != null) {
+                        BakedMeshIndex bakedMeshIndex = this.bakedMeshIndex[i];
+                        string str = (i+1 != vertexes.Length)? 
+                            $"{bakedMeshIndex.indexInBakedMesh},{bakedMeshIndex.indexInVertex},":
+                            $"{bakedMeshIndex.indexInBakedMesh},{bakedMeshIndex.indexInVertex}{Environment.NewLine}";
+                        writer.Write(str);
                     }
                 }
             }
         }
-        public void deleteSphere(int key){
-            CollisionSphere remove = collisionSpheres[key];
-            if(remove != null){
-                collisionSpheres[key] = null;
-            }
-        }
-        public void deleteAllSpheres(){
-            int size = collisionSpheres.Length;
-            for (int i = 0; i<size;i++){
-                deleteSphere(i);
-            }
-        }
-        public void resetAllSphereOrigins(){
-            int sphereCount = collisionSpheres.Length;
-            for (int i = 0; i<sphereCount; i++){
-                collisionSpheres[i]?.aroundAxis.resetOrigin();
-            }
-        }
-        public void updateGPUArray(){
-            for (int i = 0; i<collisionSpheres.Length;i++){
-                CollisionSphere collisionSphere = collisionSpheres[i];
-                if (collisionSphere!= null){
-                    joint.body.sendToGPU.vertices[i+startIndexInArray] = collisionSphere.aroundAxis.sphere.origin;
-                }
-            }
-        }
         public void rotateAllSpheres(Vector4 quat, Vector3 rotationOrigin){
-            int sphereCount = collisionSpheres.Length;
-            for (int i = 0; i<sphereCount; i++){
-                CollisionSphere collisionSphere = collisionSpheres[i];
-                if (collisionSphere != null){
-                    Vector3 vec = collisionSphere.aroundAxis.sphere.origin;
-                    vec = joint.localAxis.quatRotate(vec,rotationOrigin,quat);
-                    collisionSphere.setOrigin(vec);
-                }
+            for (int i = 0; i<vertexes.Length; i++){
+                AroundAxis aroundAxis = this.aroundAxis[i];
+                if (aroundAxis != null) vertexes[i] = joint.localAxis.quatRotate(vertexes[i],rotationOrigin,quat);
             }
         }
-        public void moveSpheres(Vector3 move){
-            int sphereCount = collisionSpheres.Length;
-            for (int i = 0; i<sphereCount; i++){
-                CollisionSphere collisionSphere = collisionSpheres[i];
-                collisionSphere?.moveOrigin(move);
+        public void moveSpheres(Vector3 add){
+            for (int i = 0; i<vertexes.Length; i++){
+                AroundAxis aroundAxis = this.aroundAxis[i];
+                if (aroundAxis != null) vertexes[i] += add;
             }
         }
         public void updatePhysics(){
-            int sphereCount = collisionSpheres.Length;
-            for (int i = 0;i<sphereCount; i++){
-                collisionSpheres[i]?.updatePhysics(); 
+            for (int i = 0;i<vertexes.Length; i++){
+                setPoint(i);
             }
         }
+        public void setPoint(int index){
+            AroundAxis aroundAxis = this.aroundAxis[index]; 
+            if (aroundAxis != null){
+                VertexVisualizer.BakedMesh bakedMesh = aroundAxis.axis.body.bakedMeshes[bakedMeshIndex[index].indexInBakedMesh];
+                Axis axis = aroundAxis.axis;
+                Vector3 point = axis.body.globalAxis.origin+bakedMesh.vertices[bakedMeshIndex[index].indexInVertex];
+                vertexes[index] = point;
+                aroundAxis.distance = aroundAxis.axis.length(point - axis.origin);
+                aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
+                aroundAxis.angleY = angleY;
+                aroundAxis.angleX = angleX;
+            }
+        }
+        public Vector3 getPoint(int index){
+            VertexVisualizer.BakedMesh bakedMesh = joint.body.bakedMeshes[bakedMeshIndex[index].indexInBakedMesh];
+            return joint.body.globalAxis.origin+bakedMesh.vertices[bakedMeshIndex[index].indexInVertex];
+        }
+
     }
 
-    public class BakedMeshIndex{
-        public CollisionSphere collisionSphere;
+    public struct BakedMeshIndex{
         public int indexInBakedMesh;
         public int indexInVertex;
-        public BakedMeshIndex(){}
         public BakedMeshIndex(int indexInBakedMesh,int indexInVertex){
             this.indexInBakedMesh = indexInBakedMesh;
             this.indexInVertex = indexInVertex;
-        }
-
-        public void setPoint(){
-            VertexVisualizer.BakedMesh bakedMesh = collisionSphere.aroundAxis.axis.body.bakedMeshes[indexInBakedMesh];
-            AroundAxis aroundAxis = collisionSphere.aroundAxis;
-            Axis axis = aroundAxis.axis;
-            Vector3 point = aroundAxis.axis.body.globalAxis.origin+bakedMesh.vertices[indexInVertex];
-            collisionSphere.setOrigin(point);
-            aroundAxis.distance = aroundAxis.axis.length(point - axis.origin);
-            aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
-            aroundAxis.angleY = angleY;
-            aroundAxis.angleX = angleX;
-        }
-    }
-    public class CollisionSphere {
-        public AroundAxis aroundAxis;
-        public BakedMeshIndex bakedMeshIndex;
-
-        public CollisionSphere(){}
-        public CollisionSphere(Joint joint){
-            init(joint);
-        }
-        public CollisionSphere(Joint joint,BakedMeshIndex bakedMeshIndex){
-            init(joint);
-            this.bakedMeshIndex = bakedMeshIndex;
-            bakedMeshIndex.collisionSphere = this;
-        }
-        void init(Joint joint){
-            aroundAxis = new AroundAxis(joint.localAxis,new Sphere());
-        }
-        public void setOrigin(Vector3 newOrigin){
-            aroundAxis.sphere.setOrigin(newOrigin);
-        }
-        public void moveOrigin(Vector3 newOrigin){
-            aroundAxis.sphere.moveOrigin(newOrigin);
-        }
-        public void setRadius(float newRadius){
-            aroundAxis.sphere.setRadius(newRadius);
-        }
-        public void updatePhysics(){
-            if (bakedMeshIndex != null) bakedMeshIndex.setPoint();
         }
     }
     public class Sphere{

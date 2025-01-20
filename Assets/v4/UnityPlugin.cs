@@ -109,22 +109,11 @@ public class VertexVisualizer : MonoBehaviour
         internal AxisData globalAxis;
         internal AxisData[] localAxis;
         GameObject fbx;
-        GameObject processedFBX;
-        Mesh mesh;
-        MeshFilter meshFilter;
 
         public SceneBuilder(GameObject fbxGameObject){ 
             fbx = fbxGameObject;
-            processedFBX = new GameObject(fbxGameObject.name);
             loadModelToBody(fbxGameObject);
-            body.sendToGPU.init();
-            mesh = new Mesh();
-            meshFilter = processedFBX.AddComponent<MeshFilter>();
-            meshFilter.mesh = mesh;
-            MeshRenderer meshRenderer = processedFBX.AddComponent<MeshRenderer>();
-            meshRenderer.material = new Material(Shader.Find("Standard"));
-            processedFBX.transform.position = processedFBX.transform.position;
-            drawMesh(body.sendToGPU.vertices,body.sendToGPU.triangles);
+            drawMesh();
         }
 
         class AssembleJoints {
@@ -199,11 +188,9 @@ public class VertexVisualizer : MonoBehaviour
             }
         }
         void renewedKeysForTriangles(PointCloud pointCloud, List<List<int>> triangles){
-            CollisionSphere[] collisionspheres = pointCloud.collisionSpheres;
             Dictionary<int, Dictionary<int,int>> dictionary = new Dictionary<int, Dictionary<int,int>>();
             int count = 0;
-            foreach (CollisionSphere collisionSphere in collisionspheres){
-                BakedMeshIndex bakedMesh = collisionSphere.bakedMeshIndex;
+            foreach (BakedMeshIndex bakedMesh in pointCloud.bakedMeshIndex){
                 if (!dictionary.ContainsKey(bakedMesh.indexInBakedMesh)) 
                     dictionary[bakedMesh.indexInBakedMesh] = new Dictionary<int,int>();
                 
@@ -242,13 +229,12 @@ public class VertexVisualizer : MonoBehaviour
                 joint.localAxis.placeAxis(gameObject.transform.position);
                 joint.localAxis.rotate(quat,gameObject.transform.position);
                 int pointCloudSize = assembleJoints.bakedMeshIndex.Count;
-                joint.pointCloud = new PointCloud(joint);
-                joint.pointCloud.collisionSpheres = new CollisionSphere[pointCloudSize];
+                joint.pointCloud = new PointCloud(joint,pointCloudSize);
                 for (int i = 0;i < pointCloudSize;i++){
-                    CollisionSphere collisionSphere = new CollisionSphere(joint,assembleJoints.bakedMeshIndex[i]);
-                    collisionSphere.bakedMeshIndex = assembleJoints.bakedMeshIndex[i];
-                    collisionSphere.bakedMeshIndex.setPoint();
-                    joint.pointCloud.collisionSpheres[i] = collisionSphere;
+                    joint.pointCloud.bakedMeshIndex[i] = assembleJoints.bakedMeshIndex[i];
+                    Vector3 vec = joint.pointCloud.getPoint(i);
+                    joint.pointCloud.aroundAxis[i] = new AroundAxis(joint.localAxis, vec);
+                    joint.pointCloud.vertexes[i] = vec;
                 }
                 renewedKeysForTriangles(joint.pointCloud,assembleJoints.triangles);
                 body.bodyStructure[indexInBody] = joint;
@@ -298,12 +284,13 @@ public class VertexVisualizer : MonoBehaviour
                 body.bakedMeshes[i].bakeMesh();
             }
         }
-        void drawMesh(Vector3[] vertices,int[] triangles){
-            mesh.vertices = vertices;
-            mesh.triangles = triangles;
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            mesh.UploadMeshData(false);
+        void drawMesh(){
+            for (int i = 0;i<body.bodyStructure.Length;i++){
+                Joint joint = body.bodyStructure[i];
+                if (joint != null&& joint.pointCloud != null){
+                    joint.pointCloud.renderPointCloud.drawMesh();
+                }
+            }
         }
         public void updateBodyPositions(){
             body.unityAxis.origin = fbx.transform.position;
@@ -322,10 +309,9 @@ public class VertexVisualizer : MonoBehaviour
         }
         public void updateBody(){
             body.updatePhysics();
-            body.sendToGPU.updateArray();
         }
         public void drawBody(){
-            drawMesh(body.sendToGPU.vertices,body.sendToGPU.triangles);
+            drawMesh();
         }
     }
 
@@ -447,8 +433,8 @@ public class VertexVisualizer : MonoBehaviour
         sceneBuilder.updateBody();
         sceneBuilder.drawBody();
         print(DateTime.Now - old);
-        sceneBuilder.bakedMeshes[0].calculateFinalColors();
-        sceneBuilder.body.editor.writer();
+        // sceneBuilder.bakedMeshes[0].calculateFinalColors();
+        // sceneBuilder.body.editor.writer();
     }
 
     // int count = 0;
