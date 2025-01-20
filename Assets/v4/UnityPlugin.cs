@@ -22,7 +22,7 @@ public class VertexVisualizer : MonoBehaviour
         Transform[] bones;
         BoneWeight[] boneWeights; 
         public List<Vector3> vertices;
-        public List<Color> colors;
+        public Color[] colors;
 
         public BakedMesh(SkinnedMeshRenderer skinnedMeshRenderer){
             this.skinnedMeshRenderer=skinnedMeshRenderer;
@@ -32,6 +32,8 @@ public class VertexVisualizer : MonoBehaviour
             bones = skinnedMeshRenderer.bones;
             boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
             transform = skinnedMeshRenderer.transform;
+            colors = new Color[vertices.Count];
+            calculateFinalColors();
         }
         public void bakeMesh(){
             skinnedMeshRenderer.BakeMesh(mesh);
@@ -49,33 +51,22 @@ public class VertexVisualizer : MonoBehaviour
         }
         public void calculateFinalColors(){
             Mesh mesh = skinnedMeshRenderer.sharedMesh;
-            Material material = skinnedMeshRenderer.sharedMaterial;
-
-            // Get the material's base color
-            Color baseColor = material.HasProperty("_Color") ? material.color : Color.white;
-
-            // Check if the material uses a texture
-            Texture2D mainTexture = null;
-            if (material.HasProperty("_MainTex") && material.mainTexture != null){
-                mainTexture = (Texture2D) material.mainTexture;
-            }
-
-            // Get UV coordinates
-            Vector2[] uvs = mesh.uv;
-
-            // Calculate final color for each vertex
-            for (int i = 0; i < mesh.vertexCount; i++)
-            {
-                Color finalColor = baseColor;
-
-                // Sample texture if it exists
-                if (mainTexture != null && uvs != null && uvs.Length > i)
-                {
-                    Vector2 uv = uvs[i];
-                    finalColor *= mainTexture.GetPixelBilinear(uv.x, uv.y);
+            Material[] materials = skinnedMeshRenderer.sharedMaterials;
+            foreach (Material material in materials){
+                Color baseColor = material.HasProperty("_Color") ? material.color : Color.white;
+                Texture2D mainTexture = null;
+                if (material.HasProperty("_MainTex") && material.mainTexture != null){
+                    mainTexture = (Texture2D) material.mainTexture;
                 }
-
-                print($"Final Color for Vertex {i}: {finalColor}");
+                Vector2[] uvs = mesh.uv;
+                for (int i = 0; i < mesh.vertexCount; i++){
+                    Color finalColor = baseColor;
+                    if (mainTexture != null && uvs != null && uvs.Length > i){
+                        Vector2 uv = uvs[i];
+                        finalColor *= mainTexture.GetPixelBilinear(uv.x, uv.y);
+                    }
+                    colors[i] = finalColor;
+                }
             }
         }
     }
@@ -224,17 +215,16 @@ public class VertexVisualizer : MonoBehaviour
                     transform.rotation.w
                     );
                 UnityAxis unityAxis = new UnityAxis(transform.position,quat);
-                Joint joint = new Joint(body,indexInBody,unityAxis);
-                joint.jointNameString = gameObject.name;
+                int pointCloudSize = assembleJoints.bakedMeshIndex.Count;
+                Joint joint = new Joint(body,indexInBody,pointCloudSize,gameObject.name,unityAxis);
                 joint.localAxis.placeAxis(gameObject.transform.position);
                 joint.localAxis.rotate(quat,gameObject.transform.position);
-                int pointCloudSize = assembleJoints.bakedMeshIndex.Count;
-                joint.pointCloud = new PointCloud(joint,pointCloudSize);
                 for (int i = 0;i < pointCloudSize;i++){
                     joint.pointCloud.bakedMeshIndex[i] = assembleJoints.bakedMeshIndex[i];
                     Vector3 vec = joint.pointCloud.getPoint(i);
                     joint.pointCloud.aroundAxis[i] = new AroundAxis(joint.localAxis, vec);
                     joint.pointCloud.vertexes[i] = vec;
+
                 }
                 renewedKeysForTriangles(joint.pointCloud,assembleJoints.triangles);
                 body.bodyStructure[indexInBody] = joint;
@@ -433,8 +423,7 @@ public class VertexVisualizer : MonoBehaviour
         sceneBuilder.updateBody();
         sceneBuilder.drawBody();
         print(DateTime.Now - old);
-        // sceneBuilder.bakedMeshes[0].calculateFinalColors();
-        // sceneBuilder.body.editor.writer();
+        sceneBuilder.body.editor.writer();
     }
 
     // int count = 0;

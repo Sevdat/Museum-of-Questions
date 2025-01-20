@@ -505,29 +505,24 @@ public class SourceCode:MonoBehaviour {
         public AroundAxis fromGlobalAxis;
         public Connection connection;
         public PointCloud pointCloud;
-        public bool movementOptionBool,keepBodyTogetherBool;
         public UnityAxis unityAxis;
         public string jointNameString;
         public Joint(){}
         public Joint(Body body, int indexInBody){
-            init(body, indexInBody);
+            init(body, indexInBody, 0, "");
         }
-        public Joint(Body body, int indexInBody, UnityAxis unityAxis){
-            init(body, indexInBody);
+        public Joint(Body body, int indexInBody,int pointCloudSize, string jointNameString, UnityAxis unityAxis){
+            init(body, indexInBody,pointCloudSize,jointNameString);
             unityAxis.joint = this;
             this.unityAxis = unityAxis;
         }
-        void init(Body body, int indexInBody){
+        void init(Body body, int indexInBody,int pointCloudSize, string jointNameString){
             this.body = body;
+            this.jointNameString = jointNameString;
+            pointCloud = new PointCloud(this,pointCloudSize);
             localAxis = new Axis(body,new Vector3(0,0,0),1);
             connection = new Connection(this,indexInBody);
-            pointCloud = new PointCloud(this,0);
-            movementOptionBool = false;
-            keepBodyTogetherBool = true;
-            Sphere sphere = new Sphere();
-            sphere.setOrigin(localAxis.origin);
             fromGlobalAxis = new AroundAxis(body.globalAxis,localAxis.origin);
-            jointNameString = "";
         }
 
         public void saveJointPosition(StreamWriter writer){
@@ -573,6 +568,7 @@ public class SourceCode:MonoBehaviour {
         GameObject processedFBX;
         Mesh mesh;
         MeshFilter meshFilter;
+        MeshRenderer meshRenderer;
         public RenderPointCloud(){}
         public RenderPointCloud(PointCloud pointCloud, string name){
             this.pointCloud = pointCloud;
@@ -580,13 +576,13 @@ public class SourceCode:MonoBehaviour {
             mesh = new Mesh();
             meshFilter = processedFBX.AddComponent<MeshFilter>();
             meshFilter.mesh = mesh;
-            MeshRenderer meshRenderer = processedFBX.AddComponent<MeshRenderer>();
-            meshRenderer.material = new Material(Shader.Find("Standard"));
-            processedFBX.transform.position = processedFBX.transform.position;
+            meshRenderer = processedFBX.AddComponent<MeshRenderer>();
+            meshRenderer.material = Resources.Load<Material>("unlitMaterial");
         }
         public void drawMesh(){
             mesh.vertices = pointCloud.vertexes;
             mesh.triangles = pointCloud.triangles;
+            mesh.colors = pointCloud.colors;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             mesh.UploadMeshData(false);
@@ -597,7 +593,7 @@ public class SourceCode:MonoBehaviour {
         public AroundAxis[] aroundAxis;
         public BakedMeshIndex[] bakedMeshIndex;
         public Vector3[] vertexes;
-        public Color[] color;
+        public Color[] colors;
         public int[] triangles;
         public RenderPointCloud renderPointCloud;
 
@@ -608,7 +604,7 @@ public class SourceCode:MonoBehaviour {
             aroundAxis = new AroundAxis[size];
             bakedMeshIndex = new BakedMeshIndex[size];
             vertexes = new Vector3[size];
-            color = new Color[size];
+            colors = new Color[size];
             triangles = new int[0];
             renderPointCloud = new RenderPointCloud(this,joint.jointNameString);
         }
@@ -629,7 +625,7 @@ public class SourceCode:MonoBehaviour {
                         AroundAxis aroundAxis = this.aroundAxis[i];
                         if (aroundAxis != null) {
                             Vector3 vec = vertexes[i];
-                            Color col = color[i];
+                            Color col = colors[i];
                             sb.Append($"{i},{vec.x},{vec.y},{vec.z},{aroundAxis.distance},{aroundAxis.angleY},{aroundAxis.angleX},{col.r},{col.g},{col.b},{col.a},");
                         }
                     }
@@ -709,8 +705,10 @@ public class SourceCode:MonoBehaviour {
             if (aroundAxis != null){
                 VertexVisualizer.BakedMesh bakedMesh = aroundAxis.axis.body.bakedMeshes[bakedMeshIndex[index].indexInBakedMesh];
                 Axis axis = aroundAxis.axis;
+                Color col = bakedMesh.colors[bakedMeshIndex[index].indexInVertex];
                 Vector3 point = axis.body.globalAxis.origin+bakedMesh.vertices[bakedMeshIndex[index].indexInVertex];
                 vertexes[index] = point;
+                colors[index] = col;
                 aroundAxis.distance = aroundAxis.axis.length(point - axis.origin);
                 aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
                 aroundAxis.angleY = angleY;
@@ -731,34 +729,6 @@ public class SourceCode:MonoBehaviour {
             this.indexInBakedMesh = indexInBakedMesh;
             this.indexInVertex = indexInVertex;
         }
-    }
-    public class Sphere{
-        public float radius;
-        public Vector3 origin;
-        public Color color;
-        
-        public Sphere(){
-            setOrigin(new Vector3(0,0,0));
-            setRadius(0.01f);
-            setColor(new Color(1,1,1,1));
-        }
-        public Sphere(Vector3 origin, float radius, Color color){
-            setOrigin(origin);
-            setRadius(radius);
-            setColor(color);
-        }
-        public void setOrigin(Vector3 newOrigin){
-            origin = newOrigin;
-        }
-        public void moveOrigin(Vector3 newOrigin){
-            origin += newOrigin;
-        }
-        public void setRadius(float newRadius){
-            radius = newRadius;
-        }
-        public void setColor(Color newColor){
-            color = newColor;
-        } 
     }
 
     const string bodyDepth = "2",
