@@ -719,6 +719,43 @@ public class SourceCode:MonoBehaviour {
             VertexVisualizer.BakedMesh bakedMesh = joint.body.bakedMeshes[bakedMeshIndex[index].indexInBakedMesh];
             return joint.body.globalAxis.origin+bakedMesh.vertices[bakedMeshIndex[index].indexInVertex];
         }
+        
+        private static Vector3 ComputeCentroid(List<Vector3> vertices){
+            Vector3 centroid = Vector3.zero;
+            foreach (Vector3 vertex in vertices){
+                centroid += vertex;
+            }
+            centroid /= vertices.Count;
+            return centroid;
+        }
+
+        private static List<Vector3> CenterVertices(List<Vector3> vertices, Vector3 centroid){
+            List<Vector3> centeredVertices = new List<Vector3>();
+            foreach (Vector3 vertex in vertices){
+                centeredVertices.Add(vertex - centroid);
+            }
+            return centeredVertices;
+        }
+        private static float ComputeScale(List<Vector3> centeredVertices){
+            float maxDistance = 0f;
+            foreach (Vector3 vertex in centeredVertices){
+                float distance = vertex.magnitude; // Distance from origin (centroid)
+                if (distance > maxDistance){
+                    maxDistance = distance;
+                }
+            }
+            return maxDistance;
+        }
+
+        // Scale the vertices to fit within a unit sphere
+        private static List<Vector3> ScaleVertices(List<Vector3> centeredVertices, float scale){
+            List<Vector3> scaledVertices = new List<Vector3>();
+            foreach (Vector3 vertex in centeredVertices)
+            {
+                scaledVertices.Add(vertex / scale);
+            }
+            return scaledVertices;
+        }
 
     }
 
@@ -744,7 +781,7 @@ public class SourceCode:MonoBehaviour {
         pointCloudSphereDatas = "PointCloudSphereDatas",
         trianglesInPointCloud = "TrianglesInPointCloud";
 
-    public class Editor {
+public class Editor {
         internal bool radianOrDegree = false;
         internal bool initilize;
         internal Body body;
@@ -762,16 +799,16 @@ public class SourceCode:MonoBehaviour {
             if (!Directory.Exists(pathToFolder)) {
                 Directory.CreateDirectory(pathToFolder);
                 }
-            if (!Directory.Exists($"{pathToFolder}/initilize")) {
-                Directory.CreateDirectory(pathToFolder);
+            if (!Directory.Exists($"{pathToFolder}/VerticesAndTriangles")) {
+                Directory.CreateDirectory($"{pathToFolder}/VerticesAndTriangles");
                 }
-            if (!Directory.Exists($"{pathToFolder}/initilize")) {
-                Directory.CreateDirectory(pathToFolder);
+            if (!Directory.Exists($"{pathToFolder}/Datasets")) {
+                Directory.CreateDirectory($"{pathToFolder}/Datasets");
                 }
         }
         
         void read(int count){
-            using(StreamReader readtext = new StreamReader($"{pathToFolder}/{count}.txt")){
+            using(StreamReader readtext = new StreamReader($"{pathToFolder}/Datasets/{count}.txt")){
                 string readText;
                 while ((readText = readtext.ReadLine()) != null){
                     string[] splitStr = readText.Split(new[] {':'},2);
@@ -797,12 +834,12 @@ public class SourceCode:MonoBehaviour {
         }
         
         internal void writer(){
-            using(StreamWriter writeText = new StreamWriter($"{pathToFolder}/{count}.txt")) {
+            using(StreamWriter writeText = new StreamWriter($"{pathToFolder}/Datasets/{count}.txt")) {
                 write(writeText);                 
             }
         }
         internal void writerBinary() {
-            using (FileStream fs = new FileStream($"{pathToFolder}/{count}.txt", FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 65536))
+            using (FileStream fs = new FileStream($"{pathToFolder}/VerticesAndTriangles/{count}.txt", FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 65536))
             using (BinaryWriter writer = new BinaryWriter(fs)) {
                 foreach (VertexVisualizer.BakedMesh bakedMesh in body.bakedMeshes){
                     writer.Write(bakedMesh.vertices.Count);
