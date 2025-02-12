@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEngine.UI;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 public class VertexVisualizer : MonoBehaviour
 {
@@ -181,7 +182,7 @@ public class VertexVisualizer : MonoBehaviour
         void renewedKeysForTriangles(PointCloud pointCloud, List<List<int>> triangles){
             Dictionary<int, Dictionary<int,int>> dictionary = new Dictionary<int, Dictionary<int,int>>();
             int count = 0;
-            foreach (BakedMeshIndex bakedMesh in pointCloud.bakedMeshIndex){
+            foreach (BakedMeshIndex bakedMesh in pointCloud.pointCloudData.bakedMeshIndex){
                 if (!dictionary.ContainsKey(bakedMesh.indexInBakedMesh)) 
                     dictionary[bakedMesh.indexInBakedMesh] = new Dictionary<int,int>();
                 
@@ -193,12 +194,12 @@ public class VertexVisualizer : MonoBehaviour
             
             int size = 0;
             foreach (List<int> triangleList in triangles) size += triangleList.Count;
-            pointCloud.triangles = new int[size];
+            pointCloud.pointCloudData.triangles = new int[size];
             size = 0;
             for (int i = 0; i<triangles.Count;i++){
                 List<int> triangleList = triangles[i];
                 for (int j = 0; j<triangleList.Count;j++){
-                    pointCloud.triangles[j+size] = dictionary[i][triangleList[j]];
+                    pointCloud.pointCloudData.triangles[j+size] = dictionary[i][triangleList[j]];
                 }
                 size += triangleList.Count;
             }
@@ -220,10 +221,10 @@ public class VertexVisualizer : MonoBehaviour
                 joint.localAxis.placeAxis(gameObject.transform.position);
                 joint.localAxis.rotate(quat,gameObject.transform.position);
                 for (int i = 0;i < pointCloudSize;i++){
-                    joint.pointCloud.bakedMeshIndex[i] = assembleJoints.bakedMeshIndex[i];
+                    joint.pointCloud.pointCloudData.bakedMeshIndex[i] = assembleJoints.bakedMeshIndex[i];
                     Vector3 vec = joint.pointCloud.getPoint(i);
-                    joint.pointCloud.aroundAxis[i] = new AroundAxis(joint.localAxis, vec);
-                    joint.pointCloud.vertexes[i] = vec;
+                    joint.pointCloud.pointCloudData.aroundAxis[i] = new AroundAxis(joint.localAxis, vec);
+                    joint.pointCloud.pointCloudData.vertexes[i] = vec;
 
                 }
                 renewedKeysForTriangles(joint.pointCloud,assembleJoints.triangles);
@@ -411,9 +412,9 @@ public class VertexVisualizer : MonoBehaviour
     long memoryBefore;
     void Start() {
         sceneBuilder = new SceneBuilder(fbx);
-        print(sceneBuilder.body.bodyStructure[3].pointCloud.triangles.Length);
+        print(sceneBuilder.body.bodyStructure[3].pointCloud.pointCloudData.triangles.Length);
         memoryBefore = Process.GetCurrentProcess().WorkingSet64;
-
+        // strt();
         // sceneBuilder.body.bakedMeshes = null; 
     }
     void LateUpdate() {
@@ -426,16 +427,35 @@ public class VertexVisualizer : MonoBehaviour
         sceneBuilder.body.editor.writer();
     }
 
-    // int count = 0;
-    // int time = 0;
-    // public void readTextFiles(){
-    //     if (time > 1){
-    //         print(count);
-    //         sceneBuilder.body.editor.reader(count);
-    //         count++;
-    //         if (count>11) count = 0;
-    //         time = 0;
-    //     } else time++;
+    // public class PlayerData {
+    //     public string[] playerName;
+    //     public int playerLevel;
+    //     public float playerHealth;
+    //     public bool isAlive;
+    // }
+    // void strt(){
+    //     // Create data
+    //     PlayerData player = new PlayerData();
+    //     player.playerName = new string[]{"Hero"};
+    //     player.playerLevel = 10;
+    //     player.playerHealth = 100.0f;
+    //     player.isAlive = true;
+
+    //     // Serialize to JSON
+    //     string json = JsonUtility.ToJson(sceneBuilder.body,true);
+    //     print("JSON: " + json);
+
+    //     // Save JSON to file
+    //     string filePath = $"Assets/v4/playerData.json";
+    //     File.WriteAllText(filePath, json);
+    //     print("JSON saved to: " + filePath);
+
+    //     // Deserialize JSON
+    //     PlayerData loadedPlayer = JsonUtility.FromJson<PlayerData>(json);
+    //     print("Loaded Player Name: " + loadedPlayer.playerName);
+    // }
+    // void Start() {
+    //     strt();
     // }
 
 }

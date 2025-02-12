@@ -17,26 +17,25 @@ public class SourceCode:MonoBehaviour {
         public List<Vector3> a,b,c,d;
         public List<Vector3> e,f,g,h;
     }
-
+    
     public class World {
         public Body[] bodiesInWorld;
         public SphericalOctTree sphereOctTree;
     }
+
     public class AroundAxis{
-        public Axis axis;
         public float angleY,angleX,distance;
         
         public AroundAxis(){}
         public AroundAxis(Axis axis, Vector3 vec){
-            this.axis = axis;
             angleY = 0; angleX = 0;
             distance = axis.length(vec-axis.origin);
-            get(vec);
+            get(axis,vec);
         }
-        public void get(Vector3 vec){
-            getPointAroundAxis(vec,out angleY, out angleX);
+        public void get(Axis axis,Vector3 vec){
+            getPointAroundAxis(axis,vec,out angleY, out angleX);
         }
-        public void getPointAroundAxis(Vector3 point,out float angleY, out float angleX){
+        public void getPointAroundAxis(Axis axis, Vector3 point,out float angleY, out float angleX){
             float tempY = this.angleY;
             float tempX = this.angleX;
             bool over180 = (this.angleY > Mathf.PI)? true:false;
@@ -52,21 +51,18 @@ public class SourceCode:MonoBehaviour {
                 angleX = tempX;
             }
         } 
-
-    }
-    public class Axis {
-        public Body body;
-        public Vector3 origin,x,y,z;
-        public float axisDistance;
         
+    }
+
+    public class Axis {
+        public Vector3 origin,x,y,z;
+        public Vector4 quat;
         public Axis(){}
-        public Axis(Body body,Vector3 origin, float distance){
-            this.body = body;
+        public Axis(Vector3 origin){
             this.origin = origin;
-            axisDistance = (distance >0.1f)? distance:1f;
-            x = origin + new Vector3(distance,0,0);
-            y = origin + new Vector3(0,distance,0);
-            z = origin + new Vector3(0,0,distance);
+            x = origin + new Vector3(1,0,0);
+            y = origin + new Vector3(0,1,0);
+            z = origin + new Vector3(0,0,1);
         }
         
         public void moveAxis(Vector3 add){
@@ -82,10 +78,9 @@ public class SourceCode:MonoBehaviour {
         }
         public void scaleAxis(float newDistance){
             if (newDistance > 0f){
-                axisDistance = newDistance;
-                x = origin + distanceFromOrigin(x,origin,axisDistance);
-                y = origin + distanceFromOrigin(y,origin,axisDistance);
-                z = origin + distanceFromOrigin(z,origin,axisDistance);
+                x = origin + distanceFromOrigin(x,origin,newDistance);
+                y = origin + distanceFromOrigin(y,origin,newDistance);
+                z = origin + distanceFromOrigin(z,origin,newDistance);
             }
         }
         public float length(Vector3 vectorDirections){
@@ -329,7 +324,7 @@ public class SourceCode:MonoBehaviour {
             this.unityAxis = unityAxis;
         }
         void init(){
-            globalAxis = new Axis(this,new Vector3(0,0,0),1);
+            globalAxis = new Axis(new Vector3(0,0,0));
             bodyStructure = null;
             editor = new Editor(this);
             editor.initilizeBody();
@@ -414,7 +409,7 @@ public class SourceCode:MonoBehaviour {
         public bool active = true, used = false;
         public int indexInBody;
         public Joint current;
-        public List<Joint> past; 
+        public List<Joint> past;
         public List<Joint> future;
 
         public Connection(){}
@@ -477,6 +472,7 @@ public class SourceCode:MonoBehaviour {
             }
         }
     }
+
     public class UnityAxis{
         public Joint joint;
         public Vector3 origin;
@@ -493,12 +489,14 @@ public class SourceCode:MonoBehaviour {
             joint.moveJoint(move);
             joint.localAxis.alignRotationTo(joint.unityAxis.quat, out _, out _, out Vector4 quat);
             joint.rotateJoint(quat);
+            joint.localAxis.quat = quat;
             Vector3 jointOrigin = joint.localAxis.origin;
             Vector3 globalOrigin = joint.body.globalAxis.origin;
             joint.fromGlobalAxis.distance = joint.body.globalAxis.length(jointOrigin-globalOrigin);
-            joint.fromGlobalAxis.get(jointOrigin);
+            joint.fromGlobalAxis.get(joint.localAxis,jointOrigin);
         }
     }
+
     public class Joint {
         public Body body;
         public Axis localAxis;
@@ -520,7 +518,7 @@ public class SourceCode:MonoBehaviour {
             this.body = body;
             this.jointNameString = jointNameString;
             pointCloud = new PointCloud(this,pointCloudSize);
-            localAxis = new Axis(body,new Vector3(0,0,0),1);
+            localAxis = new Axis(new Vector3(0,0,0));
             connection = new Connection(this,indexInBody);
             fromGlobalAxis = new AroundAxis(body.globalAxis,localAxis.origin);
         }
@@ -580,32 +578,68 @@ public class SourceCode:MonoBehaviour {
             meshRenderer.material = Resources.Load<Material>("unlitMaterial");
         }
         public void drawMesh(){
-            mesh.vertices = pointCloud.vertexes;
-            mesh.triangles = pointCloud.triangles;
-            mesh.colors = pointCloud.colors;
+            mesh.vertices = pointCloud.pointCloudData.vertexes;
+            mesh.triangles = pointCloud.pointCloudData.triangles;
+            mesh.colors = pointCloud.pointCloudData.colors;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             mesh.UploadMeshData(false);
         }
     }
-    public class PointCloud {
-        public Joint joint;
+    public struct BakedMeshIndex{
+        public int indexInBakedMesh;
+        public int indexInVertex;
+        public BakedMeshIndex(int indexInBakedMesh,int indexInVertex){
+            this.indexInBakedMesh = indexInBakedMesh;
+            this.indexInVertex = indexInVertex;
+        }
+    }
+
+    [Serializable]
+    public class SaveBody {
+        Axis globalAxis;
+        SaveJoint[] saveJoints;
+    }
+    [Serializable]
+    public class SaveConnection{
+        int current;
+        int[] past;
+        int[] future;
+    }
+    [Serializable]
+    public class SaveJoint{
+        AroundAxis jointAroundGlobalAxis;
+        Axis localAxis;
+        SaveConnection saveConnection;
+        SavePointCloudData pointCloudData;
+    }
+
+    public class SavePointCloudData{
         public AroundAxis[] aroundAxis;
         public BakedMeshIndex[] bakedMeshIndex;
         public Vector3[] vertexes;
         public Color[] colors;
         public int[] triangles;
+
+        public SavePointCloudData(){}
+        public SavePointCloudData(int size){
+            aroundAxis = new AroundAxis[size];
+            bakedMeshIndex = new BakedMeshIndex[size];
+            vertexes = new Vector3[size];
+            colors = new Color[size];
+            triangles = new int[0];
+        }
+    }
+    public class PointCloud {
+        public Joint joint;
+        public SavePointCloudData pointCloudData;
         public RenderPointCloud renderPointCloud;
 
         StringBuilder sb = new StringBuilder();
         public PointCloud(){}
         public PointCloud(Joint joint, int size){
             this.joint = joint;
-            aroundAxis = new AroundAxis[size];
-            bakedMeshIndex = new BakedMeshIndex[size];
-            vertexes = new Vector3[size];
-            colors = new Color[size];
-            triangles = new int[0];
+            pointCloudData = new SavePointCloudData(size);
             renderPointCloud = new RenderPointCloud(this,joint.jointNameString);
         }
 
@@ -615,22 +649,22 @@ public class SourceCode:MonoBehaviour {
             saveTriangles(writer,stringPath, chunkSize);
         }
         void savePointCloudPositions(StreamWriter writer, string stringPath, int chunkSize){
-            writer.Write($"{stringPath},{pointCloudSphereDatas},{vertexes.Length},11");
-            if (vertexes.Length>0) {
+            writer.Write($"{stringPath},{pointCloudSphereDatas},{pointCloudData.vertexes.Length},11");
+            if (pointCloudData.vertexes.Length>0) {
                 writer.Write(","); 
                 int offset = 0;
-                while (offset < vertexes.Length){
-                    int elementsToWrite = Math.Min(vertexes.Length-offset, chunkSize);
+                while (offset < pointCloudData.vertexes.Length){
+                    int elementsToWrite = Math.Min(pointCloudData.vertexes.Length-offset, chunkSize);
                     for (int i = 0; i < elementsToWrite; i+=1){
-                        AroundAxis aroundAxis = this.aroundAxis[i];
+                        AroundAxis aroundAxis = pointCloudData.aroundAxis[i];
                         if (aroundAxis != null) {
-                            Vector3 vec = vertexes[i];
-                            Color col = colors[i];
+                            Vector3 vec = pointCloudData.vertexes[i];
+                            Color col = pointCloudData.colors[i];
                             sb.Append($"{i},{vec.x},{vec.y},{vec.z},{aroundAxis.distance},{aroundAxis.angleY},{aroundAxis.angleX},{col.r},{col.g},{col.b},{col.a},");
                         }
                     }
                     offset += elementsToWrite;
-                    if (offset == vertexes.Length) {
+                    if (offset == pointCloudData.vertexes.Length) {
                         sb.Remove(sb.Length - 1, 1);
                         sb.Append(Environment.NewLine);
                         };
@@ -640,23 +674,23 @@ public class SourceCode:MonoBehaviour {
             } else writer.WriteLine("");
         }
         void saveTriangles(StreamWriter writer, string stringPath, int chunkSize){
-            if (triangles.Length>3){
-                writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length/3},3,");
+            if (pointCloudData.triangles.Length>3){
+                writer.Write($"{stringPath},{trianglesInPointCloud},{pointCloudData.triangles.Length/3},3,");
                 int offset = 0;
-                while (offset < triangles.Length){
-                    int elementsToWrite = Math.Min(triangles.Length-offset, chunkSize);
+                while (offset < pointCloudData.triangles.Length){
+                    int elementsToWrite = Math.Min(pointCloudData.triangles.Length-offset, chunkSize);
                     elementsToWrite = elementsToWrite / 3 * 3;
                     for (int i = 0; i < elementsToWrite; i+=3){
-                        int index1 = triangles[offset + i];
-                        int index2 = triangles[offset + i + 1];
-                        int index3 = triangles[offset + i + 2];
-                        bool check = index1<triangles.Length && index2<triangles.Length && index3<triangles.Length;
+                        int index1 = pointCloudData.triangles[offset + i];
+                        int index2 = pointCloudData.triangles[offset + i + 1];
+                        int index3 = pointCloudData.triangles[offset + i + 2];
+                        bool check = index1<pointCloudData.triangles.Length && index2<pointCloudData.triangles.Length && index3<pointCloudData.triangles.Length;
                         if (check) {
                             sb.Append($"{index1},{index2},{index3},");
                         };
                     }
                     offset += elementsToWrite;
-                    if (offset == triangles.Length) {
+                    if (offset == pointCloudData.triangles.Length) {
                         sb.Remove(sb.Length - 1, 1);
                         sb.Append(Environment.NewLine);
                     };
@@ -664,18 +698,18 @@ public class SourceCode:MonoBehaviour {
                     sb.Clear();
                 }
             } else {
-                writer.Write($"{stringPath},{trianglesInPointCloud},{triangles.Length},3{Environment.NewLine}");
+                writer.Write($"{stringPath},{trianglesInPointCloud},{pointCloudData.triangles.Length},3{Environment.NewLine}");
             }
         }
         public void saveBakedMeshes(StreamWriter writer){
             string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
-            writer.Write($"{stringPath},{bakedMeshIndex},2,{vertexes.Length/2},");
-            if (vertexes != null){
-                for (int i = 0;i<vertexes.Length;i++){
-                    AroundAxis aroundAxis = this.aroundAxis[i];
+            writer.Write($"{stringPath},{bakedMeshIndex},2,{pointCloudData.vertexes.Length/2},");
+            if (pointCloudData.vertexes != null){
+                for (int i = 0;i<pointCloudData.vertexes.Length;i++){
+                    AroundAxis aroundAxis = pointCloudData.aroundAxis[i];
                     if (aroundAxis != null) {
-                        BakedMeshIndex bakedMeshIndex = this.bakedMeshIndex[i];
-                        string str = (i+1 != vertexes.Length)? 
+                        BakedMeshIndex bakedMeshIndex = pointCloudData.bakedMeshIndex[i];
+                        string str = (i+1 != pointCloudData.vertexes.Length)? 
                             $"{bakedMeshIndex.indexInBakedMesh},{bakedMeshIndex.indexInVertex},":
                             $"{bakedMeshIndex.indexInBakedMesh},{bakedMeshIndex.indexInVertex}{Environment.NewLine}";
                         writer.Write(str);
@@ -684,40 +718,40 @@ public class SourceCode:MonoBehaviour {
             }
         }
         public void rotateAllSpheres(Vector4 quat, Vector3 rotationOrigin){
-            for (int i = 0; i<vertexes.Length; i++){
-                AroundAxis aroundAxis = this.aroundAxis[i];
-                if (aroundAxis != null) vertexes[i] = joint.localAxis.quatRotate(vertexes[i],rotationOrigin,quat);
+            for (int i = 0; i<pointCloudData.vertexes.Length; i++){
+                AroundAxis aroundAxis = pointCloudData.aroundAxis[i];
+                if (aroundAxis != null) pointCloudData.vertexes[i] = joint.localAxis.quatRotate(pointCloudData.vertexes[i],rotationOrigin,quat);
             }
         }
         public void moveSpheres(Vector3 add){
-            for (int i = 0; i<vertexes.Length; i++){
-                AroundAxis aroundAxis = this.aroundAxis[i];
-                if (aroundAxis != null) vertexes[i] += add;
+            for (int i = 0; i<pointCloudData.vertexes.Length; i++){
+                AroundAxis aroundAxis = pointCloudData.aroundAxis[i];
+                if (aroundAxis != null) pointCloudData.vertexes[i] += add;
             }
         }
         public void updatePhysics(){
-            for (int i = 0;i<vertexes.Length; i++){
+            for (int i = 0;i<pointCloudData.vertexes.Length; i++){
                 setPoint(i);
             }
         }
         public void setPoint(int index){
-            AroundAxis aroundAxis = this.aroundAxis[index]; 
+            AroundAxis aroundAxis = pointCloudData.aroundAxis[index]; 
             if (aroundAxis != null){
-                VertexVisualizer.BakedMesh bakedMesh = aroundAxis.axis.body.bakedMeshes[bakedMeshIndex[index].indexInBakedMesh];
-                Axis axis = aroundAxis.axis;
-                Color col = bakedMesh.colors[bakedMeshIndex[index].indexInVertex];
-                Vector3 point = axis.body.globalAxis.origin+bakedMesh.vertices[bakedMeshIndex[index].indexInVertex];
-                vertexes[index] = point;
-                colors[index] = col;
-                aroundAxis.distance = aroundAxis.axis.length(point - axis.origin);
-                aroundAxis.getPointAroundAxis(point, out float angleY,out float angleX);
+                VertexVisualizer.BakedMesh bakedMesh = joint.body.bakedMeshes[pointCloudData.bakedMeshIndex[index].indexInBakedMesh];
+                Axis axis = joint.localAxis;
+                Color col = bakedMesh.colors[pointCloudData.bakedMeshIndex[index].indexInVertex];
+                Vector3 point = joint.body.globalAxis.origin+bakedMesh.vertices[pointCloudData.bakedMeshIndex[index].indexInVertex];
+                pointCloudData.vertexes[index] = point;
+                pointCloudData.colors[index] = col;
+                aroundAxis.distance = joint.localAxis.length(point - axis.origin);
+                aroundAxis.getPointAroundAxis(joint.localAxis,point, out float angleY,out float angleX);
                 aroundAxis.angleY = angleY;
                 aroundAxis.angleX = angleX;
             }
         }
         public Vector3 getPoint(int index){
-            VertexVisualizer.BakedMesh bakedMesh = joint.body.bakedMeshes[bakedMeshIndex[index].indexInBakedMesh];
-            return joint.body.globalAxis.origin+bakedMesh.vertices[bakedMeshIndex[index].indexInVertex];
+            VertexVisualizer.BakedMesh bakedMesh = joint.body.bakedMeshes[pointCloudData.bakedMeshIndex[index].indexInBakedMesh];
+            return joint.body.globalAxis.origin+bakedMesh.vertices[pointCloudData.bakedMeshIndex[index].indexInVertex];
         }
         
         private static Vector3 ComputeCentroid(List<Vector3> vertices){
@@ -750,21 +784,10 @@ public class SourceCode:MonoBehaviour {
         // Scale the vertices to fit within a unit sphere
         private static List<Vector3> ScaleVertices(List<Vector3> centeredVertices, float scale){
             List<Vector3> scaledVertices = new List<Vector3>();
-            foreach (Vector3 vertex in centeredVertices)
-            {
+            foreach (Vector3 vertex in centeredVertices){
                 scaledVertices.Add(vertex / scale);
             }
             return scaledVertices;
-        }
-
-    }
-
-    public struct BakedMeshIndex{
-        public int indexInBakedMesh;
-        public int indexInVertex;
-        public BakedMeshIndex(int indexInBakedMesh,int indexInVertex){
-            this.indexInBakedMesh = indexInBakedMesh;
-            this.indexInVertex = indexInVertex;
         }
     }
 
@@ -864,6 +887,34 @@ public class Editor {
                 if (str != "") list.Add(str);
             }
         }
+        void strt(){
+            // Create data
+            PlayerData player = new PlayerData();
+            player.playerName = "Hero";
+            player.playerLevel = 10;
+            player.playerHealth = 100.0f;
+            player.isAlive = true;
+
+            // Serialize to JSON
+            string json = JsonUtility.ToJson(player);
+            Debug.Log("JSON: " + json);
+
+            // Save JSON to file
+            string filePath = Path.Combine(Application.persistentDataPath, "playerData.json");
+            File.WriteAllText(filePath, json);
+            Debug.Log("JSON saved to: " + filePath);
+
+            // Deserialize JSON
+            PlayerData loadedPlayer = JsonUtility.FromJson<PlayerData>(json);
+            Debug.Log("Loaded Player Name: " + loadedPlayer.playerName);
+        }
     }
+    public class PlayerData
+{
+    public string playerName;
+    public int playerLevel;
+    public float playerHealth;
+    public bool isAlive;
+}
 
 }

@@ -51,5 +51,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Museum of Questions.sln"
+    "dotnet.defaultSolution": "Museum-of-Questions.sln"
 }

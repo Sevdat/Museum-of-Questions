@@ -1,0 +1,24 @@
+#pragma kernel RotateVertices
+
+// Read-write buffer for vertex positions
+RWStructuredBuffer<float3> Vertices;
+
+// Rotation parameters
+float Angle;
+
+[numthreads(64, 1, 1)]
+void RotateVertices(uint3 id : SV_DispatchThreadID)
+{
+    float3 vertex = Vertices[id.x];
+
+    // Rotate around the Y-axis
+    float cosA = cos(Angle);
+    float sinA = sin(Angle);
+
+    float3 rotatedVertex;
+    rotatedVertex.x = cosA * vertex.x - sinA * vertex.z;
+    rotatedVertex.y = vertex.y;
+    rotatedVertex.z = sinA * vertex.x + cosA * vertex.z;
+
+    Vertices[id.x] = rotatedVertex;
+}
