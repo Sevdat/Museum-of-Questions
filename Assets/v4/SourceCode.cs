@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class SourceCode:MonoBehaviour {
 
@@ -311,7 +312,7 @@ public class SourceCode:MonoBehaviour {
         public string amountOfDigits; 
         public int asyncDelay, time;
         public UnityAxis unityAxis;
-        StringBuilder sb = new StringBuilder();
+        public SaveBody saveBody;
 
         public Body(){}
         public Body(int worldKey){
@@ -331,6 +332,7 @@ public class SourceCode:MonoBehaviour {
             amountOfDigits = "0.000000";
             asyncDelay = 20;
             time = 0;
+            saveBody = new SaveBody(this);
         }
 
         public void newCountStart(int timerStart){
@@ -351,49 +353,6 @@ public class SourceCode:MonoBehaviour {
         public string accuracyAmount(float num){
             return num.ToString(amountOfDigits);
         }
-        public void saveBodyStructure(StreamWriter writer, bool radianOrAngle,int chunkSize){
-            string stringPath = $"{bodyDepth},{worldKey}";
-            saveTimeStamp(writer,stringPath);
-            saveJointsInBody(writer,radianOrAngle,stringPath,chunkSize);
-        }
-        public void saveTimeStamp(StreamWriter writer,string stringPath){
-            string str = $"{stringPath},{timeStamp},1,1,{time}{Environment.NewLine}";
-            writer.Write(str);
-            time++;
-        }
-        void saveJointsInBody(StreamWriter writer, bool radianOrAngle, string stringPath, int chunkSize){
-            float convert = radianOrAngle? 180f/Mathf.PI:1;
-            writer.Write($"{stringPath},{jointData},{bodyStructure.Length},11");
-            if (bodyStructure.Length>0) {
-                writer.Write(",");
-                int offset = 0;
-                while (offset < bodyStructure.Length){
-                    int elementsToWrite = Math.Min(bodyStructure.Length-offset, chunkSize);
-                    for (int i = 0; i < elementsToWrite; i+=1){
-                        Joint joint = bodyStructure[i];
-                        if (joint != null) {
-                            Vector4 quat = joint.localAxis.getQuat();
-                            sb.Append($"{i},{accuracyAmount(joint.localAxis.origin.x)},{accuracyAmount(joint.localAxis.origin.y)},{accuracyAmount(joint.localAxis.origin.z)},{accuracyAmount(joint.fromGlobalAxis.distance)},{accuracyAmount(joint.fromGlobalAxis.angleY*convert)},{accuracyAmount(joint.fromGlobalAxis.angleX*convert)},{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)},");
-                        }
-                    }
-                    offset += elementsToWrite;
-                    if (offset == bodyStructure.Length) {
-                        sb.Remove(sb.Length - 1, 1);
-                        sb.Append(Environment.NewLine);
-                    };
-                    writer.WriteLine(sb.ToString());
-                    sb.Clear();
-                }
-            } else writer.WriteLine("");
-        }
-        public void saveBodyPosition(StreamWriter writer, bool radianOrDegree){
-            Vector3 globalOrigin = globalAxis.origin;
-            Vector4 quat = globalAxis.getQuat();
-            string stringPath = $"{bodyDepth},{worldKey}";
-            writer.Write(
-                $"{stringPath},{globalData},1,8,{accuracyAmount(globalOrigin.x)},{accuracyAmount(globalOrigin.y)},{accuracyAmount(globalOrigin.z)}{accuracyAmount(quat.x)},{accuracyAmount(quat.y)},{accuracyAmount(quat.z)},{accuracyAmount(quat.w)},{radianOrDegree}{Environment.NewLine}"
-            );
-        }
 
         public void updatePhysics(){
             if (unityAxis != null){          
@@ -401,7 +360,8 @@ public class SourceCode:MonoBehaviour {
             }
             for(int i = 0;i< bodyStructure.Length; i++){
                 bodyStructure[i]?.updatePhysics();
-            }     
+            }
+            saveBody.save(this);     
         }
     }
 
@@ -411,6 +371,7 @@ public class SourceCode:MonoBehaviour {
         public Joint current;
         public List<Joint> past;
         public List<Joint> future;
+        public SaveConnection saveConnection;
 
         public Connection(){}
         public Connection(Joint joint, int indexInBody){
@@ -450,26 +411,19 @@ public class SourceCode:MonoBehaviour {
             future.Add(joint);
             connectTo.Add(current);
         }
-
-        public void savePastConnections(StreamWriter writer, string stringPath){
-            writer.Write($"{stringPath},{pastConnectionsInBody},{past.Count},1");
-            if (past.Count>0) writer.Write(",");
-            for (int i = 0; i<past.Count;i++){
-                string str = (i+1 != past.Count)? 
-                    $"{past[i].connection.indexInBody},":
-                    $"{past[i].connection.indexInBody}";
-                writer.Write(str);
+        public int[] futureConnections(){
+            int[] future = new int[this.future.Count];
+            for (int i = 0; i<future.Length;i++){
+                future[i] = this.future[i].connection.indexInBody;
             }
+            return future;
         }
-        public void saveFutureConnections(StreamWriter writer, string stringPath){
-            writer.Write($"{stringPath},{futureConnectionsInBody},{future.Count},1");
-            if (future.Count>0) writer.Write(",");
-            for (int i = 0; i<future.Count;i++){
-                string str = (i+1 != future.Count)? 
-                    $"{future[i].connection.indexInBody},":
-                    $"{future[i].connection.indexInBody}";
-                writer.Write(str);
+        public int[] pastConnections(){
+            int[] past = new int[this.past.Count];
+            for (int i = 0; i<past.Length;i++){
+                past[i] = this.past[i].connection.indexInBody;
             }
+            return past;
         }
     }
 
@@ -505,6 +459,8 @@ public class SourceCode:MonoBehaviour {
         public PointCloud pointCloud;
         public UnityAxis unityAxis;
         public string jointNameString;
+        public SaveJoint saveJoint;
+
         public Joint(){}
         public Joint(Body body, int indexInBody){
             init(body, indexInBody, 0, "");
@@ -521,18 +477,9 @@ public class SourceCode:MonoBehaviour {
             localAxis = new Axis(new Vector3(0,0,0));
             connection = new Connection(this,indexInBody);
             fromGlobalAxis = new AroundAxis(body.globalAxis,localAxis.origin);
+            saveJoint = new SaveJoint(this);
         }
 
-        public void saveJointPosition(StreamWriter writer){
-            string stringPath = $"{jointDepth},{body.worldKey},{connection.indexInBody}";
-            writer.Write(
-                $"{stringPath},{jointName},{jointNameString.Length},1,{jointNameString}{Environment.NewLine}"
-            );
-            connection.savePastConnections(writer,stringPath);
-            writer.WriteLine("");
-            connection.saveFutureConnections(writer,stringPath);
-            writer.WriteLine("");
-        }
 
         public void deleteJoint(){
             connection.disconnectAllFuture();
@@ -548,7 +495,7 @@ public class SourceCode:MonoBehaviour {
         }
 
         public void moveJoint(Vector3 add){
-            localAxis.moveAxis(add);
+            localAxis.moveAxis(add); 
             if (pointCloud != null) pointCloud.moveSpheres(add);
         }
         public void rotateJoint(Vector4 quat){
@@ -586,6 +533,7 @@ public class SourceCode:MonoBehaviour {
             mesh.UploadMeshData(false);
         }
     }
+    [Serializable]
     public struct BakedMeshIndex{
         public int indexInBakedMesh;
         public int indexInVertex;
@@ -596,24 +544,96 @@ public class SourceCode:MonoBehaviour {
     }
 
     [Serializable]
+    public class SaveMeshData{
+        public List<VertexVisualizer.MeshData> bakedMeshVectors;
+
+        public SaveMeshData(){}
+        public SaveMeshData(Body body){
+            body.saveBody.saveMeshData = this;
+            bakedMeshVectors = new List<VertexVisualizer.MeshData>();
+        }
+
+        public void save(Body body){
+            if (bakedMeshVectors.Count != body.bakedMeshes.Count){
+                bakedMeshVectors = new List<VertexVisualizer.MeshData>();
+                foreach (VertexVisualizer.BakedMesh bakedMesh in body.bakedMeshes){
+                    bakedMeshVectors.Add(bakedMesh.meshData);
+                }
+            } else {
+                foreach (VertexVisualizer.BakedMesh bakedMesh in body.bakedMeshes){
+                    bakedMeshVectors.Add(bakedMesh.meshData);
+                }  
+            }
+        }
+    }
+    [Serializable]
     public class SaveBody {
-        Axis globalAxis;
-        SaveJoint[] saveJoints;
+        public SaveMeshData saveMeshData;
+        public Axis globalAxis;
+        public SaveJoint[] saveJoints;
+
+        public SaveBody(){}
+        public SaveBody(Body body){
+            body.saveBody = this;
+            saveMeshData = new SaveMeshData(body);
+            globalAxis = body.globalAxis;
+            saveJoints = new SaveJoint[0];
+        }
+        public void save(Body body){
+            saveMeshData.save(body);
+            if (saveJoints.Length != body.bodyStructure.Length) saveJoints =  new SaveJoint[body.bodyStructure.Length];
+            for (int i = 0; i< saveJoints.Length;i++){
+                saveJoints[i] = body.bodyStructure[i].saveJoint;
+                saveJoints[i].save(body.bodyStructure[i]);
+            }
+        }
     }
     [Serializable]
     public class SaveConnection{
-        int current;
-        int[] past;
-        int[] future;
+        public int current;
+        public int[] past;
+        public int[] future;
+
+        public SaveConnection(){}
+        public SaveConnection(Joint joint){
+            Connection connection = joint.connection;
+            current = connection.indexInBody;
+            past = new int[connection.past.Count];
+            future = new int[connection.future.Count];
+            joint.saveJoint.saveConnection = this; 
+        }
+        
+        public void save(Connection connection){
+            current = connection.indexInBody;
+            past = connection.pastConnections();
+            future = connection.futureConnections();
+        }
     }
     [Serializable]
     public class SaveJoint{
-        AroundAxis jointAroundGlobalAxis;
-        Axis localAxis;
-        SaveConnection saveConnection;
-        SavePointCloudData pointCloudData;
+        public string name;
+        public AroundAxis jointAroundGlobalAxis;
+        public Axis localAxis;
+        public SaveConnection saveConnection;
+        public SavePointCloudData pointCloudData;
+
+        public SaveJoint(){}
+        public SaveJoint(Joint joint){
+            joint.saveJoint = this;
+            name = joint.jointNameString;
+            jointAroundGlobalAxis = joint.fromGlobalAxis;
+            localAxis = joint.localAxis;
+            saveConnection = new SaveConnection(joint);
+        }
+
+        public void save(Joint joint){
+            name = joint.jointNameString;
+            saveConnection.save(joint.connection);
+            pointCloudData = joint.pointCloud.pointCloudData;
+        }
     }
 
+    [Serializable]
     public class SavePointCloudData{
         public AroundAxis[] aroundAxis;
         public BakedMeshIndex[] bakedMeshIndex;
@@ -635,7 +655,6 @@ public class SourceCode:MonoBehaviour {
         public SavePointCloudData pointCloudData;
         public RenderPointCloud renderPointCloud;
 
-        StringBuilder sb = new StringBuilder();
         public PointCloud(){}
         public PointCloud(Joint joint, int size){
             this.joint = joint;
@@ -643,80 +662,6 @@ public class SourceCode:MonoBehaviour {
             renderPointCloud = new RenderPointCloud(this,joint.jointNameString);
         }
 
-        public void savePointCloud(StreamWriter writer,int chunkSize){
-            string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
-            savePointCloudPositions(writer,stringPath,chunkSize);
-            saveTriangles(writer,stringPath, chunkSize);
-        }
-        void savePointCloudPositions(StreamWriter writer, string stringPath, int chunkSize){
-            writer.Write($"{stringPath},{pointCloudSphereDatas},{pointCloudData.vertexes.Length},11");
-            if (pointCloudData.vertexes.Length>0) {
-                writer.Write(","); 
-                int offset = 0;
-                while (offset < pointCloudData.vertexes.Length){
-                    int elementsToWrite = Math.Min(pointCloudData.vertexes.Length-offset, chunkSize);
-                    for (int i = 0; i < elementsToWrite; i+=1){
-                        AroundAxis aroundAxis = pointCloudData.aroundAxis[i];
-                        if (aroundAxis != null) {
-                            Vector3 vec = pointCloudData.vertexes[i];
-                            Color col = pointCloudData.colors[i];
-                            sb.Append($"{i},{vec.x},{vec.y},{vec.z},{aroundAxis.distance},{aroundAxis.angleY},{aroundAxis.angleX},{col.r},{col.g},{col.b},{col.a},");
-                        }
-                    }
-                    offset += elementsToWrite;
-                    if (offset == pointCloudData.vertexes.Length) {
-                        sb.Remove(sb.Length - 1, 1);
-                        sb.Append(Environment.NewLine);
-                        };
-                    writer.Write(sb.ToString());
-                    sb.Clear();
-                }        
-            } else writer.WriteLine("");
-        }
-        void saveTriangles(StreamWriter writer, string stringPath, int chunkSize){
-            if (pointCloudData.triangles.Length>3){
-                writer.Write($"{stringPath},{trianglesInPointCloud},{pointCloudData.triangles.Length/3},3,");
-                int offset = 0;
-                while (offset < pointCloudData.triangles.Length){
-                    int elementsToWrite = Math.Min(pointCloudData.triangles.Length-offset, chunkSize);
-                    elementsToWrite = elementsToWrite / 3 * 3;
-                    for (int i = 0; i < elementsToWrite; i+=3){
-                        int index1 = pointCloudData.triangles[offset + i];
-                        int index2 = pointCloudData.triangles[offset + i + 1];
-                        int index3 = pointCloudData.triangles[offset + i + 2];
-                        bool check = index1<pointCloudData.triangles.Length && index2<pointCloudData.triangles.Length && index3<pointCloudData.triangles.Length;
-                        if (check) {
-                            sb.Append($"{index1},{index2},{index3},");
-                        };
-                    }
-                    offset += elementsToWrite;
-                    if (offset == pointCloudData.triangles.Length) {
-                        sb.Remove(sb.Length - 1, 1);
-                        sb.Append(Environment.NewLine);
-                    };
-                    writer.Write(sb.ToString());
-                    sb.Clear();
-                }
-            } else {
-                writer.Write($"{stringPath},{trianglesInPointCloud},{pointCloudData.triangles.Length},3{Environment.NewLine}");
-            }
-        }
-        public void saveBakedMeshes(StreamWriter writer){
-            string stringPath = $"{jointDepth},{joint.body.worldKey},{joint.connection.indexInBody}";
-            writer.Write($"{stringPath},{bakedMeshIndex},2,{pointCloudData.vertexes.Length/2},");
-            if (pointCloudData.vertexes != null){
-                for (int i = 0;i<pointCloudData.vertexes.Length;i++){
-                    AroundAxis aroundAxis = pointCloudData.aroundAxis[i];
-                    if (aroundAxis != null) {
-                        BakedMeshIndex bakedMeshIndex = pointCloudData.bakedMeshIndex[i];
-                        string str = (i+1 != pointCloudData.vertexes.Length)? 
-                            $"{bakedMeshIndex.indexInBakedMesh},{bakedMeshIndex.indexInVertex},":
-                            $"{bakedMeshIndex.indexInBakedMesh},{bakedMeshIndex.indexInVertex}{Environment.NewLine}";
-                        writer.Write(str);
-                    }
-                }
-            }
-        }
         public void rotateAllSpheres(Vector4 quat, Vector3 rotationOrigin){
             for (int i = 0; i<pointCloudData.vertexes.Length; i++){
                 AroundAxis aroundAxis = pointCloudData.aroundAxis[i];
@@ -739,8 +684,8 @@ public class SourceCode:MonoBehaviour {
             if (aroundAxis != null){
                 VertexVisualizer.BakedMesh bakedMesh = joint.body.bakedMeshes[pointCloudData.bakedMeshIndex[index].indexInBakedMesh];
                 Axis axis = joint.localAxis;
-                Color col = bakedMesh.colors[pointCloudData.bakedMeshIndex[index].indexInVertex];
-                Vector3 point = joint.body.globalAxis.origin+bakedMesh.vertices[pointCloudData.bakedMeshIndex[index].indexInVertex];
+                Color col = bakedMesh.meshData.colors[pointCloudData.bakedMeshIndex[index].indexInVertex];
+                Vector3 point = joint.body.globalAxis.origin+bakedMesh.meshData.vertices[pointCloudData.bakedMeshIndex[index].indexInVertex];
                 pointCloudData.vertexes[index] = point;
                 pointCloudData.colors[index] = col;
                 aroundAxis.distance = joint.localAxis.length(point - axis.origin);
@@ -751,7 +696,7 @@ public class SourceCode:MonoBehaviour {
         }
         public Vector3 getPoint(int index){
             VertexVisualizer.BakedMesh bakedMesh = joint.body.bakedMeshes[pointCloudData.bakedMeshIndex[index].indexInBakedMesh];
-            return joint.body.globalAxis.origin+bakedMesh.vertices[pointCloudData.bakedMeshIndex[index].indexInVertex];
+            return joint.body.globalAxis.origin+bakedMesh.meshData.vertices[pointCloudData.bakedMeshIndex[index].indexInVertex];
         }
         
         private static Vector3 ComputeCentroid(List<Vector3> vertices){
@@ -790,19 +735,6 @@ public class SourceCode:MonoBehaviour {
             return scaledVertices;
         }
     }
-
-    const string bodyDepth = "2",
-        jointData = "JointData",
-        globalData = "GlobalData",
-        timeStamp = "TimeStamp";
-
-    const string jointDepth = "3",
-        jointName = "JointName",
-        pastConnectionsInBody = "PastConnectionsInBody",
-        futureConnectionsInBody = "FutureConnectionsInBody",
-        bakedMeshIndex = "BakedMeshIndex",
-        pointCloudSphereDatas = "PointCloudSphereDatas",
-        trianglesInPointCloud = "TrianglesInPointCloud";
 
 public class Editor {
         internal bool radianOrDegree = false;
@@ -843,17 +775,14 @@ public class Editor {
         }
         void write(StreamWriter writetext){
             body.updatePhysics();
-            body.saveBodyStructure(writetext,radianOrDegree,chunkSize);
-            int size = body.bodyStructure.Length;
-            for (int i = 0; i<size; i++){
-                Joint joint = body.bodyStructure[i];
-                if (joint != null){
-                    joint.saveJointPosition(writetext);
-                    joint.pointCloud.savePointCloud(writetext,chunkSize);
-                    writetext.WriteLine("");
-                } 
-            }
-            body.saveBodyPosition(writetext,radianOrDegree);
+            // Serialize to JSON
+            string json = JsonUtility.ToJson(body.saveBody,true);
+            print("JSON: " + json);
+
+            // Save JSON to file
+            string filePath = $"Assets/v4/playerData.json";
+            File.WriteAllText(filePath, json);
+            print("JSON saved to: " + filePath);
         }
         
         internal void writer(){
@@ -865,8 +794,8 @@ public class Editor {
             using (FileStream fs = new FileStream($"{pathToFolder}/VerticesAndTriangles/{count}.txt", FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 65536))
             using (BinaryWriter writer = new BinaryWriter(fs)) {
                 foreach (VertexVisualizer.BakedMesh bakedMesh in body.bakedMeshes){
-                    writer.Write(bakedMesh.vertices.Count);
-                    foreach (Vector3 vec in bakedMesh.vertices) {
+                    writer.Write(bakedMesh.meshData.vertices.Count);
+                    foreach (Vector3 vec in bakedMesh.meshData.vertices) {
                         writer.Write(vec.x);
                         writer.Write(vec.y);
                         writer.Write(vec.z);
@@ -887,34 +816,6 @@ public class Editor {
                 if (str != "") list.Add(str);
             }
         }
-        void strt(){
-            // Create data
-            PlayerData player = new PlayerData();
-            player.playerName = "Hero";
-            player.playerLevel = 10;
-            player.playerHealth = 100.0f;
-            player.isAlive = true;
-
-            // Serialize to JSON
-            string json = JsonUtility.ToJson(player);
-            Debug.Log("JSON: " + json);
-
-            // Save JSON to file
-            string filePath = Path.Combine(Application.persistentDataPath, "playerData.json");
-            File.WriteAllText(filePath, json);
-            Debug.Log("JSON saved to: " + filePath);
-
-            // Deserialize JSON
-            PlayerData loadedPlayer = JsonUtility.FromJson<PlayerData>(json);
-            Debug.Log("Loaded Player Name: " + loadedPlayer.playerName);
-        }
     }
-    public class PlayerData
-{
-    public string playerName;
-    public int playerLevel;
-    public float playerHealth;
-    public bool isAlive;
-}
 
 }

@@ -16,35 +16,45 @@ public class VertexVisualizer : MonoBehaviour
     public static GameObject staticTerminal;
     public SceneBuilder sceneBuilder;
 
+    [Serializable]
+    public class MeshData {
+        public List<Vector3> vertices;
+        public Color[] colors;
+        
+        public MeshData(){}
+        public MeshData(List<Vector3> vertices,Color[] colors){
+            this.vertices = vertices;
+            this.colors = colors;
+        }
+    }
+
     public class BakedMesh {
         internal SkinnedMeshRenderer skinnedMeshRenderer;
         internal Mesh mesh;
         Transform transform;
         Transform[] bones;
         BoneWeight[] boneWeights; 
-        public List<Vector3> vertices;
-        public Color[] colors;
+        public MeshData meshData;
 
         public BakedMesh(SkinnedMeshRenderer skinnedMeshRenderer){
             this.skinnedMeshRenderer=skinnedMeshRenderer;
             mesh = new Mesh();
             skinnedMeshRenderer.BakeMesh(mesh);
-            vertices = mesh.vertices.ToList();
+            meshData = new MeshData(mesh.vertices.ToList(),new Color[mesh.vertices.Length]);
             bones = skinnedMeshRenderer.bones;
             boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
             transform = skinnedMeshRenderer.transform;
-            colors = new Color[vertices.Count];
             calculateFinalColors();
         }
         public void bakeMesh(){
             skinnedMeshRenderer.BakeMesh(mesh);
-            mesh.GetVertices(vertices);
+            mesh.GetVertices(meshData.vertices);
             bones = skinnedMeshRenderer.bones;
             boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
             transform = skinnedMeshRenderer.transform;
         }
         public Vector3 worldPosition(int index){
-            return transform.TransformPoint(vertices[index]);
+            return transform.TransformPoint(meshData.vertices[index]);
         }
         public GameObject getGameObject(int index){
             BoneWeight boneWeight = boneWeights[index];
@@ -66,7 +76,7 @@ public class VertexVisualizer : MonoBehaviour
                         Vector2 uv = uvs[i];
                         finalColor *= mainTexture.GetPixelBilinear(uv.x, uv.y);
                     }
-                    colors[i] = finalColor;
+                    meshData.colors[i] = finalColor;
                 }
             }
         }
@@ -146,7 +156,7 @@ public class VertexVisualizer : MonoBehaviour
         void createMeshAccessForSpheres(List<BakedMesh> bakedMeshes,Dictionary<GameObject,AssembleJoints> dictionary){
             for (int i = 0; i<bakedMeshes.Count; i++){
                 BakedMesh bakedMesh = bakedMeshes[i];
-                for (int j = 0; j < bakedMesh.vertices.Count; j++){
+                for (int j = 0; j < bakedMesh.meshData.vertices.Count; j++){
                     dictionary[bakedMesh.getGameObject(j)].bakedMeshIndex.Add(new BakedMeshIndex(i,j));
                 }
             }
