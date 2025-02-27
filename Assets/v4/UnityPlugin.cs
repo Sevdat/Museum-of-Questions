@@ -344,20 +344,20 @@ public class VertexVisualizer : MonoBehaviour
             return terminal.transform.GetChild(index).GetChild(0).GetChild(0);
         }
     }
-    // Terminal terminal;
-    // void Start(){
-    //     terminal = new Terminal();
+    Terminal terminal;
+    void Start(){
+        terminal = new Terminal();
         
-    //     // print(terminal.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<ItemButton>());
-    //     // string appDataPath = System.Environment.GetEnvironmentVariable("LOCALAPPDATA");
+        // print(terminal.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<ItemButton>());
+        // string appDataPath = System.Environment.GetEnvironmentVariable("LOCALAPPDATA");
         
-    //     // string firefoxPath = System.IO.Path.Combine(appDataPath, @"Mozilla Firefox\firefox.exe");
-    //     // // Path to the Firefox executable
+        // string firefoxPath = System.IO.Path.Combine(appDataPath, @"Mozilla Firefox\firefox.exe");
+        // // Path to the Firefox executable
 
-    //     // // URL or file you want to open
-    //     // string url = "https://www.google.com";
-    //     // Process.Start(firefoxPath, url);
-    // }
+        // // URL or file you want to open
+        // string url = "https://www.google.com";
+        // Process.Start(firefoxPath, url);
+    }
     MultiThread multiThread;
     static ConcurrentQueue<MultiThread> resultQueue = new ConcurrentQueue<MultiThread>();
 
@@ -419,23 +419,23 @@ public class VertexVisualizer : MonoBehaviour
     //     print(DateTime.Now - old);
     // }
 
-    long memoryBefore;
-    void Start() {
-        sceneBuilder = new SceneBuilder(fbx);
-        print(sceneBuilder.body.bodyStructure[3].pointCloud.pointCloudData.triangles.Length);
-        memoryBefore = Process.GetCurrentProcess().WorkingSet64;
-        // strt();
-        // sceneBuilder.body.bakedMeshes = null; 
-    }
-    void LateUpdate() {
-        DateTime old = DateTime.Now;
-        sceneBuilder.updateBodyPositions();
-        sceneBuilder.updateUnityData();
-        sceneBuilder.updateBody();
-        sceneBuilder.drawBody();
-        print(DateTime.Now - old);
-        sceneBuilder.body.editor.writer();
-    }
+    // long memoryBefore;
+    // void Start() {
+    //     sceneBuilder = new SceneBuilder(fbx);
+    //     print(sceneBuilder.body.bodyStructure[3].pointCloud.pointCloudData.triangles.Length);
+    //     memoryBefore = Process.GetCurrentProcess().WorkingSet64;
+    //     // strt();
+    //     // sceneBuilder.body.bakedMeshes = null; 
+    // }
+    // void LateUpdate() {
+    //     DateTime old = DateTime.Now;
+    //     sceneBuilder.updateBodyPositions();
+    //     sceneBuilder.updateUnityData();
+    //     sceneBuilder.updateBody();
+    //     sceneBuilder.drawBody();
+    //     print(DateTime.Now - old);
+    //     sceneBuilder.body.editor.writer();
+    // }
 
     // public class PlayerData {
     //     public string[] playerName;

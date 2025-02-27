@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Rendering;
+using UnityEngine.Rendering; 
 
 public class SourceCode:MonoBehaviour {
 
@@ -523,7 +523,7 @@ public class SourceCode:MonoBehaviour {
             meshFilter.mesh = mesh;
             meshRenderer = processedFBX.AddComponent<MeshRenderer>();
             meshRenderer.material = Resources.Load<Material>("unlitMaterial");
-        }
+        } 
         public void drawMesh(){
             mesh.vertices = pointCloud.pointCloudData.vertexes;
             mesh.triangles = pointCloud.pointCloudData.triangles;
