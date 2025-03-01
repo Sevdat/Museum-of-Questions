@@ -4,14 +4,16 @@ using UnityEngine;
 
 public class AnimateCharacter : MonoBehaviour
 {
+    public GameObject parent;
+    public Rigidbody parentRigidBody;
+    public GameObject fbxModel;
     Animator animator;
-    internal Rigidbody rigidBody;
     internal float velocityZ = 0.0f;
     internal float velocityX = 0.0f;
-    public float acceleration = 2.0f;
-    public float deacceleration = -2.0f;
-    public float maximumWalkVelocity = 0.5f;
-    public float maximumRunVelocity = 2.0f;
+    float acceleration = 10.0f;
+    float deacceleration = -10.0f;
+    float maximumWalkVelocity = 5f;
+    float maximumRunVelocity = 10f;
     public int VelocityZHash;
     public int VelocityXHash;
     internal bool forwardPressed;
@@ -24,7 +26,7 @@ public class AnimateCharacter : MonoBehaviour
         animator = GetComponent<Animator>();
         VelocityZHash = Animator.StringToHash("VelocityZ");
         VelocityXHash = Animator.StringToHash("VelocityX");
-        rigidBody = GetComponent<Rigidbody>();
+        parentRigidBody = parent.GetComponent<Rigidbody>();
     }
 
     // Update is called once per frame
@@ -50,9 +52,11 @@ public class AnimateCharacter : MonoBehaviour
             if (Mathf.Abs(velocityZ) < 0.05f) velocityZ = 0.0f;
         }
 
-        if ((leftPressed || rightPressed)  && velocityX < currentmaxVelocity ){
+        if (rightPressed  && velocityX < currentmaxVelocity){
             velocityX += Time.deltaTime *acceleration;
-            print(velocityX);
+        }
+        if (leftPressed && -velocityX < currentmaxVelocity){
+            velocityX -= Time.deltaTime *acceleration;
         }
         if (!leftPressed && !rightPressed && velocityX != 0.0f){
             velocityX += Mathf.Sign(velocityX)*Time.deltaTime *deacceleration;
@@ -61,6 +65,7 @@ public class AnimateCharacter : MonoBehaviour
 
         animator.SetFloat(VelocityZHash, velocityZ);
         animator.SetFloat(VelocityXHash, velocityX);
+
     }
 
     void FixedUpdate(){
@@ -68,12 +73,13 @@ public class AnimateCharacter : MonoBehaviour
     }
 
 
+
     public void run(){
         if (forwardPressed || backwardPressed || velocityZ != 0.0f) {
-            rigidBody.velocity = rigidBody.transform.forward *velocityZ;
+            parentRigidBody.velocity = fbxModel.transform.forward *velocityZ;
         }
-        if (leftPressed || rightPressed || velocityZ != 0.0f) {
-            rigidBody.velocity = rigidBody.transform.forward *velocityX;
+        if (leftPressed || rightPressed || velocityX != 0.0f) {
+            parentRigidBody.velocity = fbxModel.transform.forward *velocityX;
         }
     }
 

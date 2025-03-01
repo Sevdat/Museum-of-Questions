@@ -1,44 +1,38 @@
-using System.Collections;
-using System.Collections.Generic;
-using Cinemachine;
 using UnityEngine;
 
 public class RotateCharacter : MonoBehaviour
 {
-    public CinemachineVirtualCamera cinemachine; // Reference to the Cinemachine camera
-    public GameObject player; // Reference to the player object
+    public GameObject fbxGameObject; // Reference to the player object
+    Rigidbody fbxRigidBody;
     public float sensitivityX = 5f; // Sensitivity for horizontal mouse movement
     public float sensitivityY = 5f; // Sensitivity for vertical mouse movement
 
     private float mouseX; // Change in mouse position on the X-axis
     private float mouseY; // Change in mouse position on the Y-axis
-    Vector3 angles;
-    float time = 0;
-    Vector3 initialPosition;
-    AnimateCharacter animateCharacter;
+    private Vector3 initialPosition;
+    private AnimateCharacter animateCharacter;
 
     void Start(){
-        initialPosition = transform.position - player.transform.position;
-        animateCharacter = player.GetComponent<AnimateCharacter>();
+        initialPosition = transform.position - fbxGameObject.transform.position;
+        animateCharacter = fbxGameObject.GetComponent<AnimateCharacter>();
+        fbxRigidBody = fbxGameObject.GetComponent<Rigidbody>();
     }
-    void Update(){
+
+    void LateUpdate(){
         // Get mouse input
         mouseX = Input.GetAxis("Mouse X") * sensitivityX;
         mouseY = Input.GetAxis("Mouse Y") * sensitivityY;
 
         // Rotate the camera based on mouse input
         RotateCamera(mouseX, mouseY);
-        // Rotate the player to match the camera's horizontal rotation
-        RotatePlayerWithCamera();
+        transform.position = Vector3.Lerp(transform.position, fbxGameObject.transform.position + initialPosition, Time.deltaTime * 100);
+    }
 
-        transform.position = player.transform.position + initialPosition;
-    }
     void FixedUpdate(){
-        RotatePlayerLeft();
-        RotatePlayerRight();
-        RotatePlayerUp();
-        RotatePlayerDown();
+        // Handle player rotation
+        RotatePlayerWithCamera();
     }
+
     private void RotateCamera(float mouseX, float mouseY){
         // Rotate the camera horizontally (around the y-axis)
         transform.Rotate(-mouseY, mouseX, 0);
@@ -50,7 +44,7 @@ public class RotateCharacter : MonoBehaviour
     }
 
     private void clampCameraY(){
-        angles = transform.eulerAngles;
+        Vector3 angles = transform.eulerAngles;
         //Clamp the Up/Down rotation
         if (angles.x > 180 && angles.x < 275){
             angles.x = 275;
@@ -62,23 +56,19 @@ public class RotateCharacter : MonoBehaviour
     }
 
     private void RotatePlayerWithCamera(){
-        // Set the player's rotation to match the camera's y-axis rotation
-        player.GetComponent<Rigidbody>().MoveRotation(Quaternion.Euler(0, transform.eulerAngles.y, 0));
-    }
-    private void RotatePlayerLeft(){
-        // Set the player's rotation to match the camera's y-axis rotation
-        if (animateCharacter.leftPressed) player.GetComponent<Rigidbody>().MoveRotation(Quaternion.Euler(0, transform.eulerAngles.y -90, 0));
-    }
-    private void RotatePlayerRight(){
-        // Set the player's rotation to match the camera's y-axis rotation
-        if (animateCharacter.rightPressed) player.GetComponent<Rigidbody>().MoveRotation(Quaternion.Euler(0, transform.eulerAngles.y +90, 0));
-    }
-    private void RotatePlayerUp(){
-        // Set the player's rotation to match the camera's y-axis rotation
-        if (animateCharacter.forwardPressed) player.GetComponent<Rigidbody>().MoveRotation(Quaternion.Euler(0, transform.eulerAngles.y, 0));
-    }
-        private void RotatePlayerDown(){
-        // Set the player's rotation to match the camera's y-axis rotation
-        if (animateCharacter.backwardPressed) player.GetComponent<Rigidbody>().MoveRotation(Quaternion.Euler(0, transform.eulerAngles.y+180, 0));
+        float targetYRotation = transform.eulerAngles.y;
+
+        if (animateCharacter.leftPressed) {
+            targetYRotation -= 90;
+        }
+        if (animateCharacter.rightPressed) {
+            targetYRotation += 90;
+        }
+        if (animateCharacter.backwardPressed) {
+            targetYRotation += 180;
+        }
+
+        Quaternion targetRotation = Quaternion.Euler(0, targetYRotation, 0);
+        fbxRigidBody.MoveRotation(Quaternion.Slerp(fbxGameObject.transform.rotation, targetRotation, Time.fixedDeltaTime * 100));
     }
 }
