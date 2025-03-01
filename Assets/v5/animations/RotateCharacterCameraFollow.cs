@@ -58,15 +58,15 @@ public class RotateCharacter : MonoBehaviour
     private void RotatePlayerWithCamera(){
         float targetYRotation = transform.eulerAngles.y;
 
-        if (animateCharacter.leftPressed) {
-            targetYRotation -= 90;
-        }
-        if (animateCharacter.rightPressed) {
-            targetYRotation += 90;
-        }
-        if (animateCharacter.backwardPressed) {
-            targetYRotation += 180;
-        }
+        // if (animateCharacter.leftPressed) {
+        //     targetYRotation -= 90;
+        // }
+        // if (animateCharacter.rightPressed) {
+        //     targetYRotation += 90;
+        // }
+        // if (animateCharacter.backwardPressed) {
+        //     targetYRotation += 180;
+        // }
 
         Quaternion targetRotation = Quaternion.Euler(0, targetYRotation, 0);
         fbxRigidBody.MoveRotation(Quaternion.Slerp(fbxGameObject.transform.rotation, targetRotation, Time.fixedDeltaTime * 100));

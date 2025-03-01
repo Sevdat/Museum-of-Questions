@@ -72,14 +72,12 @@ public class AnimateCharacter : MonoBehaviour
         run();
     }
 
-
-
     public void run(){
         if (forwardPressed || backwardPressed || velocityZ != 0.0f) {
             parentRigidBody.velocity = fbxModel.transform.forward *velocityZ;
         }
         if (leftPressed || rightPressed || velocityX != 0.0f) {
-            parentRigidBody.velocity = fbxModel.transform.forward *velocityX;
+            parentRigidBody.velocity = fbxModel.transform.right *velocityX;
         }
     }
 
