@@ -32,9 +32,25 @@ public class TerminalScript : MonoBehaviour
         Transform getTerminalWindow(int index){
             return terminal.transform.GetChild(index).GetChild(0).GetChild(0);
         }
+        public void destroy(){
+            Destroy(terminal);
+            terminal = null;
+        }
     }
     void Start() {
-        terminal = new Terminal();
+    }
+    bool exist = false;
+    public void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F)){
+            if (exist == false){
+                terminal = new Terminal();
+                exist = true;
+            } else {
+                terminal.destroy();
+                exist = false;
+            }
+        }
     }
 
 }

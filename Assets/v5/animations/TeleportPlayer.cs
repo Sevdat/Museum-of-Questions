@@ -10,7 +10,7 @@ public class TeleportPlayer : MonoBehaviour
         // Ensure portal1 and portal2 are assigned
         if (portal1 == null || portal2 == null)
         {
-            Debug.LogError("Portals are not assigned in the Inspector!");
+            // Debug.LogError("Portals are not assigned in the Inspector!");
             return;
         }
 
@@ -54,12 +54,10 @@ public class TeleportPlayer : MonoBehaviour
     private void TeleportObject(GameObject objectToTeleport, GameObject destinationPortal)
     {
         // Teleport the object to the destination portal's position
-        objectToTeleport.transform.position = destinationPortal.transform.position;
+        objectToTeleport.transform.position = destinationPortal.transform.position + objectToTeleport.transform.forward*2;
 
         // Optional: Adjust rotation to match the destination portal's rotation
         objectToTeleport.transform.rotation = destinationPortal.transform.rotation;
-
-        Debug.Log("Teleported " + objectToTeleport.name + " to " + destinationPortal.name);
     }
 
     private void OnDestroy()

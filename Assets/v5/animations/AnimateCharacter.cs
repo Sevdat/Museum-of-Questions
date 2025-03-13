@@ -5,7 +5,7 @@ using UnityEngine;
 public class AnimateCharacter : MonoBehaviour
 {
     public GameObject parent;
-    public Rigidbody parentRigidBody;
+    public CharacterController parentRigidBody;
     public GameObject fbxModel;
     Animator animator;
     internal float velocityZ = 0.0f;
@@ -26,7 +26,7 @@ public class AnimateCharacter : MonoBehaviour
         animator = GetComponent<Animator>();
         VelocityZHash = Animator.StringToHash("VelocityZ");
         VelocityXHash = Animator.StringToHash("VelocityX");
-        parentRigidBody = parent.GetComponent<Rigidbody>();
+        parentRigidBody = parent.GetComponent<CharacterController>();
     }
 
     // Update is called once per frame
@@ -65,20 +65,41 @@ public class AnimateCharacter : MonoBehaviour
 
         animator.SetFloat(VelocityZHash, velocityZ);
         animator.SetFloat(VelocityXHash, velocityX);
-
-    }
-
-    void FixedUpdate(){
         run();
     }
 
-    public void run(){
-        if (forwardPressed || backwardPressed || velocityZ != 0.0f) {
-            parentRigidBody.velocity = fbxModel.transform.forward *velocityZ;
-        }
-        if (leftPressed || rightPressed || velocityX != 0.0f) {
-            parentRigidBody.velocity = fbxModel.transform.right *velocityX;
-        }
+    void FixedUpdate(){
+        // run();
     }
+
+public void run()
+{
+    // Calculate the combined movement direction
+    Vector3 movementDirection = Vector3.zero;
+    float moveSpeed = 0;
+
+    // Forward/Backward movement
+    if (forwardPressed || backwardPressed || velocityZ != 0.0f)
+    {
+        movementDirection += fbxModel.transform.forward * velocityZ;
+        moveSpeed = Mathf.Abs(velocityZ);
+    }
+
+    // Left/Right movement
+    if (leftPressed || rightPressed || velocityX != 0.0f)
+    {
+        movementDirection += fbxModel.transform.right * velocityX;
+        moveSpeed = (moveSpeed + Mathf.Abs(velocityX))/2;
+    }
+
+    // Normalize the direction to prevent faster diagonal movement
+    if (movementDirection != Vector3.zero)
+    {
+        movementDirection.Normalize();
+    }
+
+    // Apply the velocity to the Rigidbody
+    parentRigidBody.SimpleMove(movementDirection * moveSpeed);
+}
 
 }

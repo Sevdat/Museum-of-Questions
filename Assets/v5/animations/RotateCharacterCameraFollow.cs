@@ -3,7 +3,7 @@ using UnityEngine;
 public class RotateCharacter : MonoBehaviour
 {
     public GameObject fbxGameObject; // Reference to the player object
-    Rigidbody fbxRigidBody;
+    CharacterController fbxRigidBody;
     public float sensitivityX = 5f; // Sensitivity for horizontal mouse movement
     public float sensitivityY = 5f; // Sensitivity for vertical mouse movement
 
@@ -15,7 +15,7 @@ public class RotateCharacter : MonoBehaviour
     void Start(){
         initialPosition = transform.position - fbxGameObject.transform.position;
         animateCharacter = fbxGameObject.GetComponent<AnimateCharacter>();
-        fbxRigidBody = fbxGameObject.GetComponent<Rigidbody>();
+        fbxRigidBody = fbxGameObject.GetComponent<CharacterController>();
     }
 
     void LateUpdate(){
@@ -25,12 +25,13 @@ public class RotateCharacter : MonoBehaviour
 
         // Rotate the camera based on mouse input
         RotateCamera(mouseX, mouseY);
-        transform.position = Vector3.Lerp(transform.position, fbxGameObject.transform.position + initialPosition, Time.deltaTime * 100);
+        transform.position = fbxGameObject.transform.position + initialPosition;
+        RotatePlayerWithCamera();
     }
 
     void FixedUpdate(){
         // Handle player rotation
-        RotatePlayerWithCamera();
+        // RotatePlayerWithCamera();
     }
 
     private void RotateCamera(float mouseX, float mouseY){
@@ -69,6 +70,6 @@ public class RotateCharacter : MonoBehaviour
         // }
 
         Quaternion targetRotation = Quaternion.Euler(0, targetYRotation, 0);
-        fbxRigidBody.MoveRotation(Quaternion.Slerp(fbxGameObject.transform.rotation, targetRotation, Time.fixedDeltaTime * 100));
+        fbxRigidBody.transform.rotation = targetRotation;
     }
 }
