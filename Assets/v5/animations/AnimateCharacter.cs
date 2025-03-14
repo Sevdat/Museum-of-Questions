@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class AnimateCharacter : MonoBehaviour
-{
-    public GameObject parent;
-    public CharacterController parentRigidBody;
-    public GameObject fbxModel;
+{   
+    CharacterController characterController;
     Animator animator;
     internal float velocityZ = 0.0f;
     internal float velocityX = 0.0f;
@@ -14,8 +12,8 @@ public class AnimateCharacter : MonoBehaviour
     float deacceleration = -10.0f;
     float maximumWalkVelocity = 5f;
     float maximumRunVelocity = 10f;
-    public int VelocityZHash;
-    public int VelocityXHash;
+    int VelocityZHash;
+    int VelocityXHash;
     internal bool forwardPressed;
     internal bool backwardPressed;
     internal bool leftPressed;
@@ -26,7 +24,7 @@ public class AnimateCharacter : MonoBehaviour
         animator = GetComponent<Animator>();
         VelocityZHash = Animator.StringToHash("VelocityZ");
         VelocityXHash = Animator.StringToHash("VelocityX");
-        parentRigidBody = parent.GetComponent<CharacterController>();
+        characterController = transform.GetComponent<CharacterController>();
     }
 
     // Update is called once per frame
@@ -79,27 +77,24 @@ public void run()
     float moveSpeed = 0;
 
     // Forward/Backward movement
-    if (forwardPressed || backwardPressed || velocityZ != 0.0f)
-    {
-        movementDirection += fbxModel.transform.forward * velocityZ;
+    if (forwardPressed || backwardPressed || velocityZ != 0.0f){
+        movementDirection += transform.forward * velocityZ;
         moveSpeed = Mathf.Abs(velocityZ);
     }
 
     // Left/Right movement
-    if (leftPressed || rightPressed || velocityX != 0.0f)
-    {
-        movementDirection += fbxModel.transform.right * velocityX;
+    if (leftPressed || rightPressed || velocityX != 0.0f){
+        movementDirection += transform.right * velocityX;
         moveSpeed = (moveSpeed + Mathf.Abs(velocityX))/2;
     }
 
     // Normalize the direction to prevent faster diagonal movement
-    if (movementDirection != Vector3.zero)
-    {
+    if (movementDirection != Vector3.zero){
         movementDirection.Normalize();
     }
 
     // Apply the velocity to the Rigidbody
-    parentRigidBody.SimpleMove(movementDirection * moveSpeed);
+    characterController.SimpleMove(movementDirection * moveSpeed);
 }
 
 }

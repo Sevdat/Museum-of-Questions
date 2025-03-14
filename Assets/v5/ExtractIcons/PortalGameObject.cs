@@ -5,21 +5,21 @@ using UnityEngine;
 
 public class PortalGameObject : MonoBehaviour
 {
-    GameObject prefab,player;
+    GameObject player;
     FolderPaths folderPaths;
 
-    public void init(GameObject parent, GameObject prefab,GameObject player, string path){
+    public void init(GameObject parent, GameObject player, string path){
         this.player = player;
-        this.prefab = prefab;
         rename(path);
-        this.prefab.transform.SetParent(parent.transform);
+        transform.rotation = player.transform.rotation;
+        transform.SetParent(parent.transform);
         folderPaths = player.transform.parent.GetComponent<FolderPaths>();
     }
 
     internal void rename(string path){
-        prefab.transform.name = path;
+        transform.name = path;
         string[] strArray = path.Split("\\");
-        prefab.transform.GetChild(2).GetComponent<TextMeshPro>().text = strArray[strArray.Length-1];
+        transform.GetChild(2).GetComponent<TextMeshPro>().text = strArray[strArray.Length-1];
     }
 
     void OnTriggerEnter(Collider collision){
@@ -31,11 +31,11 @@ public class PortalGameObject : MonoBehaviour
     public void teleportPlayer(){
         if (transform.name != ""){
             if (folderPaths.currentMap != null) {
-                folderPaths.previousDirectoryPath = folderPaths.directoryPath;
-                folderPaths.directoryPath = transform.name;
+                folderPaths.currentDirectoryPath = transform.name;
                 StartCoroutine(folderPaths.loadPrefabScript.DeleteMapPrefab(folderPaths.currentMap));
+                folderPaths.getFiles();
+                folderPaths.getFolders();
             }
-            print(transform.name);
             player.GetComponent<CharacterController>().enabled = false;
             player.transform.position = new Vector3(100*height,100*height + 5,100*height);
             player.GetComponent<CharacterController>().enabled = true;

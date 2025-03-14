@@ -1,21 +1,19 @@
 using UnityEngine;
 
-public class RotateCharacter : MonoBehaviour
+public class RotateCameraFollow : MonoBehaviour
 {
-    public GameObject fbxGameObject; // Reference to the player object
-    CharacterController fbxRigidBody;
-    public float sensitivityX = 5f; // Sensitivity for horizontal mouse movement
-    public float sensitivityY = 5f; // Sensitivity for vertical mouse movement
+    internal GameObject player; // Reference to the player object
+    CharacterController characterController;
+    float sensitivityX = 5f; // Sensitivity for horizontal mouse movement
+    float sensitivityY = 5f; // Sensitivity for vertical mouse movement
 
     private float mouseX; // Change in mouse position on the X-axis
     private float mouseY; // Change in mouse position on the Y-axis
     private Vector3 initialPosition;
-    private AnimateCharacter animateCharacter;
 
     void Start(){
-        initialPosition = transform.position - fbxGameObject.transform.position;
-        animateCharacter = fbxGameObject.GetComponent<AnimateCharacter>();
-        fbxRigidBody = fbxGameObject.GetComponent<CharacterController>();
+        initialPosition = transform.position - player.transform.position;
+        characterController = player.GetComponent<CharacterController>();
     }
 
     void LateUpdate(){
@@ -25,13 +23,8 @@ public class RotateCharacter : MonoBehaviour
 
         // Rotate the camera based on mouse input
         RotateCamera(mouseX, mouseY);
-        transform.position = fbxGameObject.transform.position + initialPosition;
+        transform.position = player.transform.position + initialPosition;
         RotatePlayerWithCamera();
-    }
-
-    void FixedUpdate(){
-        // Handle player rotation
-        // RotatePlayerWithCamera();
     }
 
     private void RotateCamera(float mouseX, float mouseY){
@@ -58,18 +51,7 @@ public class RotateCharacter : MonoBehaviour
 
     private void RotatePlayerWithCamera(){
         float targetYRotation = transform.eulerAngles.y;
-
-        // if (animateCharacter.leftPressed) {
-        //     targetYRotation -= 90;
-        // }
-        // if (animateCharacter.rightPressed) {
-        //     targetYRotation += 90;
-        // }
-        // if (animateCharacter.backwardPressed) {
-        //     targetYRotation += 180;
-        // }
-
         Quaternion targetRotation = Quaternion.Euler(0, targetYRotation, 0);
-        fbxRigidBody.transform.rotation = targetRotation;
+        characterController.transform.rotation = targetRotation;
     }
 }

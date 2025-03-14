@@ -7,22 +7,22 @@ using UnityEngine.UI;
 
 public class IconGameObject : ExtractIcon
 {
-    GameObject prefab,player;
+    GameObject player;
 
-    public void init(GameObject parent, GameObject prefab,GameObject player, string path){
+    public void init(GameObject parent, GameObject player, string path){
         this.player = player;
-        this.prefab = prefab;
         rename(path);
-        this.prefab.transform.SetParent(parent.transform);
+        transform.rotation = player.transform.rotation;
+        transform.SetParent(parent.transform);
     }
     internal void createIcon(string path){
-        prefab.transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = getGenericIcon(path);
+        transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = getGenericIcon(path);
     }
     internal void rename(string path){
-        prefab.transform.name = path;
+        transform.name = path;
         createIcon(path);
         string[] strArray = path.Split("\\");
-        prefab.transform.GetChild(1).GetComponent<TextMeshPro>().text = strArray[strArray.Length-1];
+        transform.GetChild(1).GetComponent<TextMeshPro>().text = strArray[strArray.Length-1];
     }
 
     void OnTriggerEnter(Collider collision){

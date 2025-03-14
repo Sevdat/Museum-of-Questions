@@ -10,13 +10,14 @@ public class LoadPrefabScript : MonoBehaviour
 {
     // The name of the prefab to load (without the file extension)
     // public string prefabName = "ImportedScenes/Medieval Cute Series/Medieval Cute Build In 1";
-    List<string> allprefabs;
     FolderPaths folderPaths;
-    public LoadPrefabScript(FolderPaths folderPaths){
-        allprefabs = getAllPrefabs();
-        this.folderPaths = folderPaths;
+    List<string> allScenePrefabs;
+
+    public void Start(){
+        folderPaths = transform.GetComponent<FolderPaths>();
+        allScenePrefabs = getAllPrefabs();
     }
-    
+
     public static string getRelativeResourcePath(string fullPath){
         string pattern = @"(?<=Resources\/).+(?=\.prefab)";
         return Regex.Match(fullPath, pattern).Value;
@@ -46,18 +47,14 @@ public class LoadPrefabScript : MonoBehaviour
     }
 
     internal IEnumerator LoadAndInstantiateMapPrefab(Vector3 vec){
-
         // Load the prefab from the Resources folder
-        ResourceRequest request = Resources.LoadAsync<GameObject>(allprefabs[Random.Range(0, allprefabs.Count-1)]);
-
+        ResourceRequest request = Resources.LoadAsync<GameObject>(allScenePrefabs[Random.Range(0, allScenePrefabs.Count-1)]);
         // Wait until the prefab is fully loaded
         yield return request;
-
         // Check if the prefab was loaded successfully
         if (request.asset == null){
             yield break;
         }
-
         // Instantiate the prefab into the scene
         GameObject root = request.asset as GameObject;
         if (root != null){
@@ -67,7 +64,6 @@ public class LoadPrefabScript : MonoBehaviour
     internal IEnumerator DeleteMapPrefab(GameObject prefab){
         // Destroy the last object
         Destroy(prefab);
-
         // Yield to the next frame to spread out the workload
         yield return null;
     }

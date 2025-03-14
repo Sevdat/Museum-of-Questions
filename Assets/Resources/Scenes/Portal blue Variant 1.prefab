@@ -354,6 +354,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Portal blue Variant 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5607819269926399345, guid: 45e0f06c750176947862c10346226439,
+        type: 3}
+      propertyPath: m_TagString
+      value: Portal
+      objectReference: {fileID: 0}
     - target: {fileID: 8445763112410648400, guid: 45e0f06c750176947862c10346226439,
         type: 3}
       propertyPath: simulationSpeed
