@@ -13,9 +13,11 @@ public class LoadPrefabScript : MonoBehaviour
     FolderPaths folderPaths;
     List<string> allScenePrefabs;
 
+    public void Awake(){
+        allScenePrefabs = getAllPrefabs();
+    }
     public void Start(){
         folderPaths = transform.GetComponent<FolderPaths>();
-        allScenePrefabs = getAllPrefabs();
     }
 
     public static string getRelativeResourcePath(string fullPath){
@@ -46,7 +48,23 @@ public class LoadPrefabScript : MonoBehaviour
         return paths;
     }
 
-    internal IEnumerator LoadAndInstantiateMapPrefab(Vector3 vec){
+    internal IEnumerator LoadAndInstantiatePrefab(GameObject destroyPortal,Vector3 vec){
+        // Load the prefab from the Resources folder
+        ResourceRequest request = Resources.LoadAsync<GameObject>(allScenePrefabs[Random.Range(0, allScenePrefabs.Count-1)]);
+        // Wait until the prefab is fully loaded
+        yield return request;
+        // Check if the prefab was loaded successfully
+        if (request.asset == null){
+            yield break;
+        }
+        // Instantiate the prefab into the scene
+        GameObject root = request.asset as GameObject;
+        if (root != null){
+            folderPaths.currentMap = Instantiate(root, vec, Quaternion.identity);
+            Destroy(destroyPortal);
+        }
+    }
+    internal IEnumerator LoadAndInstantiatePrefab(Vector3 vec){
         // Load the prefab from the Resources folder
         ResourceRequest request = Resources.LoadAsync<GameObject>(allScenePrefabs[Random.Range(0, allScenePrefabs.Count-1)]);
         // Wait until the prefab is fully loaded

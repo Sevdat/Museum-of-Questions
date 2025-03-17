@@ -30,6 +30,7 @@ public class PortalGameObject : MonoBehaviour
     float height = 1;
     public void teleportPlayer(){
         if (transform.name != ""){
+            transform.SetParent(null);
             if (folderPaths.currentMap != null) {
                 folderPaths.currentDirectoryPath = transform.name;
                 StartCoroutine(folderPaths.loadPrefabScript.DeleteMapPrefab(folderPaths.currentMap));
@@ -37,10 +38,9 @@ public class PortalGameObject : MonoBehaviour
                 folderPaths.getFolders();
             }
             player.GetComponent<CharacterController>().enabled = false;
-            player.transform.position = new Vector3(100*height,100*height + 5,100*height);
+            player.transform.position = Vector3.zero;
             player.GetComponent<CharacterController>().enabled = true;
-            StartCoroutine(folderPaths.loadPrefabScript.LoadAndInstantiateMapPrefab(new Vector3(100*height,100*height,100*height)));
-            height++;
+            StartCoroutine(folderPaths.loadPrefabScript.LoadAndInstantiatePrefab(gameObject,Vector3.zero));
         }
     }
     // Process.Start(@"C:\Users\Public\Desktop\Firefox.lnk");

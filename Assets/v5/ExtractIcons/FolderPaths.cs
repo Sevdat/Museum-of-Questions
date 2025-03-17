@@ -18,7 +18,10 @@ public class FolderPaths : MonoBehaviour
 
     internal AnimateCharacter animateCharacter;
     internal RotateCameraFollow rotateCameraFollow;
+    internal TerminalScript terminalScript;
     
+    internal GameObject entrencePortal;
+
     internal GameObject paths;
     internal GameObject rootPortalPrefab,rootIconPrefab;
     internal GameObject currentMap;
@@ -26,14 +29,20 @@ public class FolderPaths : MonoBehaviour
     void Awake(){
         init();
     }
-    // Start is called before the first frame update
-    void Start(){
+    public void createPaths(){
+        StartCoroutine(loadPrefabScript.LoadAndInstantiatePrefab(Vector3.zero));
         paths = new GameObject("Paths");
         GameObject folder = new GameObject("Folder");
         GameObject file = new GameObject("File");
 
         folder.transform.SetParent(paths.transform);
         file.transform.SetParent(paths.transform);
+
+
+    }
+    // Start is called before the first frame update
+    void Start(){
+        createPaths();
         
         // LoadSceneAdditively("Assets/Resources/ImportedScenes/AltonGames/Demo 1.unity");
     }
@@ -53,6 +62,8 @@ public class FolderPaths : MonoBehaviour
         editPrefab = transform.AddComponent<EditPrefab>();
         rotateCameraFollow = follow.AddComponent<RotateCameraFollow>();
         animateCharacter = player.AddComponent<AnimateCharacter>();
+        loadPrefabScript = transform.AddComponent<LoadPrefabScript>();
+        terminalScript = transform.AddComponent<TerminalScript>();
         rotateCameraFollow.player = player;
         initiateRootPrefab(ref rootPortalPrefab, "Scenes/Portal blue Variant 1");
         initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");
