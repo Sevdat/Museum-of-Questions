@@ -29,10 +29,10 @@ public class FolderPaths : MonoBehaviour
     internal GameObject currentMap;
     GameObject targetObject;
     
-    public void ExportGameObject()
-    {
+    public void ExportGameObject(){
         // Load the GameObject from Resources
         GameObject targetObject = Instantiate(Resources.Load<GameObject>("ImportedScenes/_Barking_Dog/Scene/Test_Map 1"));
+        
         if (targetObject == null)
         {
             Debug.LogError("Target GameObject is not assigned.");
@@ -72,6 +72,7 @@ public class FolderPaths : MonoBehaviour
             Debug.LogError($"Failed to import GLTF file: {ex.Message}");
         }
     }
+
     public void AddMeshCollidersToHierarchy(GameObject root){
         // Check if the current GameObject has a MeshFilter
         MeshFilter meshFilter = root.GetComponent<MeshFilter>();
@@ -91,6 +92,7 @@ public class FolderPaths : MonoBehaviour
     
     void Awake(){
         init();
+        ExportGameObject();
         ImportGLTF();
     }
     public void createPaths(){

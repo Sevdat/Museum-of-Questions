@@ -46,7 +46,7 @@ namespace UnityGLTF.Loader
 		{
 			await Task.CompletedTask;
 			throw new System.ApplicationException("The module com.unity.modules.unitywebrequest is required for this functionality. Please install it in your project.");
-		}
+		} 
 #endif
 
 		// TODO: figure out how to do this correctly in a streaming fashion.
