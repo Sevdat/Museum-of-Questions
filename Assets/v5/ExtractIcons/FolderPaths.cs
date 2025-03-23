@@ -27,14 +27,12 @@ public class FolderPaths : MonoBehaviour
     internal GameObject paths;
     internal GameObject rootPortalPrefab,rootIconPrefab;
     internal GameObject currentMap;
-    GameObject targetObject;
     
     public void ExportGameObject(){
         // Load the GameObject from Resources
-        GameObject targetObject = Instantiate(Resources.Load<GameObject>("ImportedScenes/_Barking_Dog/Scene/Test_Map 1"));
+        GameObject targetObject = Instantiate(Resources.Load<GameObject>("Scenes/Portal blue Variant 1"));
         
-        if (targetObject == null)
-        {
+        if (targetObject == null){
             Debug.LogError("Target GameObject is not assigned.");
             return;
         }
@@ -49,26 +47,25 @@ public class FolderPaths : MonoBehaviour
         string exportPath = Path.Combine(Application.persistentDataPath, "ExportedModel");
         exporter.SaveGLTFandBin(exportPath, Path.GetFileName(exportPath));
         Debug.Log($"GameObject exported to {exportPath}");
+        // Destroy(targetObject);
     }
 
     async void ImportGLTF(){
         // Create an instance of GLTFSceneImporter
         var sceneImporter = new GLTFSceneImporter(
-            @$"{Application.persistentDataPath}/ExportedModel/ExportedModel.gltf", // Path to the .gltf file
+            $"{Application.persistentDataPath}/ExportedModel/ExportedModel.gltf", // Path to the .gltf file
             new ImportOptions()
         );
         // Load the GLTF scene asynchronously
-        try
-        {
+        try {
             await sceneImporter.LoadSceneAsync();
             Debug.Log("GLTF file imported successfully!");
 
             // Get the root GameObject of the imported scene
-            targetObject = sceneImporter.LastLoadedScene;
-            AddMeshCollidersToHierarchy(targetObject);
+            currentMap = sceneImporter.LastLoadedScene;
+            AddMeshCollidersToHierarchy(currentMap);
         }
-        catch (System.Exception ex)
-        {
+        catch (System.Exception ex){
             Debug.LogError($"Failed to import GLTF file: {ex.Message}");
         }
     }
@@ -92,7 +89,7 @@ public class FolderPaths : MonoBehaviour
     
     void Awake(){
         init();
-        ExportGameObject();
+        // ExportGameObject();
         ImportGLTF();
     }
     public void createPaths(){
