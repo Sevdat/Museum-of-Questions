@@ -61,8 +61,9 @@ public class FolderPaths : MonoBehaviour
             Debug.Log("GLTF file imported successfully!");
 
             // Get the root GameObject of the imported scene
-            currentMap = sceneImporter.LastLoadedScene;
-            AddMeshCollidersToHierarchy(currentMap);
+            currentMap = sceneImporter.CreatedObject;
+            print(currentMap);
+            // AddMeshCollidersToHierarchy(currentMap);
         }
         catch (System.Exception ex){
             Debug.LogError($"Failed to import GLTF file: {ex.Message}");
