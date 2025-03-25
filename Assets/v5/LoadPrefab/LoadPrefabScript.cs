@@ -19,7 +19,7 @@ public class LoadPrefabScript : MonoBehaviour
     }
     public void Start(){
         // generatePrefabFolders("Prefab","Assets/ImportedAssets/ImportedAssets");
-         generatePrefabFolders("Scene","Assets/ImportedAssets/ImportedAssets");
+        // generatePrefabFolders("Scene","Assets/ImportedAssets/ImportedAssets");
     }
 
     public static string getRelativeResourcePath(string fullPath){
@@ -65,7 +65,7 @@ public class LoadPrefabScript : MonoBehaviour
             string generatedPath = $"Resources/GeneratedAssets/{folder}";
             createFolder(generatedPath);
             duplicateAsset($"{path}/{i}",$"Assets/{generatedPath}/{split[split.Length-1]}");
-        };
+        }
     }
 
     // public List<string> getAllPrefabs(){

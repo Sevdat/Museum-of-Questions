@@ -28,9 +28,8 @@ public class FolderPaths : MonoBehaviour
     internal GameObject rootPortalPrefab,rootIconPrefab;
     internal GameObject currentMap;
     
-    public void ExportGameObject(){
+    public void ExportGameObject(GameObject targetObject){
         // Load the GameObject from Resources
-        GameObject targetObject = Instantiate(Resources.Load<GameObject>("Scenes/Portal blue Variant 1"));
         
         if (targetObject == null){
             Debug.LogError("Target GameObject is not assigned.");
@@ -58,7 +57,7 @@ public class FolderPaths : MonoBehaviour
         );
         // Load the GLTF scene asynchronously
         try {
-            await sceneImporter.LoadSceneAsync();
+            await sceneImporter.LoadNodeAsync(0,new System.Threading.CancellationToken());
             Debug.Log("GLTF file imported successfully!");
 
             // Get the root GameObject of the imported scene
@@ -89,8 +88,10 @@ public class FolderPaths : MonoBehaviour
     
     void Awake(){
         init();
-        // ExportGameObject();
-        ImportGLTF();
+        currentMap = Instantiate(Resources.Load<GameObject>("GeneratedAssets/_Barking_Dog/3D Free Modular Kit/Prefab/Door_Left_01"));
+        // ImportGLTF();
+        // ExportGameObject(currentMap);
+        
     }
     public void createPaths(){
         // StartCoroutine(loadPrefabScript.LoadAndInstantiatePrefab(Vector3.zero));
@@ -117,6 +118,12 @@ public class FolderPaths : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Space)){
             editPrefab.ray();
+        }
+        if (Input.GetKeyDown(KeyCode.J)){
+            ImportGLTF();
+        }
+        if (Input.GetKeyDown(KeyCode.K)){
+            ExportGameObject(currentMap);
         }
     }
 
