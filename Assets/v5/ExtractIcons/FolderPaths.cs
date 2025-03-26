@@ -21,6 +21,7 @@ public class FolderPaths : MonoBehaviour
     internal AnimateCharacter animateCharacter;
     internal RotateCameraFollow rotateCameraFollow;
     internal TerminalScript terminalScript;
+    internal ExportImportGLTF exportImportGLTF;
     
     internal GameObject entrencePortal;
 
@@ -28,71 +29,11 @@ public class FolderPaths : MonoBehaviour
     internal GameObject rootPortalPrefab,rootIconPrefab;
     internal GameObject currentMap;
     
-    public void ExportGameObject(GameObject targetObject){
-        // Load the GameObject from Resources
-        
-        if (targetObject == null){
-            Debug.LogError("Target GameObject is not assigned.");
-            return;
-        }
-
-        // Create a GLTFSceneExporter instance
-        var exporter = new GLTFSceneExporter(
-            new[] { targetObject.transform }, // Array of root transforms to export
-            new ExportContext()
-        );
-
-        // Export to GLB file
-        string exportPath = Path.Combine(Application.persistentDataPath, "ExportedModel");
-        exporter.SaveGLTFandBin(exportPath, Path.GetFileName(exportPath));
-        Debug.Log($"GameObject exported to {exportPath}");
-        // Destroy(targetObject);
-    }
-
-    async void ImportGLTF(){
-        // Create an instance of GLTFSceneImporter
-        var sceneImporter = new GLTFSceneImporter(
-            $"{Application.persistentDataPath}/ExportedModel/ExportedModel.gltf", // Path to the .gltf file
-            new ImportOptions()
-        );
-        // Load the GLTF scene asynchronously
-        try {
-            await sceneImporter.LoadNodeAsync(0,new System.Threading.CancellationToken());
-            Debug.Log("GLTF file imported successfully!");
-
-            // Get the root GameObject of the imported scene
-            currentMap = sceneImporter.CreatedObject;
-            print(currentMap);
-            // AddMeshCollidersToHierarchy(currentMap);
-        }
-        catch (System.Exception ex){
-            Debug.LogError($"Failed to import GLTF file: {ex.Message}");
-        }
-    }
-
-    public void AddMeshCollidersToHierarchy(GameObject root){
-        // Check if the current GameObject has a MeshFilter
-        MeshFilter meshFilter = root.GetComponent<MeshFilter>();
-        if (meshFilter != null){
-            // Add a MeshCollider if it doesn't already have one
-            if (root.GetComponent<MeshCollider>() == null){
-                MeshCollider meshCollider = root.AddComponent<MeshCollider>();
-                meshCollider.sharedMesh = meshFilter.sharedMesh;
-            }
-        }
-
-        // Recursively process all children
-        foreach (Transform child in root.transform){
-            AddMeshCollidersToHierarchy(child.gameObject);
-        }
-    }
-    
     void Awake(){
         init();
         currentMap = Instantiate(Resources.Load<GameObject>("GeneratedAssets/_Barking_Dog/3D Free Modular Kit/Prefab/Door_Left_01"));
         // ImportGLTF();
         // ExportGameObject(currentMap);
-        
     }
     public void createPaths(){
         // StartCoroutine(loadPrefabScript.LoadAndInstantiatePrefab(Vector3.zero));
@@ -108,8 +49,6 @@ public class FolderPaths : MonoBehaviour
     // Start is called before the first frame update
     void Start(){
         createPaths();
-        
-        // LoadSceneAdditively("Assets/Resources/ImportedScenes/AltonGames/Demo 1.unity");
     }
 
     // Update is called once per frame
@@ -120,12 +59,6 @@ public class FolderPaths : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space)){
             editPrefab.ray();
         }
-        if (Input.GetKeyDown(KeyCode.J)){
-            ImportGLTF();
-        }
-        if (Input.GetKeyDown(KeyCode.K)){
-            ExportGameObject(currentMap);
-        }
     }
 
     public void init(){
@@ -134,6 +67,7 @@ public class FolderPaths : MonoBehaviour
         rotateCameraFollow = follow.AddComponent<RotateCameraFollow>();
         animateCharacter = player.AddComponent<AnimateCharacter>();
         terminalScript = transform.AddComponent<TerminalScript>();
+        exportImportGLTF = transform.AddComponent<ExportImportGLTF>();
         rotateCameraFollow.player = player;
         initiateRootPrefab(ref rootPortalPrefab, "Scenes/Portal blue Variant 1");
         initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");
