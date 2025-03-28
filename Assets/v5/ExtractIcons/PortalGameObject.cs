@@ -27,20 +27,19 @@ public class PortalGameObject : MonoBehaviour
             teleportPlayer();
         }
     }
-    float height = 1;
     public void teleportPlayer(){
         if (transform.name != ""){
             transform.SetParent(null);
             if (folderPaths.currentMap != null) {
                 folderPaths.currentDirectoryPath = transform.name;
-                StartCoroutine(folderPaths.loadPrefabScript.DeleteMapPrefab(folderPaths.currentMap));
+                StartCoroutine(folderPaths.DeleteMapPrefab(folderPaths.currentMap));
                 folderPaths.getFiles();
                 folderPaths.getFolders();
             }
             player.GetComponent<CharacterController>().enabled = false;
             player.transform.position = Vector3.zero;
             player.GetComponent<CharacterController>().enabled = true;
-            StartCoroutine(folderPaths.loadPrefabScript.LoadAndInstantiatePrefab(gameObject,Vector3.zero));
+            StartCoroutine(folderPaths.LoadAndInstantiatePrefab(gameObject.name,gameObject,Vector3.zero));
         }
     }
     // Process.Start(@"C:\Users\Public\Desktop\Firefox.lnk");

@@ -15,7 +15,7 @@ public class FolderPaths : MonoBehaviour
     public GameObject follow, player;
 
     internal string currentDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-    internal LoadPrefabScript loadPrefabScript;
+    internal GeneratedAssets loadPrefabScript;
     internal EditPrefab editPrefab;
 
     internal AnimateCharacter animateCharacter;
@@ -62,7 +62,7 @@ public class FolderPaths : MonoBehaviour
     }
 
     public void init(){
-        loadPrefabScript = transform.AddComponent<LoadPrefabScript>();
+        loadPrefabScript = transform.AddComponent<GeneratedAssets>();
         editPrefab = transform.AddComponent<EditPrefab>();
         rotateCameraFollow = follow.AddComponent<RotateCameraFollow>();
         animateCharacter = player.AddComponent<AnimateCharacter>();
@@ -100,5 +100,42 @@ public class FolderPaths : MonoBehaviour
                 string name = strArray[strArray.Length-1];
             }
         }
+    }
+    internal IEnumerator LoadAndInstantiatePrefab(string path,GameObject destroyPortal,Vector3 vec){
+        // Load the prefab from the Resources folder
+        ResourceRequest request = Resources.LoadAsync<GameObject>(path);
+        // Wait until the prefab is fully loaded
+        yield return request;
+        // Check if the prefab was loaded successfully
+        if (request.asset == null){
+            yield break;
+        }
+        // Instantiate the prefab into the scene
+        GameObject root = request.asset as GameObject;
+        if (root != null){
+            currentMap = Instantiate(root, vec, Quaternion.identity);
+            Destroy(destroyPortal);
+        }
+    }
+    internal IEnumerator LoadAndInstantiatePrefab(string path,Vector3 vec){
+        // Load the prefab from the Resources folder
+        ResourceRequest request = Resources.LoadAsync<GameObject>(path);
+        // Wait until the prefab is fully loaded
+        yield return request;
+        // Check if the prefab was loaded successfully
+        if (request.asset == null){
+            yield break;
+        }
+        // Instantiate the prefab into the scene
+        GameObject root = request.asset as GameObject;
+        if (root != null){
+            currentMap = Instantiate(root, vec, Quaternion.identity);
+        }
+    }
+    internal IEnumerator DeleteMapPrefab(GameObject prefab){
+        // Destroy the last object
+        Destroy(prefab);
+        // Yield to the next frame to spread out the workload
+        yield return null;
     }
 }
