@@ -378,12 +378,10 @@ namespace UnityGLTF
 
 			// some characters such as # are allowed as part of an URI and are thus not escaped
 			// by EscapeUriString. They need to be escaped if they're part of the filename though.
-			// !!!causes error when the name is different from URI in gltf file!!!
-			// image.Uri = Path.Combine(
-			// 	Uri.EscapeUriString(Path.GetDirectoryName(filenamePath).Replace("\\","/")),
-			// 	Uri.EscapeDataString(Path.GetFileName(filenamePath))
-			// ).Replace("\\","/");
-			image.Uri = filenamePath;
+			image.Uri = Path.Combine(
+				Uri.EscapeUriString(Path.GetDirectoryName(filenamePath).Replace("\\","/")),
+				Uri.EscapeDataString(Path.GetFileName(filenamePath))
+			).Replace("\\","/");
 
 			// TODO: handle cubemap export
 			var imageInfoTexture = texture as Texture2D;

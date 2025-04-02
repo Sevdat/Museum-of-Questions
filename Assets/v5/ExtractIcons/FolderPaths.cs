@@ -22,6 +22,7 @@ public class FolderPaths : MonoBehaviour
     internal RotateCameraFollow rotateCameraFollow;
     internal TerminalScript terminalScript;
     internal ExportImportGLTF exportImportGLTF;
+    internal OrginizePaths orginizePaths;
     
     internal GameObject entrencePortal;
 
@@ -31,7 +32,7 @@ public class FolderPaths : MonoBehaviour
     
     void Awake(){
         init();
-        currentMap = Instantiate(Resources.Load<GameObject>("GeneratedAssets/_Barking_Dog/3D Free Modular Kit/Prefab/Door_Left_01"));
+        // currentMap = Instantiate(Resources.Load<GameObject>("GeneratedAssets/_Barking_Dog/3D Free Modular Kit/Prefab/Door_Left_01"));
         // ImportGLTF();
         // ExportGameObject(currentMap);
     }
@@ -68,6 +69,7 @@ public class FolderPaths : MonoBehaviour
         animateCharacter = player.AddComponent<AnimateCharacter>();
         terminalScript = transform.AddComponent<TerminalScript>();
         exportImportGLTF = transform.AddComponent<ExportImportGLTF>();
+        orginizePaths = transform.AddComponent<OrginizePaths>();
         rotateCameraFollow.player = player;
         initiateRootPrefab(ref rootPortalPrefab, "Scenes/Portal blue Variant 1");
         initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");

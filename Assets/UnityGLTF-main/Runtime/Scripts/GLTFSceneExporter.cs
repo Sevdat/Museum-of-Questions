@@ -660,6 +660,12 @@ namespace UnityGLTF
 			};
 			_root.Buffers.Add(_buffer);
 			
+			foreach (var plugin in settings.ExportPlugins)
+			{
+				if (plugin != null && plugin.Enabled && plugin.AssetExtras != null)
+					_root.Asset.PluginExtras.Add(plugin.DisplayName, plugin.AssetExtras);
+			}
+			
 			_visbilityPluginEnabled = settings.ExportPlugins.Any(x => x is VisibilityExport && x.Enabled);
 			if (_visbilityPluginEnabled && !settings.ExportDisabledGameObjects)
 			{
@@ -1217,7 +1223,7 @@ namespace UnityGLTF
 			if (materials != null)
 				for (int i = 0; i < materials.Length; i++)
 					anyMaterialIsNonNull |= materials[i];
-			return (meshFilter && meshRenderer && (meshRenderer.enabled || exportDisabledGameObjects)) || (skinnedMeshRender && (skinnedMeshRender.enabled || exportDisabledGameObjects)) && anyMaterialIsNonNull;
+			return ((meshFilter && meshRenderer && (meshRenderer.enabled || exportDisabledGameObjects)) || (skinnedMeshRender && (skinnedMeshRender.enabled || exportDisabledGameObjects))) && anyMaterialIsNonNull;
 		}
 
         private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)

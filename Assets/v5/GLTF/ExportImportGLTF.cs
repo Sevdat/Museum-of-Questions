@@ -7,57 +7,69 @@ using UnityGLTF;
 public class ExportImportGLTF : MonoBehaviour
 {
     FolderPaths folderPaths;
+    GameObject exp;
+    string str;
     // Start is called before the first frame update
     void Start()
     {
         folderPaths = transform.GetComponent<FolderPaths>();
-    }
+        exp = Resources.Load<GameObject>("Vegetation Pack 2_URP Scene");
+        // StartCoroutine(ExportGameObject(exp, $"{Application.persistentDataPath}/Expertod"));
 
+        str = Application.dataPath+"/Resources/GeneratedAssets/BERCEST STUDIO/LOW POLY MEDIEVAL SHIP/Prefab/Content/Vegetation Pack 2_URP Scene/Vegetation Pack 2_URP Scene.gltf";
+        string str1 = Application.dataPath+"/Resources/GeneratedAssets/LineAcroos/Environment Forest/Prefab/Content/EnvironmentForestScene/EnvironmentForestScene.gltf";
+        // ImportGLTF(str);
+        // print(Application.persistentDataPath + "/Expertod");
+        print(str);
+    }
+ 
     // Update is called once per frame
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.J)){
-            ImportGLTF("ExportedModel/ExportedModel.gltf");
+            ImportGLTF($"{Application.persistentDataPath}/ExportedModel/ExportedModel.gltf");
         }
         if (Input.GetKeyDown(KeyCode.K)){
-            StartCoroutine(ExportGameObject(folderPaths.currentMap,"ExportedModel"));
+            StartCoroutine(ExportGameObject(exp,$"{Application.persistentDataPath}/ExportedModel"));
         }
     }
 
-    internal IEnumerator ExportGameObject(GameObject targetObject,string relativeFolderPath){
+    internal IEnumerator ExportGameObject(GameObject targetObject,string exportPath, bool unloadLoadedGameObject = false){
         // Load the GameObject from Resources
         if (targetObject == null){
-            Debug.LogError("Target GameObject is not assigned.");
+            print("Target GameObject is not assigned.");
             yield break;
         }
+        
         // Create a GLTFSceneExporter instance
         GLTFSceneExporter exporter = new GLTFSceneExporter(
             new[] { targetObject.transform }, // Array of root transforms to export
             new ExportContext()
         );
         // Export to GLB file
-        string exportPath = $"{Application.persistentDataPath}/{relativeFolderPath}";
         exporter.SaveGLTFandBin(exportPath, Path.GetFileName(exportPath));
-        Debug.Log($"GameObject exported to {exportPath}");
+        print($"GameObject exported to {exportPath}");
+        if (unloadLoadedGameObject) Resources.UnloadAsset(targetObject);
+
     }
 
-    internal async void ImportGLTF(string relativeFilePathToGLTF){
+    internal async void ImportGLTF(string importPath){
         // Create an instance of GLTFSceneImporter
         GLTFSceneImporter sceneImporter = new GLTFSceneImporter(
-            $"{Application.persistentDataPath}/{relativeFilePathToGLTF}", // Path to the .gltf file
+            importPath, // Path to the .gltf file
             new ImportOptions()
         );
         // Load the GLTF scene asynchronously
         try {
             await sceneImporter.LoadNodeAsync(0,new System.Threading.CancellationToken());
-            Debug.Log("GLTF file imported successfully!");
+            print("GLTF file imported successfully!");
 
             // Get the root GameObject of the imported scene
             folderPaths.currentMap = sceneImporter.CreatedObject;
             AddMeshCollidersToHierarchy(folderPaths.currentMap);
         }
         catch (System.Exception ex){
-            Debug.LogError($"Failed to import GLTF file: {ex.Message}");
+            print($"Failed to import GLTF file: {ex.Message}");
         }
     }
 

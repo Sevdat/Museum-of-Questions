@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.16.0-pre] - 2025-04-02
+
+- add: Editor export support for [`KHR_interactivity`](https://github.com/KhronosGroup/glTF/blob/220ca407a2ce1f8463855803778edf73a885b7e9/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc), [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426) and [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422).Support for these extensions is based on the draft specification as of Mar 10 2024. Please note that these extensions are not yet ratified and implementation details may change.
+- add: convert `Unity Visual Scripting` Units to `KHR_interactivity` nodes on export, including virtual properties from the [`glTF Object Model`](https://github.com/KhronosGroup/glTF/blob/main/specification/2.0/ObjectModel.adoc). 
+- add: visual hints for which nodes can be exported from Visual Scripting to `KHR_interactivity`
+- add: `KHR_interactivity` export plugin.
+  - This plugin is disabled by default. Enable it in `UnityGLTFSettings`, add a Script Machine component to an object, and author the logic there.
+  - Currently, you can find some samples for interactive scenes here: https://github.com/needle-tools/UnityGLTF-Interactivity-Sample-Assets
+- add: batch export mode is now an option when exporting via the UnityGLTF menu items. This allows exporting many scene objects, prefabs, or scenes as individual or merged files.
+- fix: Remove duplicate `GLTFLoadException` type
+- fix: added `AlphaToMask` and `BlendModePreserveSpecular` float values to material setup and material mappers. This works around a Unity issue where some runtime-created materials have incorrect keywords until refresh of their keywords.
+- fix: Removed synchronous wait in GLB json loading causing spikes
+- change: GLTFComponent: changed `loadOnStart` from private to public
+- fix: added `TextMeshPro.ForceMeshUpdate` to TMP exporter plugin to ensure exports of scenes immediately after loading have correct mesh data for 3D text
+- fix: selecting multiple scenes and exporting via the menu now exports each selected scene as individual file. Previously, it would export the first selected scene only.
+- fix: exporting meshes with zero materials was throwing an exception, now correctly does not export the mesh
+
 ## [2.15.0] - 2025-03-06
 
 - fix: assets with absolute URLs or paths containing URL encoded information now load correctly

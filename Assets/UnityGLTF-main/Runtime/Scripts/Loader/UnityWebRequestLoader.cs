@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -17,8 +18,14 @@ namespace UnityGLTF.Loader
 		public async Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
 			var path = Path.Combine(dir, relativeFilePath).Replace("\\","/");
-			if (File.Exists(path))
+			if (File.Exists(path)){
 				path = "file://" + Path.GetFullPath(path);
+			} else {
+				relativeFilePath = Uri.UnescapeDataString(relativeFilePath);
+				path = Path.Combine(dir, relativeFilePath).Replace("\\","/");
+				path = "file://" + Path.GetFullPath(Uri.UnescapeDataString(path));
+				Debug.Log(path);
+			}
 			var request = UnityWebRequest.Get(path);
 			// request.downloadHandler = new DownloadStreamHandler(new byte[1024 * 1024]);
 			var asyncOperation = request.SendWebRequest();
@@ -46,7 +53,7 @@ namespace UnityGLTF.Loader
 		{
 			await Task.CompletedTask;
 			throw new System.ApplicationException("The module com.unity.modules.unitywebrequest is required for this functionality. Please install it in your project.");
-		} 
+		}
 #endif
 
 		// TODO: figure out how to do this correctly in a streaming fashion.
