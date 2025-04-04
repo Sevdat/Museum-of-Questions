@@ -22,9 +22,16 @@ namespace UnityGLTF.Plugins
 			if (!transform) return;
 
 			var lodGroup = transform.GetComponent<LODGroup>();
+			
 			if (!lodGroup) return;
+			// Get LODs and filter out empty ones
+			var lods = lodGroup.GetLODs()
+				.Where(lod => lod.renderers != null && 
+							lod.renderers.Length > 0 && 
+							lod.renderers.Any(r => r != null && MeshHasTriangles(r)))
+				.ToArray();
+			if (lods.Length == 0) return;
 
-			var lods = lodGroup.GetLODs();
 			var usesCulling = lods[lods.Length - 1].renderers.Length == 0;
 			var nodeIds = new int[lods.Length - 1 - (usesCulling ? 1 : 0)];
 			var coverages = new float[nodeIds.Length + 1];
@@ -68,6 +75,16 @@ namespace UnityGLTF.Plugins
 			if (node.Extensions == null) node.Extensions = new Dictionary<string, IExtension>();
 			node.Extensions.Add(MSFT_LODExtensionFactory.EXTENSION_NAME, ext);
 			exporter.DeclareExtensionUsage(MSFT_LODExtensionFactory.EXTENSION_NAME, false);
+		}
+		private bool MeshHasTriangles(Renderer renderer){
+			if (renderer is SkinnedMeshRenderer skinnedRenderer){
+				return skinnedRenderer.sharedMesh != null && skinnedRenderer.sharedMesh.triangles.Length > 0;
+			}
+			else if (renderer is MeshRenderer meshRenderer){
+				var filter = renderer.GetComponent<MeshFilter>();
+				return filter != null && filter.sharedMesh != null && filter.sharedMesh.triangles.Length > 0;
+			}
+			return false;
 		}
 	}
 }
