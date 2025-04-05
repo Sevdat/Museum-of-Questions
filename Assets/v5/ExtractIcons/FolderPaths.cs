@@ -29,6 +29,9 @@ public class FolderPaths : MonoBehaviour
     internal GameObject paths;
     internal GameObject rootPortalPrefab,rootIconPrefab;
     internal GameObject currentMap;
+ 
+    public GameObject assetTerminalGameObject;
+    internal AssetTerminal assetTerminal;
     
     void Awake(){
         init();
@@ -36,7 +39,7 @@ public class FolderPaths : MonoBehaviour
         // ImportGLTF();
         // ExportGameObject(currentMap);
     }
-    public void createPaths(){
+    public void createPaths(){ 
         // StartCoroutine(loadPrefabScript.LoadAndInstantiatePrefab(Vector3.zero));
         paths = new GameObject("Paths");
         GameObject folder = new GameObject("Folder");
@@ -75,6 +78,8 @@ public class FolderPaths : MonoBehaviour
         initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");
         getFiles();
         getFolders();
+        assetTerminalGameObject = Instantiate(assetTerminalGameObject);
+        assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
     }
     public void initiateRootPrefab(ref GameObject prefab, string path){
         string iconPrefabPath = path;
