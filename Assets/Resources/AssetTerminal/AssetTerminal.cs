@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,14 +17,39 @@ public class AssetTerminal : MonoBehaviour
 
     public GameObject prefabIconsMenuContent,prefabIconsPrefab;
     public List<GameObject> prefabIconsButtons = new List<GameObject>();
+
+    string path = @$"{Application.dataPath}/Resources/GeneratedAssets";
+    string[][] icons;
+
+    string[] allAuthors;
+    string[][] allProjects;
+
     
     // Start is called before the first frame update
     void Start()
     {
         transform.gameObject.SetActive(true);
-        createIconButtons(@$"{Application.dataPath}/Resources/GeneratedAssets/Palmov Island/Low Poly Houses Free Pack/Prefab/Icon/city hall.png");
-        createAuthorButtons("Author");
-        createProjectButtons("Project");
+        // createIconButtons(@$"{Application.dataPath}/Resources/GeneratedAssets/Palmov Island/Low Poly Houses Free Pack/Prefab/Icon/city hall.png");
+        // createAuthorButtons("Author");
+        // createProjectButtons("Project");
+
+        allAuthors = getAllAuthors();
+        foreach (string str in allAuthors) createAuthorButtons(Path.GetFileNameWithoutExtension(str));
+        
+        allProjects = getAllProjects();
+        foreach (string[] str in allProjects){
+            foreach (string strr in str){
+                createProjectButtons(Path.GetFileNameWithoutExtension(strr));
+            }
+        }
+
+        icons = getAllIcons();
+
+        foreach (string[] str in icons){
+            foreach (string strr in str){
+                createIconButtons(strr);
+            }
+        }
     }
  
     // Update is called once per frame
@@ -31,7 +57,26 @@ public class AssetTerminal : MonoBehaviour
     {
         
     }
-    
+    public string[] getAllAuthors(){
+        return Directory.GetDirectories(path);
+    }
+    public string[][] getAllProjects(){
+        List<string[]> iconList = new List<string[]>();
+        foreach (string str in allAuthors){
+            iconList.Add(Directory.GetDirectories(str));
+        }
+        return iconList.ToArray();
+    }
+    public string[][] getAllIcons(){
+        string[] allDirectories = Directory.GetDirectories(path,"*",SearchOption.AllDirectories);
+        string[] allIconPaths = allDirectories.Where(dir => dir.Replace('\\', '/').EndsWith("Prefab/Icon")).ToArray();
+        List<string[]> iconList = new List<string[]>();
+        foreach (string str in allIconPaths){
+            iconList.Add(Directory.GetFiles(str, "*.png"));
+        }
+        return iconList.ToArray();
+    }
+
     public GameObject createAuthorButtons(string authorName){
         return createItem(authorName,authorNameMenuContent,authorNamePrefab,0);
     }
@@ -43,16 +88,6 @@ public class AssetTerminal : MonoBehaviour
         Sprite sprite = createSpriteFromTexture2D(path);
         icon.transform.GetChild(0).GetComponent<Image>().sprite = sprite;
         return icon;
-    }
-
-
-    public Sprite createSpriteFromTexture2D(string path){
-        Texture2D iconTexture = LoadPNG(path);
-        return Sprite.Create(
-            iconTexture,
-            new Rect(0, 0, iconTexture.width, iconTexture.height),
-            new Vector2(0.5f, 0.5f) // Pivot point (center)
-        );
     }
 
     public GameObject createItem(string strName, GameObject content,GameObject button, int option = 0){
@@ -80,17 +115,25 @@ public class AssetTerminal : MonoBehaviour
     public void onClickIcon(Button button){
         print("Icon");
     }
-    public static Texture2D LoadPNG(string filePath) {
 
+    public static Texture2D LoadPNG(string filePath) {
         Texture2D tex = null;
         byte[] fileData;
 
         if (File.Exists(filePath)) 	{
-            print("lol");
             fileData = File.ReadAllBytes(filePath);
             tex = new Texture2D(2, 2);
             tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
         }
         return tex;
+    }
+
+    public Sprite createSpriteFromTexture2D(string path){
+        Texture2D iconTexture = LoadPNG(path);
+        return Sprite.Create(
+            iconTexture,
+            new Rect(0, 0, iconTexture.width, iconTexture.height),
+            new Vector2(0.5f, 0.5f) // Pivot point (center)
+        );
     }
 }
