@@ -24,7 +24,6 @@ namespace UnityGLTF.Loader
 				relativeFilePath = Uri.UnescapeDataString(relativeFilePath);
 				path = Path.Combine(dir, relativeFilePath).Replace("\\","/");
 				path = "file://" + Path.GetFullPath(Uri.UnescapeDataString(path));
-				Debug.Log(path);
 			}
 			var request = UnityWebRequest.Get(path);
 			// request.downloadHandler = new DownloadStreamHandler(new byte[1024 * 1024]);

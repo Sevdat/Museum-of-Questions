@@ -80,6 +80,7 @@ public class FolderPaths : MonoBehaviour
         getFolders();
         assetTerminalGameObject = Instantiate(assetTerminalGameObject);
         assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
+        assetTerminal.folderPaths = this;
     }
     public void initiateRootPrefab(ref GameObject prefab, string path){
         string iconPrefabPath = path;

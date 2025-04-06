@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 public class AssetTerminal : MonoBehaviour
 {
+    
     public GameObject assetTerminalPrefab;
     public GameObject authorNameMenuContent,authorNamePrefab;
     public List<GameObject> authorNameButtons = new List<GameObject>();
@@ -24,6 +25,7 @@ public class AssetTerminal : MonoBehaviour
     string[] allAuthors;
     string[][] allProjects;
 
+    internal FolderPaths folderPaths;
     
     // Start is called before the first frame update
     void Start()
@@ -44,7 +46,6 @@ public class AssetTerminal : MonoBehaviour
         }
 
         icons = getAllIcons();
-
         foreach (string[] str in icons){
             foreach (string strr in str){
                 createIconButtons(strr);
@@ -84,8 +85,10 @@ public class AssetTerminal : MonoBehaviour
         return createItem(projectName,projectNameMenuContent,projectNamePrefab,1);
     }
     public GameObject createIconButtons(string path){
-        GameObject icon = createItem(Path.GetFileNameWithoutExtension(path),prefabIconsMenuContent,prefabIconsPrefab,2);
+        string fileName = Path.GetFileNameWithoutExtension(path);
+        GameObject icon = createItem(fileName,prefabIconsMenuContent,prefabIconsPrefab,2);
         Sprite sprite = createSpriteFromTexture2D(path);
+        icon.name = Path.GetDirectoryName(path).Replace(@"Prefab\Icon",@"Prefab\Content")+$@"\{fileName}"+$@"\{fileName}.gltf";
         icon.transform.GetChild(0).GetComponent<Image>().sprite = sprite;
         return icon;
     }
@@ -113,7 +116,7 @@ public class AssetTerminal : MonoBehaviour
         print("Project");
     }
     public void onClickIcon(Button button){
-        print("Icon");
+        folderPaths.exportImportGLTF.ImportGLTF(button.gameObject.name);
     }
 
     public static Texture2D LoadPNG(string filePath) {
