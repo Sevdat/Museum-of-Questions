@@ -7,10 +7,10 @@ using UnityEngine.UI;
 
 public class SpecialFolderScript : MonoBehaviour
 {
-    public RectTransform content;
+    public GameObject content;
     public GameObject button;
     public PathScript pathScript;
-    public Dictionary<GameObject,string> buttons = new Dictionary<GameObject,string>();
+    internal Dictionary<GameObject,string> buttons = new Dictionary<GameObject,string>();
     public GameObject createItem(string strName){
         GameObject gameObject;
         gameObject = Instantiate(button, Vector3.zero, Quaternion.identity);
@@ -43,15 +43,5 @@ public class SpecialFolderScript : MonoBehaviour
         pathScript.resetPath(buttons[button.gameObject]);
         pathScript.folders.getFolders();
         pathScript.files.getFiles();
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

@@ -27,37 +27,77 @@ public class AssetTerminal : MonoBehaviour
 
     internal FolderPaths folderPaths;
     
+    
     // Start is called before the first frame update
     void Start()
     {
-        transform.gameObject.SetActive(true);
         // createIconButtons(@$"{Application.dataPath}/Resources/GeneratedAssets/Palmov Island/Low Poly Houses Free Pack/Prefab/Icon/city hall.png");
         // createAuthorButtons("Author");
         // createProjectButtons("Project");
+        StartCoroutine(init());
 
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+
+    internal IEnumerator init(){
         allAuthors = getAllAuthors();
-        foreach (string str in allAuthors) createAuthorButtons(Path.GetFileNameWithoutExtension(str));
+        int count = 0;
+        int amount = 10;
+        foreach (string str in allAuthors) {
+            authorNameButtons.Add(createAuthorButtons(Path.GetFileNameWithoutExtension(str)));
+            if (count >amount) {count = 0; yield return null;}
+            count++;
+        }
         
         allProjects = getAllProjects();
         foreach (string[] str in allProjects){
             foreach (string strr in str){
-                createProjectButtons(Path.GetFileNameWithoutExtension(strr));
+                projectNameButtons.Add(createProjectButtons(Path.GetFileNameWithoutExtension(strr)));
+                if (count >amount) {count = 0; yield return null;}
+                count++;
             }
+            if (count >amount) {count = 0; yield return null;}
+            count++;
         }
 
         icons = getAllIcons();
+        float precentageDone = 0;
+        float max = 1f/icons.Sum(subArray => subArray.Length)*100f;
         foreach (string[] str in icons){
             foreach (string strr in str){
-                createIconButtons(strr);
+                prefabIconsButtons.Add(createIconButtons(strr));
+                if (count >amount) {count = 0; yield return null;}
+                count++;
+                precentageDone += max;
+                print(precentageDone);
             }
+            if (count >amount) {count = 0; yield return null;}
+            count++;
         }
+        precentageDone = 100f;
+        yield break;
     }
- 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    public IEnumerator destroyButtons(){
+        int count = 0;
+        int amount = 5;
+        float max = 1f/icons.Sum(subArray => subArray.Length)*100f;
+        float precentageDone = 100f;
+        for (int i = 0; i <prefabIconsButtons.Count;){
+            Destroy(prefabIconsButtons[prefabIconsButtons.Count-1]);
+            prefabIconsButtons.RemoveAt(prefabIconsButtons.Count-1);
+            if (count >amount) {count = 0; yield return null;}
+            count++;
+            precentageDone -= max;
+            print(precentageDone);
+        }
+        yield break;
     }
+
     public string[] getAllAuthors(){
         return Directory.GetDirectories(path);
     }

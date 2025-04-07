@@ -6,12 +6,12 @@ using UnityEngine.UI;
 
 public class PathScript : MonoBehaviour
 {
-    public RectTransform content;
+    public GameObject content;
     public GameObject button;
-    public List<GameObject> buttons = new List<GameObject>();
     public SpecialFolderScript specialFolder;
     public FolderScript folders;
     public FileScript files;
+    internal List<GameObject> buttons = new List<GameObject>();
     public GameObject createItem(string strName){
         GameObject gameObject;
         gameObject = Instantiate(button, Vector3.zero, Quaternion.identity);
@@ -63,15 +63,5 @@ public class PathScript : MonoBehaviour
         }
         folders.getFolders();
         files.getFiles();
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

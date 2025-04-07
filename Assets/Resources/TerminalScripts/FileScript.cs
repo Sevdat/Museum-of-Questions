@@ -9,10 +9,10 @@ using UnityEngine.WSA;
 
 public class FileScript : MonoBehaviour
 {
-    public RectTransform content;
+    public GameObject content;
     public GameObject button;
     public PathScript pathScript;
-    public List<GameObject> buttons = new List<GameObject>();
+    internal List<GameObject> buttons = new List<GameObject>();
     public GameObject createItem(string strName){
         GameObject gameObject;
         gameObject = Instantiate(button, Vector3.zero, Quaternion.identity);
@@ -43,10 +43,7 @@ public class FileScript : MonoBehaviour
         buttons = new List<GameObject>();
     }
     public void onClick(Button button){
-        pathScript.addButton(button.name);
-        pathScript.folders.deleteButtons();
-        deleteButtons();
-        Process.Start(pathScript.pathToString());
+        Process.Start(pathScript.pathToString() + $"/{button.name}");
     }
     // Start is called before the first frame update
     void Start()

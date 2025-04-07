@@ -511,6 +511,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
         type: 3}
+      propertyPath: terminal
+      value: 
+      objectReference: {fileID: 896768897538380627, guid: 0b2fa908130f25b4c959d028e3e2cdb4,
+        type: 3}
+    - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
+        type: 3}
       propertyPath: AssetTerminal
       value: 
       objectReference: {fileID: 896768897538380627, guid: 7e346849de9b3244a9a5aae8d78a6b95,

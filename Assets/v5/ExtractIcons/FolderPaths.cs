@@ -20,7 +20,6 @@ public class FolderPaths : MonoBehaviour
 
     internal AnimateCharacter animateCharacter;
     internal RotateCameraFollow rotateCameraFollow;
-    internal TerminalScript terminalScript;
     internal ExportImportGLTF exportImportGLTF;
     internal OrginizePaths orginizePaths;
     
@@ -29,9 +28,14 @@ public class FolderPaths : MonoBehaviour
     internal GameObject paths;
     internal GameObject rootPortalPrefab,rootIconPrefab;
     internal GameObject currentMap;
- 
+    
+    public bool assetTerminalActive = false;
     public GameObject assetTerminalGameObject;
     internal AssetTerminal assetTerminal;
+
+    public bool terminalActive = false;
+    public GameObject terminal;
+    internal TerminalScript terminalScript;
     
     void Awake(){
         init();
@@ -70,7 +74,6 @@ public class FolderPaths : MonoBehaviour
         editPrefab = transform.AddComponent<EditPrefab>();
         rotateCameraFollow = follow.AddComponent<RotateCameraFollow>();
         animateCharacter = player.AddComponent<AnimateCharacter>();
-        terminalScript = transform.AddComponent<TerminalScript>();
         exportImportGLTF = transform.AddComponent<ExportImportGLTF>();
         orginizePaths = transform.AddComponent<OrginizePaths>();
         rotateCameraFollow.player = player;
@@ -78,9 +81,12 @@ public class FolderPaths : MonoBehaviour
         initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");
         getFiles();
         getFolders();
-        assetTerminalGameObject = Instantiate(assetTerminalGameObject);
-        assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
-        assetTerminal.folderPaths = this;
+        // assetTerminalGameObject = Instantiate(assetTerminalGameObject);
+        // assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
+        // assetTerminal.folderPaths = this;
+        terminal = Instantiate(terminal);
+        terminalScript = assetTerminalGameObject.GetComponent<TerminalScript>();
+        
     }
     public void initiateRootPrefab(ref GameObject prefab, string path){
         string iconPrefabPath = path;

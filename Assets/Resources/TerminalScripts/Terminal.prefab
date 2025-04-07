@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1360005496703554184}
   - component: {fileID: 1454165540566135570}
   - component: {fileID: 2670764825238780941}
+  - component: {fileID: 6545685462751707519}
   m_Layer: 5
   m_Name: Terminal
   m_TagString: Untagged
@@ -105,6 +106,22 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &6545685462751707519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896768897538380627}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0dd711a470bca70429cb4ccc141cce2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  path: {fileID: 2759406282714958985}
+  specialFolder: {fileID: 1197923696380920880}
+  folders: {fileID: 4320022745613934271}
+  files: {fileID: 1916119646726575244}
 --- !u!1 &1577550876536817503
 GameObject:
   m_ObjectHideFlags: 0
@@ -225,8 +242,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6899072689009442782}
   m_HandleRect: {fileID: 5494696072546254545}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 0
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -522,9 +539,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85ab99c3f72aca84d96d5d1a05f39853, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  content: {fileID: 9159333695875538643}
+  content: {fileID: 2310265774018036750}
   button: {fileID: 2932189640931733488, guid: ee6a942de047f7c42acdec6fa6617540, type: 3}
-  pathScript: {fileID: 0}
+  pathScript: {fileID: 2759406282714958985}
 --- !u!1 &3048418232671549250
 GameObject:
   m_ObjectHideFlags: 0
@@ -615,10 +632,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f8b92c16ad70654e832450b760b8d5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  content: {fileID: 7579464843121742226}
+  content: {fileID: 3048418232671549250}
   button: {fileID: 2932189640931733488, guid: ee6a942de047f7c42acdec6fa6617540, type: 3}
-  pathScript: {fileID: 0}
-  buttons: []
+  pathScript: {fileID: 2759406282714958985}
 --- !u!1 &3162141436947320559
 GameObject:
   m_ObjectHideFlags: 0
@@ -1036,10 +1052,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3843bcf078e1fdb40a3c299bd96d29f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  content: {fileID: 1856198302639398930}
+  content: {fileID: 4158037964630548152}
   button: {fileID: 2932189640931733488, guid: ee6a942de047f7c42acdec6fa6617540, type: 3}
-  pathScript: {fileID: 0}
-  buttons: []
+  pathScript: {fileID: 2759406282714958985}
 --- !u!1 &4293432203011023506
 GameObject:
   m_ObjectHideFlags: 0
@@ -1618,7 +1633,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 225.85658, y: -7.999975}
+  m_AnchoredPosition: {x: 475.05997, y: -7.999975}
   m_SizeDelta: {x: 0, y: 8}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &7425541760011650066
@@ -1673,12 +1688,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cfffa15164f3b545a64bc85b60afd46, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  content: {fileID: 7684581281333157722}
+  content: {fileID: 6501398121286040901}
   button: {fileID: 2932189640931733488, guid: 167fb9b310ab11d4c9c2c875ff7f5431, type: 3}
-  buttons: []
-  specialFolder: {fileID: 0}
-  folders: {fileID: 0}
-  files: {fileID: 0}
+  specialFolder: {fileID: 1197923696380920880}
+  folders: {fileID: 4320022745613934271}
+  files: {fileID: 1916119646726575244}
 --- !u!1 &6844652207806187744
 GameObject:
   m_ObjectHideFlags: 0
