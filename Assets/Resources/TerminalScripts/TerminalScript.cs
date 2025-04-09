@@ -4,11 +4,12 @@ using UnityEngine;
 
 public class TerminalScript : MonoBehaviour
 {
+    internal FolderPaths folderPaths;
     public PathScript path;
     public SpecialFolderScript specialFolder;
     public FolderScript folders;
     public FileScript files;
-    bool exist = false;
+    
     public void Start()
     {
         specialFolder.specialFolderPaths();

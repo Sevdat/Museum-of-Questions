@@ -8,9 +8,7 @@ public class PathScript : MonoBehaviour
 {
     public GameObject content;
     public GameObject button;
-    public SpecialFolderScript specialFolder;
-    public FolderScript folders;
-    public FileScript files;
+    public TerminalScript terminalScript;
     internal List<GameObject> buttons = new List<GameObject>();
     public GameObject createItem(string strName){
         GameObject gameObject;
@@ -61,7 +59,7 @@ public class PathScript : MonoBehaviour
                 }
             if (buttons[i] == button.gameObject) check = true;
         }
-        folders.getFolders();
-        files.getFiles();
+        terminalScript.folders.getFolders();
+        terminalScript.files.getFiles();
     }
 }

@@ -85,7 +85,8 @@ public class FolderPaths : MonoBehaviour
         // assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
         // assetTerminal.folderPaths = this;
         terminal = Instantiate(terminal);
-        terminalScript = assetTerminalGameObject.GetComponent<TerminalScript>();
+        terminalScript = terminal.GetComponent<TerminalScript>();
+        terminalScript.folderPaths = this;
         
     }
     public void initiateRootPrefab(ref GameObject prefab, string path){

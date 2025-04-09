@@ -9,7 +9,7 @@ public class SpecialFolderScript : MonoBehaviour
 {
     public GameObject content;
     public GameObject button;
-    public PathScript pathScript;
+    public TerminalScript terminalScript;
     internal Dictionary<GameObject,string> buttons = new Dictionary<GameObject,string>();
     public GameObject createItem(string strName){
         GameObject gameObject;
@@ -40,8 +40,8 @@ public class SpecialFolderScript : MonoBehaviour
         }
     }
     public void onClick(Button button){
-        pathScript.resetPath(buttons[button.gameObject]);
-        pathScript.folders.getFolders();
-        pathScript.files.getFiles();
+        terminalScript.path.resetPath(buttons[button.gameObject]);
+        terminalScript.folders.getFolders();
+        terminalScript.files.getFiles();
     }
 }

@@ -9,8 +9,15 @@ public class FolderScript : MonoBehaviour
 {
     public GameObject content;
     public GameObject button;
-    public PathScript pathScript;
+    public TerminalScript terminalScript;
     internal List<GameObject> buttons = new List<GameObject>();
+
+    internal bool spawnFolder = false;
+    public GameObject folderSpawner;
+    Button folderSpawnerButton;
+    ColorBlock colorBlock;
+
+
     public GameObject createItem(string strName){
         GameObject gameObject;
         gameObject = Instantiate(button, Vector3.zero, Quaternion.identity);
@@ -26,7 +33,7 @@ public class FolderScript : MonoBehaviour
         return gameObject;
     }
     public void getFolders(){
-        string[] files = Directory.GetDirectories(pathScript.pathToString());
+        string[] files = Directory.GetDirectories(terminalScript.path.pathToString());
         deleteButtons();
         foreach(string file in files){
             string[] strArray = file.Split("\\");
@@ -41,8 +48,33 @@ public class FolderScript : MonoBehaviour
         buttons = new List<GameObject>();
     }
     public void onClick(Button button){
-        pathScript.addButton(button.name);
-        getFolders();
-        pathScript.files.getFiles();
+        if (spawnFolder){
+            terminalScript.folderPaths.editPrefab.createPortal(terminalScript.path.pathToString() + $"\\{button.name}");
+        } else {
+            terminalScript.path.addButton(button.name);
+            getFolders();
+            terminalScript.files.getFiles();
+        }
+    }
+
+    void Start()
+    {
+        folderSpawnerButton = folderSpawner.GetComponent<Button>();
+        folderSpawnerButton.onClick.AddListener(() => onClick());
+        colorBlock = folderSpawnerButton.colors;
+    }
+    public void onClick(){
+        toggleHighlight();
+        print($"Folder: {spawnFolder}");
+    }
+    void toggleHighlight()
+    {
+        spawnFolder = !spawnFolder;
+        ColorBlock newColors = colorBlock;
+        // Change the normal color to keep the highlight appearance
+        newColors.normalColor = spawnFolder ? newColors.selectedColor : colorBlock.normalColor;
+        newColors.selectedColor = spawnFolder ? newColors.selectedColor : colorBlock.normalColor;
+        newColors.highlightedColor = spawnFolder ? newColors.selectedColor : colorBlock.normalColor;
+        folderSpawnerButton.colors = newColors;
     }
 }
