@@ -34,8 +34,12 @@ public class FolderPaths : MonoBehaviour
     internal AssetTerminal assetTerminal;
 
     public bool terminalActive = false;
-    public GameObject terminal;
+    public GameObject terminalGameObject;
     internal TerminalScript terminalScript;
+
+    public bool menuActive = false;
+    public GameObject menuGameObject;
+    internal Menu menu;
     
     void Awake(){
         init();
@@ -64,8 +68,13 @@ public class FolderPaths : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.T)){
             currentDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         }
+        if (Input.GetKeyDown(KeyCode.Escape)){
+            menuActive = !menuActive;
+            menuGameObject.SetActive(menuActive);
+        }
         if (Input.GetKeyDown(KeyCode.Space)){
-            editPrefab.ray();
+            terminalGameObject.SetActive(false);
+            assetTerminalGameObject.SetActive(false);
         }
     }
 
@@ -81,12 +90,21 @@ public class FolderPaths : MonoBehaviour
         initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");
         getFiles();
         getFolders();
-        // assetTerminalGameObject = Instantiate(assetTerminalGameObject);
-        // assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
-        // assetTerminal.folderPaths = this;
-        terminal = Instantiate(terminal);
-        terminalScript = terminal.GetComponent<TerminalScript>();
+
+        assetTerminalGameObject = Instantiate(assetTerminalGameObject);
+        assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
+        assetTerminal.folderPaths = this;
+        assetTerminalActive = true;
+
+        terminalGameObject = Instantiate(terminalGameObject);
+        terminalScript = terminalGameObject.GetComponent<TerminalScript>();
         terminalScript.folderPaths = this;
+        terminalActive = true;
+
+        menuGameObject = Instantiate(menuGameObject);
+        menu = menuGameObject.GetComponent<Menu>();
+        menu.folderPaths = this;
+        menuActive = true;
         
     }
     public void initiateRootPrefab(ref GameObject prefab, string path){

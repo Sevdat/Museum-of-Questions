@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class RotateCameraFollow : MonoBehaviour
 {
+    internal FolderPaths folderPaths;
     internal GameObject player; // Reference to the player object
     CharacterController characterController;
     float sensitivityX = 5f; // Sensitivity for horizontal mouse movement

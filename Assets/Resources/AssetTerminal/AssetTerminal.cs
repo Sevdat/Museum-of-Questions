@@ -26,6 +26,10 @@ public class AssetTerminal : MonoBehaviour
     string[][] allProjects;
 
     internal FolderPaths folderPaths;
+    internal float precentageDone = 0f;
+
+    internal Coroutine delete = null;
+
     
     
     // Start is called before the first frame update
@@ -34,7 +38,7 @@ public class AssetTerminal : MonoBehaviour
         // createIconButtons(@$"{Application.dataPath}/Resources/GeneratedAssets/Palmov Island/Low Poly Houses Free Pack/Prefab/Icon/city hall.png");
         // createAuthorButtons("Author");
         // createProjectButtons("Project");
-        StartCoroutine(init());
+        init();
 
     }
 
@@ -43,8 +47,13 @@ public class AssetTerminal : MonoBehaviour
     {
 
     }
-
-    internal IEnumerator init(){
+    internal void init(){
+        StartCoroutine(courutineStart());
+    }
+    internal void destroyButtonsCourrutine(){
+        delete = StartCoroutine(courutineStart());
+    }
+    internal IEnumerator courutineStart(){
         allAuthors = getAllAuthors();
         int count = 0;
         int amount = 10;
@@ -66,7 +75,7 @@ public class AssetTerminal : MonoBehaviour
         }
 
         icons = getAllIcons();
-        float precentageDone = 0;
+        precentageDone = 0;
         float max = 1f/icons.Sum(subArray => subArray.Length)*100f;
         foreach (string[] str in icons){
             foreach (string strr in str){
@@ -86,15 +95,16 @@ public class AssetTerminal : MonoBehaviour
         int count = 0;
         int amount = 5;
         float max = 1f/icons.Sum(subArray => subArray.Length)*100f;
-        float precentageDone = 100f;
+        precentageDone = 99.98f;
         for (int i = 0; i <prefabIconsButtons.Count;){
             Destroy(prefabIconsButtons[prefabIconsButtons.Count-1]);
             prefabIconsButtons.RemoveAt(prefabIconsButtons.Count-1);
             if (count >amount) {count = 0; yield return null;}
             count++;
             precentageDone -= max;
-            print(precentageDone);
         }
+        precentageDone = 0;
+        delete = null;
         yield break;
     }
 

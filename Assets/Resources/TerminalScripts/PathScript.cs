@@ -39,9 +39,6 @@ public class PathScript : MonoBehaviour
         }   
         buttons = new List<GameObject>();
     }
-    public void refreshFilesAndFolders(){
-        
-    }
     public void resetPath(string str){
         deleteButtons();
         string[] strArray = str.Split("\\");
