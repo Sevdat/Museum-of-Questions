@@ -6,14 +6,14 @@ using UnityEngine;
 public class PortalGameObject : MonoBehaviour
 {
     GameObject player;
-    FolderPaths folderPaths;
+    Main folderPaths;
 
     public void init(GameObject parent, GameObject player, string path){
         this.player = player;
         rename(path);
         transform.rotation = player.transform.rotation;
         transform.SetParent(parent.transform);
-        folderPaths = player.transform.parent.GetComponent<FolderPaths>();
+        folderPaths = player.transform.parent.GetComponent<Main>();
     }
 
     internal void rename(string path){
@@ -33,8 +33,6 @@ public class PortalGameObject : MonoBehaviour
             if (folderPaths.currentMap != null) {
                 folderPaths.currentDirectoryPath = transform.name;
                 StartCoroutine(folderPaths.DeleteMapPrefab(folderPaths.currentMap));
-                folderPaths.getFiles();
-                folderPaths.getFolders();
             }
             player.GetComponent<CharacterController>().enabled = false;
             player.transform.position = Vector3.zero;

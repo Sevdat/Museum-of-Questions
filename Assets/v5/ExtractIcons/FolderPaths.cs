@@ -9,13 +9,13 @@ using UnityEngine.SceneManagement;
 using UnityGLTF;
 
 
-public class FolderPaths : MonoBehaviour
+public class Main : MonoBehaviour
 {
 
     public GameObject follow, player;
 
     internal string currentDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-    internal GeneratedAssets loadPrefabScript;
+    internal GeneratedAssets generatedAssets;
     internal EditPrefab editPrefab;
 
     internal AnimateCharacter animateCharacter;
@@ -79,7 +79,7 @@ public class FolderPaths : MonoBehaviour
     }
 
     public void init(){
-        loadPrefabScript = transform.AddComponent<GeneratedAssets>();
+        generatedAssets = transform.AddComponent<GeneratedAssets>();
         editPrefab = transform.AddComponent<EditPrefab>();
         rotateCameraFollow = follow.AddComponent<RotateCameraFollow>();
         animateCharacter = player.AddComponent<AnimateCharacter>();
@@ -88,12 +88,10 @@ public class FolderPaths : MonoBehaviour
         rotateCameraFollow.player = player;
         initiateRootPrefab(ref rootPortalPrefab, "Scenes/Portal blue Variant 1");
         initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");
-        getFiles();
-        getFolders();
 
         assetTerminalGameObject = Instantiate(assetTerminalGameObject);
         assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
-        assetTerminal.folderPaths = this;
+        assetTerminal.main = this;
         assetTerminalActive = true;
 
         terminalGameObject = Instantiate(terminalGameObject);
@@ -103,37 +101,14 @@ public class FolderPaths : MonoBehaviour
 
         menuGameObject = Instantiate(menuGameObject);
         menu = menuGameObject.GetComponent<Menu>();
-        menu.folderPaths = this;
+        menu.main = this;
         menuActive = true;
-        
     }
     public void initiateRootPrefab(ref GameObject prefab, string path){
         string iconPrefabPath = path;
         prefab = Resources.Load<GameObject>(iconPrefabPath);
     }
-    public string[] getDrives(){
-        string[] drives = Environment.GetLogicalDrives();
-        return drives;
-    }
-    public string[] getFiles(){
-        editPrefab.files = Directory.GetFiles(currentDirectoryPath);
-        return editPrefab.files;
-    }
-    public string[] getFolders(){
-        editPrefab.folders = Directory.GetDirectories(currentDirectoryPath);
-        return editPrefab.folders;
-    }
-    public void specialFolderPaths(){
-        Environment.SpecialFolder[] folderNames = 
-            (Environment.SpecialFolder[])Enum.GetValues(typeof(Environment.SpecialFolder));
-        foreach (Environment.SpecialFolder folderName in folderNames){
-            string fullPath = Environment.GetFolderPath(folderName);
-            if (fullPath.Length>0){
-                string[] strArray = fullPath.Split("\\");
-                string name = strArray[strArray.Length-1];
-            }
-        }
-    }
+
     internal IEnumerator LoadAndInstantiatePrefab(string path,GameObject destroyPortal,Vector3 vec){
         // Load the prefab from the Resources folder
         ResourceRequest request = Resources.LoadAsync<GameObject>(path);

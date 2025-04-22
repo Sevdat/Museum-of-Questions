@@ -6,7 +6,7 @@ using UnityGLTF;
 
 public class ExportImportGLTF : MonoBehaviour
 {
-    FolderPaths folderPaths;
+    Main folderPaths;
     GameObject exp;
     string str;
     // Start is called before the first frame update
@@ -14,7 +14,7 @@ public class ExportImportGLTF : MonoBehaviour
     // terrain isn't supported, KHR_materials_pbrSpecularGlossiness has been deprecated  older specular-glossiness PBR workflow
     void Start()
     {
-        folderPaths = transform.GetComponent<FolderPaths>();
+        folderPaths = transform.GetComponent<Main>();
         exp = Resources.Load<GameObject>("OutPostOnDesert");
         Resources.UnloadAsset(exp);
         

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TerminalScript : MonoBehaviour
 {
-    internal FolderPaths folderPaths;
+    internal Main folderPaths;
     public PathScript path;
     public SpecialFolderScript specialFolder;
     public FolderScript folders;

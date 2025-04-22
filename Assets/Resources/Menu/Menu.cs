@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class Menu : MonoBehaviour
 {
-    internal FolderPaths folderPaths;
+    internal Main main;
     public GameObject terminalButton,assetTerminalButton;
     
     
@@ -21,11 +21,11 @@ public class Menu : MonoBehaviour
     }
 
     public void onTerminalButtonClick(){
-        folderPaths.terminalGameObject.SetActive(true);
+        main.terminalGameObject.SetActive(true);
         transform.gameObject.SetActive(false);
     }
     public void onAssetTerminalButtonClick(){
-        folderPaths.assetTerminalGameObject.SetActive(true);
+        main.assetTerminalGameObject.SetActive(true);
         transform.gameObject.SetActive(false);
     }
 }

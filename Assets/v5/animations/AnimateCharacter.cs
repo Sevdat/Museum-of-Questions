@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AnimateCharacter : MonoBehaviour
 {   
-    internal FolderPaths folderPaths;
+    internal Main folderPaths;
     CharacterController characterController;
     Animator animator;
     internal float velocityZ = 0.0f;

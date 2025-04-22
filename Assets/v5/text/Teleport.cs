@@ -7,9 +7,7 @@ public class Teleport : MonoBehaviour
     public GameObject player;
     public GameObject parent;
     Vector3 teleportLocation = new Vector3(507f,10,0);
-    void OnTriggerEnter(Collider other)
-    {
-        print(other.transform.name);
+    void OnTriggerEnter(Collider other){
         if (other.transform.name == player.transform.name){
             parent.transform.position = teleportLocation;
         }

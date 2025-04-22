@@ -67,8 +67,7 @@ public class FolderScript : MonoBehaviour
         toggleHighlight();
         print($"Folder: {spawnFolder}");
     }
-    void toggleHighlight()
-    {
+    void toggleHighlight(){
         spawnFolder = !spawnFolder;
         ColorBlock newColors = colorBlock;
         // Change the normal color to keep the highlight appearance

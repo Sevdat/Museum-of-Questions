@@ -25,10 +25,13 @@ public class AssetTerminal : MonoBehaviour
     string[] allAuthors;
     string[][] allProjects;
 
-    internal FolderPaths folderPaths;
+    internal Main main;
+    internal int maxValue;
+    internal float incrementPrecentegeDone = 0;
     internal float precentageDone = 0f;
 
     internal Coroutine delete = null;
+    internal Coroutine coroutine;
 
     
     
@@ -38,6 +41,7 @@ public class AssetTerminal : MonoBehaviour
         // createIconButtons(@$"{Application.dataPath}/Resources/GeneratedAssets/Palmov Island/Low Poly Houses Free Pack/Prefab/Icon/city hall.png");
         // createAuthorButtons("Author");
         // createProjectButtons("Project");
+        refresh();
         init();
 
     }
@@ -48,45 +52,47 @@ public class AssetTerminal : MonoBehaviour
 
     }
     internal void init(){
-        StartCoroutine(courutineStart());
+        coroutine = StartCoroutine(courutineStart());
     }
     internal void destroyButtonsCourrutine(){
         delete = StartCoroutine(courutineStart());
     }
-    internal IEnumerator courutineStart(){
-        allAuthors = getAllAuthors();
+
+    internal IEnumerator courutineStart(int amount = 10){
         int count = 0;
-        int amount = 10;
+        float track = 0;
         foreach (string str in allAuthors) {
-            authorNameButtons.Add(createAuthorButtons(Path.GetFileNameWithoutExtension(str)));
-            if (count >amount) {count = 0; yield return null;}
-            count++;
+            if (track>precentageDone){
+                if (count >amount) {count = 0; yield return null;}
+                authorNameButtons.Add(createAuthorButtons(Path.GetFileNameWithoutExtension(str)));
+                count++;
+                precentageDone += incrementPrecentegeDone;
+            }
+            track += incrementPrecentegeDone;
         }
         
-        allProjects = getAllProjects();
         foreach (string[] str in allProjects){
             foreach (string strr in str){
-                projectNameButtons.Add(createProjectButtons(Path.GetFileNameWithoutExtension(strr)));
-                if (count >amount) {count = 0; yield return null;}
-                count++;
+                if (track>precentageDone){
+                    if (count >amount) {count = 0; yield return null;}
+                    projectNameButtons.Add(createProjectButtons(Path.GetFileNameWithoutExtension(strr)));
+                    count++;
+                    precentageDone += incrementPrecentegeDone;
+                }
+                track += incrementPrecentegeDone;
             }
-            if (count >amount) {count = 0; yield return null;}
-            count++;
         }
 
-        icons = getAllIcons();
-        precentageDone = 0;
-        float max = 1f/icons.Sum(subArray => subArray.Length)*100f;
         foreach (string[] str in icons){
             foreach (string strr in str){
-                prefabIconsButtons.Add(createIconButtons(strr));
-                if (count >amount) {count = 0; yield return null;}
-                count++;
-                precentageDone += max;
-                print(precentageDone);
+                if (track>precentageDone){
+                    if (count >amount) {count = 0; yield return null;}
+                    prefabIconsButtons.Add(createIconButtons(strr));
+                    count++;
+                    precentageDone += incrementPrecentegeDone;
+                }
+                track += incrementPrecentegeDone;
             }
-            if (count >amount) {count = 0; yield return null;}
-            count++;
         }
         precentageDone = 100f;
         yield break;
@@ -107,25 +113,41 @@ public class AssetTerminal : MonoBehaviour
         delete = null;
         yield break;
     }
-
-    public string[] getAllAuthors(){
-        return Directory.GetDirectories(path);
+    public void refresh(){
+        var allAuthors = getAllAuthors();
+        this.allAuthors = allAuthors.Item1;
+        var allProjects = getAllProjects();
+        this.allProjects = allProjects.Item1;
+        var icons = getAllIcons();
+        this.icons = icons.Item1;
+        maxValue = allAuthors.Item2 + allProjects.Item2 + icons.Item2;
+        if (maxValue != 0.0f) incrementPrecentegeDone = 1f/maxValue;
     }
-    public string[][] getAllProjects(){
+    public (string[], int) getAllAuthors(){
+        string[] str = Directory.GetDirectories(path);
+        return (str, str.Length);
+    }
+    public (string[][], int) getAllProjects(){
+        int size = 0;
         List<string[]> iconList = new List<string[]>();
         foreach (string str in allAuthors){
-            iconList.Add(Directory.GetDirectories(str));
+            string[] temp = Directory.GetDirectories(str);
+            size += temp.Length;
+            iconList.Add(temp);
         }
-        return iconList.ToArray();
+        return (iconList.ToArray(),size);
     }
-    public string[][] getAllIcons(){
+    public (string[][], int) getAllIcons(){
+        int size = 0;
         string[] allDirectories = Directory.GetDirectories(path,"*",SearchOption.AllDirectories);
         string[] allIconPaths = allDirectories.Where(dir => dir.Replace('\\', '/').EndsWith("Prefab/Icon")).ToArray();
         List<string[]> iconList = new List<string[]>();
         foreach (string str in allIconPaths){
-            iconList.Add(Directory.GetFiles(str, "*.png"));
+            string[] temp = Directory.GetFiles(str, "*.png");
+            size += temp.Length;
+            iconList.Add(temp);
         }
-        return iconList.ToArray();
+        return (iconList.ToArray(), size);
     }
 
     public GameObject createAuthorButtons(string authorName){
@@ -166,7 +188,7 @@ public class AssetTerminal : MonoBehaviour
         print("Project");
     }
     public void onClickIcon(Button button){
-        folderPaths.exportImportGLTF.ImportGLTF(button.gameObject.name);
+        main.exportImportGLTF.ImportGLTF(button.gameObject.name);
     }
 
     public static Texture2D LoadPNG(string filePath) {

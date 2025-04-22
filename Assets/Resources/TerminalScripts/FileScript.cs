@@ -66,8 +66,7 @@ public class FileScript : MonoBehaviour
         colorBlock = fileSpawnerButton.colors;
     }
 
-    void toggleHighlight()
-    {
+    void toggleHighlight(){
         spawnFile = !spawnFile;
         ColorBlock newColors = colorBlock;
         // Change the normal color to keep the highlight appearance
