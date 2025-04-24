@@ -19,6 +19,9 @@ public class AssetTerminal : MonoBehaviour
     public GameObject prefabIconsMenuContent,prefabIconsPrefab;
     public List<GameObject> prefabIconsButtons = new List<GameObject>();
 
+    public GameObject refreshGameObject;
+    public TextMeshProUGUI precenageDoneGameObject;
+
     string path = @$"{Application.dataPath}/Resources/GeneratedAssets";
     string[][] icons;
 
@@ -29,21 +32,12 @@ public class AssetTerminal : MonoBehaviour
     internal int maxValue;
     internal float incrementPrecentegeDone = 0;
     internal float precentageDone = 0f;
-
-    internal Coroutine delete = null;
-    internal Coroutine coroutine;
-
-    
     
     // Start is called before the first frame update
-    void Start()
-    {
-        // createIconButtons(@$"{Application.dataPath}/Resources/GeneratedAssets/Palmov Island/Low Poly Houses Free Pack/Prefab/Icon/city hall.png");
-        // createAuthorButtons("Author");
-        // createProjectButtons("Project");
+    void Start(){
         refresh();
-        init();
-
+        StartCoroutine(courutineStart());
+        refreshGameObject.GetComponent<Button>().onClick.AddListener(() => StartCoroutine(onRefreshButtonClick()));
     }
 
     // Update is called once per frame
@@ -51,68 +45,74 @@ public class AssetTerminal : MonoBehaviour
     {
 
     }
-    internal void init(){
-        coroutine = StartCoroutine(courutineStart());
-    }
-    internal void destroyButtonsCourrutine(){
-        delete = StartCoroutine(courutineStart());
-    }
 
     internal IEnumerator courutineStart(int amount = 10){
+
+        var gridLayout = GetComponent<GridLayoutGroup>();
+        if (gridLayout != null) gridLayout.enabled = false;
+        
         int count = 0;
-        float track = 0;
-        foreach (string str in allAuthors) {
-            if (track>precentageDone){
-                if (count >amount) {count = 0; yield return null;}
-                authorNameButtons.Add(createAuthorButtons(Path.GetFileNameWithoutExtension(str)));
-                count++;
-                precentageDone += incrementPrecentegeDone;
-            }
-            track += incrementPrecentegeDone;
+        foreach (string str in allAuthors) {      
+            if (count >amount) {count = 0; yield return null;}
+            authorNameButtons.Add(createAuthorButtons(Path.GetFileNameWithoutExtension(str)));
+            count++;
+            precentageDone += incrementPrecentegeDone;
+            precenageDoneGameObject.text = precentageDone.ToString("0.0");
         }
         
         foreach (string[] str in allProjects){
             foreach (string strr in str){
-                if (track>precentageDone){
-                    if (count >amount) {count = 0; yield return null;}
-                    projectNameButtons.Add(createProjectButtons(Path.GetFileNameWithoutExtension(strr)));
-                    count++;
-                    precentageDone += incrementPrecentegeDone;
-                }
-                track += incrementPrecentegeDone;
+                if (count >amount) {count = 0; yield return null;}
+                projectNameButtons.Add(createProjectButtons(Path.GetFileNameWithoutExtension(strr)));
+                count++;
+                precentageDone += incrementPrecentegeDone;
+                precenageDoneGameObject.text = precentageDone.ToString("0.0");
             }
         }
 
         foreach (string[] str in icons){
             foreach (string strr in str){
-                if (track>precentageDone){
-                    if (count >amount) {count = 0; yield return null;}
-                    prefabIconsButtons.Add(createIconButtons(strr));
-                    count++;
-                    precentageDone += incrementPrecentegeDone;
-                }
-                track += incrementPrecentegeDone;
+                if (count >amount) {count = 0; yield return null;}
+                prefabIconsButtons.Add(createIconButtons(strr));
+                count++;
+                precentageDone += incrementPrecentegeDone;
+                precenageDoneGameObject.text = precentageDone.ToString("0.0");
             }
         }
         precentageDone = 100f;
+        precenageDoneGameObject.text = 100f.ToString("0.0");
         yield break;
     }
-    public IEnumerator destroyButtons(){
+    public IEnumerator destroyButtons(int amount = 10) {
         int count = 0;
-        int amount = 5;
-        float max = 1f/icons.Sum(subArray => subArray.Length)*100f;
-        precentageDone = 99.98f;
-        for (int i = 0; i <prefabIconsButtons.Count;){
-            Destroy(prefabIconsButtons[prefabIconsButtons.Count-1]);
-            prefabIconsButtons.RemoveAt(prefabIconsButtons.Count-1);
-            if (count >amount) {count = 0; yield return null;}
+        int maxLength = Mathf.Max(authorNameButtons.Count, projectNameButtons.Count, prefabIconsButtons.Count);
+        
+        for (int i = maxLength - 1; i >= 0; i--) {
+            if (count >= amount) {
+                count = 0;
+                yield return null;
+            }
+
+            if (i < authorNameButtons.Count) Destroy(authorNameButtons[i]);
+            if (i < projectNameButtons.Count) Destroy(projectNameButtons[i]);
+            if (i < prefabIconsButtons.Count) Destroy(prefabIconsButtons[i]);
+
             count++;
-            precentageDone -= max;
+            precentageDone -= incrementPrecentegeDone;
+            precenageDoneGameObject.text = precentageDone.ToString("0.0");
         }
+
+        authorNameButtons.Clear();
+        projectNameButtons.Clear();
+        prefabIconsButtons.Clear();
+        authorNameButtons.TrimExcess();
+        projectNameButtons.TrimExcess();
+        prefabIconsButtons.TrimExcess();
+
         precentageDone = 0;
-        delete = null;
-        yield break;
+        precenageDoneGameObject.text = 0f.ToString("0.0");
     }
+
     public void refresh(){
         var allAuthors = getAllAuthors();
         this.allAuthors = allAuthors.Item1;
@@ -121,7 +121,7 @@ public class AssetTerminal : MonoBehaviour
         var icons = getAllIcons();
         this.icons = icons.Item1;
         maxValue = allAuthors.Item2 + allProjects.Item2 + icons.Item2;
-        if (maxValue != 0.0f) incrementPrecentegeDone = 1f/maxValue;
+        if (maxValue != 0.0f) incrementPrecentegeDone = 100f/maxValue;
     }
     public (string[], int) getAllAuthors(){
         string[] str = Directory.GetDirectories(path);
@@ -189,6 +189,7 @@ public class AssetTerminal : MonoBehaviour
     }
     public void onClickIcon(Button button){
         main.exportImportGLTF.ImportGLTF(button.gameObject.name);
+        transform.gameObject.SetActive(false);
     }
 
     public static Texture2D LoadPNG(string filePath) {
@@ -211,4 +212,23 @@ public class AssetTerminal : MonoBehaviour
             new Vector2(0.5f, 0.5f) // Pivot point (center)
         );
     }
+
+    public IEnumerator onRefreshButtonClick(){
+        yield return StartCoroutine(destroyButtons());
+        refresh();
+        yield return null;
+        yield return StartCoroutine(courutineStart());
+    }
+
+    public void onMenuClick(){
+        StartCoroutine(onMenuButtonClick());
+    }
+    public IEnumerator onMenuButtonClick(){
+        if (precentageDone != 100.0f){
+            yield return StartCoroutine(destroyButtons());
+            yield return null;
+            yield return StartCoroutine(courutineStart());
+        }
+    }
+
 }

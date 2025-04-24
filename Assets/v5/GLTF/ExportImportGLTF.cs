@@ -69,7 +69,9 @@ public class ExportImportGLTF : MonoBehaviour
 
             // Get the root GameObject of the imported scene
             folderPaths.currentMap = sceneImporter.CreatedObject;
+            folderPaths.currentMap.transform.position = folderPaths.editPrefab.placeInfrontOfPlayer(1,2,4);
             AddMeshCollidersToHierarchy(folderPaths.currentMap);
+
         }
         catch (System.Exception ex){
             print($"Failed to import GLTF file: {ex.Message}");
