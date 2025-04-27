@@ -18,6 +18,11 @@ public class RotateCameraFollow : MonoBehaviour
     }
 
     void LateUpdate(){
+        if (folderPaths.allMenuDisabled){
+            rotateCharacter();
+        }
+    }
+    private void rotateCharacter(){
         // Get mouse input
         mouseX = Input.GetAxis("Mouse X") * sensitivityX;
         mouseY = Input.GetAxis("Mouse Y") * sensitivityY;
@@ -27,7 +32,6 @@ public class RotateCameraFollow : MonoBehaviour
         transform.position = player.transform.position + initialPosition;
         RotatePlayerWithCamera();
     }
-
     private void RotateCamera(float mouseX, float mouseY){
         // Rotate the camera horizontally (around the y-axis)
         transform.Rotate(-mouseY, mouseX, 0);

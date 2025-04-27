@@ -31,7 +31,7 @@ public class PortalGameObject : MonoBehaviour
         if (transform.name != ""){
             transform.SetParent(null);
             if (folderPaths.currentMap != null) {
-                folderPaths.currentDirectoryPath = transform.name;
+                folderPaths.orginizePaths.currentDirectoryPath = transform.name;
                 StartCoroutine(folderPaths.DeleteMapPrefab(folderPaths.currentMap));
             }
             player.GetComponent<CharacterController>().enabled = false;

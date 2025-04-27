@@ -14,7 +14,6 @@ public class Main : MonoBehaviour
 
     public GameObject follow, player;
 
-    internal string currentDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
     internal GeneratedAssets generatedAssets;
     internal EditPrefab editPrefab;
 
@@ -22,24 +21,22 @@ public class Main : MonoBehaviour
     internal RotateCameraFollow rotateCameraFollow;
     internal ExportImportGLTF exportImportGLTF;
     internal OrginizePaths orginizePaths;
-    
-    internal GameObject entrencePortal;
 
-    internal GameObject paths;
     internal GameObject rootPortalPrefab,rootIconPrefab;
+
+    public GameObject defaultMapRoot;
     internal GameObject currentMap;
     
-    public bool assetTerminalActive = false;
     public GameObject assetTerminalGameObject;
     internal AssetTerminal assetTerminal;
 
-    public bool terminalActive = false;
     public GameObject terminalGameObject;
     internal TerminalScript terminalScript;
 
-    public bool menuActive = false;
     public GameObject menuGameObject;
     internal Menu menu;
+
+    internal bool allMenuDisabled = false;
     
     void Awake(){
         init();
@@ -47,38 +44,23 @@ public class Main : MonoBehaviour
         // ImportGLTF();
         // ExportGameObject(currentMap);
     }
-    public void createPaths(){ 
-        // StartCoroutine(loadPrefabScript.LoadAndInstantiatePrefab(Vector3.zero));
-        paths = new GameObject("Paths");
-        GameObject folder = new GameObject("Folder");
-        GameObject file = new GameObject("File");
 
-        folder.transform.SetParent(paths.transform);
-        file.transform.SetParent(paths.transform);
-
-
-    }
     // Start is called before the first frame update
     void Start(){
-        createPaths();
     }
 
     // Update is called once per frame
     void Update(){
-        if (Input.GetKeyDown(KeyCode.T)){
-            currentDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        }
+        allMenuDisabled = !terminalGameObject.activeSelf && !assetTerminalGameObject.activeSelf && !menuGameObject.activeSelf;
         if (Input.GetKeyDown(KeyCode.Escape)){
-            menuActive = !menuActive;
-            menuGameObject.SetActive(menuActive);
-        }
-        if (Input.GetKeyDown(KeyCode.Space)){
+            menuGameObject.SetActive(!menu.gameObject.activeSelf);
             terminalGameObject.SetActive(false);
             assetTerminalGameObject.SetActive(false);
         }
     }
 
     public void init(){
+        currentMap = Instantiate(defaultMapRoot);
         generatedAssets = transform.AddComponent<GeneratedAssets>();
         editPrefab = transform.AddComponent<EditPrefab>();
         rotateCameraFollow = follow.AddComponent<RotateCameraFollow>();
@@ -88,21 +70,22 @@ public class Main : MonoBehaviour
         rotateCameraFollow.player = player;
         initiateRootPrefab(ref rootPortalPrefab, "Scenes/Portal blue Variant 1");
         initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");
+        rotateCameraFollow.folderPaths = this;
+        animateCharacter.folderPaths = this;
 
         assetTerminalGameObject = Instantiate(assetTerminalGameObject);
         assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
         assetTerminal.main = this;
-        assetTerminalActive = true;
+        terminalGameObject.SetActive(false);
 
         terminalGameObject = Instantiate(terminalGameObject);
         terminalScript = terminalGameObject.GetComponent<TerminalScript>();
         terminalScript.folderPaths = this;
-        terminalActive = true;
+        assetTerminalGameObject.SetActive(false);
 
         menuGameObject = Instantiate(menuGameObject);
         menu = menuGameObject.GetComponent<Menu>();
         menu.main = this;
-        menuActive = true;
     }
     public void initiateRootPrefab(ref GameObject prefab, string path){
         string iconPrefabPath = path;

@@ -24,11 +24,11 @@ public class EditPrefab : MonoBehaviour
     }
     public void createPortal(string path){
         GameObject portalGameObject = Instantiate(folderPaths.rootPortalPrefab, placeInfrontOfPlayer(1,2,4), transform.rotation);
-        portalGameObject.GetComponent<PortalGameObject>().init(folderPaths.paths.transform.GetChild(0).gameObject,folderPaths.player,path);
+        portalGameObject.GetComponent<PortalGameObject>().init(folderPaths.currentMap.transform.GetChild(3).GetChild(0).gameObject,folderPaths.player,path);
     }
     public void createIcon(string path){
         GameObject iconGameObject = Instantiate(folderPaths.rootIconPrefab, placeInfrontOfPlayer(1,2,4), transform.rotation);
-        iconGameObject.GetComponent<IconGameObject>().init(folderPaths.paths.transform.GetChild(1).gameObject,folderPaths.player,path);
+        iconGameObject.GetComponent<IconGameObject>().init(folderPaths.currentMap.transform.GetChild(3).GetChild(1).gameObject,folderPaths.player,path);
     }
     public void ray(){
         // Get the center of the screen

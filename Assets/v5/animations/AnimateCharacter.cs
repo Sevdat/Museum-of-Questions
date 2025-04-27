@@ -30,6 +30,12 @@ public class AnimateCharacter : MonoBehaviour
 
     // Update is called once per frame
     void Update(){
+        if (folderPaths.allMenuDisabled){
+            animateCharacter();
+        }
+    }
+
+    public void animateCharacter(){
         forwardPressed = Input.GetKey(KeyCode.W);
         backwardPressed = Input.GetKey(KeyCode.S);
         leftPressed = Input.GetKey(KeyCode.A);
@@ -67,35 +73,31 @@ public class AnimateCharacter : MonoBehaviour
         run();
     }
 
-    void FixedUpdate(){
-        // run();
+    public void run()
+    {
+        // Calculate the combined movement direction
+        Vector3 movementDirection = Vector3.zero;
+        float moveSpeed = 0;
+
+        // Forward/Backward movement
+        if (forwardPressed || backwardPressed || velocityZ != 0.0f){
+            movementDirection += transform.forward * velocityZ;
+            moveSpeed = Mathf.Abs(velocityZ);
+        }
+
+        // Left/Right movement
+        if (leftPressed || rightPressed || velocityX != 0.0f){
+            movementDirection += transform.right * velocityX;
+            moveSpeed = (moveSpeed + Mathf.Abs(velocityX))/2;
+        }
+
+        // Normalize the direction to prevent faster diagonal movement
+        if (movementDirection != Vector3.zero){
+            movementDirection.Normalize();
+        }
+
+        // Apply the velocity to the Rigidbody
+        characterController.SimpleMove(movementDirection * moveSpeed);
     }
-
-public void run()
-{
-    // Calculate the combined movement direction
-    Vector3 movementDirection = Vector3.zero;
-    float moveSpeed = 0;
-
-    // Forward/Backward movement
-    if (forwardPressed || backwardPressed || velocityZ != 0.0f){
-        movementDirection += transform.forward * velocityZ;
-        moveSpeed = Mathf.Abs(velocityZ);
-    }
-
-    // Left/Right movement
-    if (leftPressed || rightPressed || velocityX != 0.0f){
-        movementDirection += transform.right * velocityX;
-        moveSpeed = (moveSpeed + Mathf.Abs(velocityX))/2;
-    }
-
-    // Normalize the direction to prevent faster diagonal movement
-    if (movementDirection != Vector3.zero){
-        movementDirection.Normalize();
-    }
-
-    // Apply the velocity to the Rigidbody
-    characterController.SimpleMove(movementDirection * moveSpeed);
-}
 
 }
