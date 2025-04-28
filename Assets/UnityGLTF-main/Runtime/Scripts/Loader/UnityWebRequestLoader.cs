@@ -15,38 +15,29 @@ namespace UnityGLTF.Loader
 			this.dir = dir;
 		}
 #if UNITY_WEBREQUEST
-		public async Task<Stream> LoadStreamAsync(string relativeFilePath)
+	public async Task<Stream> LoadStreamAsync(string relativeFilePath)
+	{
+		try
 		{
-			var path = Path.Combine(dir, relativeFilePath).Replace("\\","/");
-			if (File.Exists(path)){
-				path = "file://" + Path.GetFullPath(path);
-			} else {
-				relativeFilePath = Uri.UnescapeDataString(relativeFilePath);
-				path = Path.Combine(dir, relativeFilePath).Replace("\\","/");
-				path = "file://" + Path.GetFullPath(Uri.UnescapeDataString(path));
-			}
-			var request = UnityWebRequest.Get(path);
-			// request.downloadHandler = new DownloadStreamHandler(new byte[1024 * 1024]);
-			var asyncOperation = request.SendWebRequest();
-
-			while (!asyncOperation.isDone) {
-				await Task.Yield();
-			}
-
-#if UNITY_2020_1_OR_NEWER
-			if (request.result != UnityWebRequest.Result.Success)
-#else
-			if (request.isNetworkError || request.isHttpError)
-#endif
+			relativeFilePath = Uri.UnescapeDataString(relativeFilePath);
+			var fullPath = Path.Combine(dir, relativeFilePath);
+			
+			if (!File.Exists(fullPath))
 			{
-				Debug.LogError($"Error when loading {relativeFilePath} ({path}): {request.error}");
+				Debug.LogError($"File not found: {fullPath}");
 				return null;
 			}
 
-			var results = request.downloadHandler.data;
-			var stream = new MemoryStream(results, 0, results.Length, false, true);
-			return stream;
+			// Read file asynchronously
+			var bytes = await File.ReadAllBytesAsync(fullPath);
+			return new MemoryStream(bytes);
 		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"Exception when loading {relativeFilePath}: {ex}");
+			return null;
+		}
+	}
 #else
 		public async Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{

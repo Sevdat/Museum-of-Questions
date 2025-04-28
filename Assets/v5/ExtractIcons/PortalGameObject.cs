@@ -32,12 +32,11 @@ public class PortalGameObject : MonoBehaviour
             transform.SetParent(null);
             if (folderPaths.currentMap != null) {
                 folderPaths.orginizePaths.currentDirectoryPath = transform.name;
-                StartCoroutine(folderPaths.DeleteMapPrefab(folderPaths.currentMap));
             }
             player.GetComponent<CharacterController>().enabled = false;
             player.transform.position = Vector3.zero;
             player.GetComponent<CharacterController>().enabled = true;
-            StartCoroutine(folderPaths.LoadAndInstantiatePrefab(gameObject.name,gameObject,Vector3.zero));
+            // StartCoroutine(folderPaths.LoadAndInstantiatePrefab(gameObject.name,gameObject,Vector3.zero));
         }
     }
     // Process.Start(@"C:\Users\Public\Desktop\Firefox.lnk");

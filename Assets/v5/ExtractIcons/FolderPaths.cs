@@ -21,8 +21,8 @@ public class Main : MonoBehaviour
     internal RotateCameraFollow rotateCameraFollow;
     internal ExportImportGLTF exportImportGLTF;
     internal OrginizePaths orginizePaths;
-
-    internal GameObject rootPortalPrefab,rootIconPrefab;
+    
+    public GameObject portalPrefab,iconPrefab;
 
     public GameObject defaultMapRoot;
     internal GameObject currentMap;
@@ -40,13 +40,11 @@ public class Main : MonoBehaviour
     
     void Awake(){
         init();
-        // currentMap = Instantiate(Resources.Load<GameObject>("GeneratedAssets/_Barking_Dog/3D Free Modular Kit/Prefab/Door_Left_01"));
-        // ImportGLTF();
-        // ExportGameObject(currentMap);
     }
 
     // Start is called before the first frame update
     void Start(){
+        loadMap(Application.dataPath+"/Resources/GeneratedAssets/3DShapes/Colonial City LittlePack/Prefab/Content/Colonial_graveyardScene/Colonial_graveyardScene.gltf");
     }
 
     // Update is called once per frame
@@ -56,6 +54,9 @@ public class Main : MonoBehaviour
             menuGameObject.SetActive(!menu.gameObject.activeSelf);
             terminalGameObject.SetActive(false);
             assetTerminalGameObject.SetActive(false);
+        }
+        if (Input.GetKeyDown(KeyCode.H)){
+            loadMap(Application.dataPath+"/Resources/GeneratedAssets/255 pixel studios/CITY package/Prefab/Content/POLYGON city pack Scene/POLYGON city pack Scene.gltf");
         }
     }
 
@@ -68,8 +69,6 @@ public class Main : MonoBehaviour
         exportImportGLTF = transform.AddComponent<ExportImportGLTF>();
         orginizePaths = transform.AddComponent<OrginizePaths>();
         rotateCameraFollow.player = player;
-        initiateRootPrefab(ref rootPortalPrefab, "Scenes/Portal blue Variant 1");
-        initiateRootPrefab(ref rootIconPrefab, "Scenes/Icon");
         rotateCameraFollow.folderPaths = this;
         animateCharacter.folderPaths = this;
 
@@ -87,46 +86,38 @@ public class Main : MonoBehaviour
         menu = menuGameObject.GetComponent<Menu>();
         menu.main = this;
     }
-    public void initiateRootPrefab(ref GameObject prefab, string path){
-        string iconPrefabPath = path;
-        prefab = Resources.Load<GameObject>(iconPrefabPath);
-    }
-
-    internal IEnumerator LoadAndInstantiatePrefab(string path,GameObject destroyPortal,Vector3 vec){
-        // Load the prefab from the Resources folder
-        ResourceRequest request = Resources.LoadAsync<GameObject>(path);
-        // Wait until the prefab is fully loaded
-        yield return request;
-        // Check if the prefab was loaded successfully
-        if (request.asset == null){
-            yield break;
-        }
-        // Instantiate the prefab into the scene
-        GameObject root = request.asset as GameObject;
-        if (root != null){
-            currentMap = Instantiate(root, vec, Quaternion.identity);
-            Destroy(destroyPortal);
+    internal async void loadMap(string path){
+        if (!Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
+            GameObject oldMap = currentMap;
+            currentMap = await exportImportGLTF.ImportGLTF(path);
+            teleportPlayer(currentMap.transform.GetChild(0).transform.position);
+            Destroy(oldMap);
         }
     }
-    internal IEnumerator LoadAndInstantiatePrefab(string path,Vector3 vec){
-        // Load the prefab from the Resources folder
-        ResourceRequest request = Resources.LoadAsync<GameObject>(path);
-        // Wait until the prefab is fully loaded
-        yield return request;
-        // Check if the prefab was loaded successfully
-        if (request.asset == null){
-            yield break;
-        }
-        // Instantiate the prefab into the scene
-        GameObject root = request.asset as GameObject;
-        if (root != null){
-            currentMap = Instantiate(root, vec, Quaternion.identity);
+    internal async void loadPrefab(string path){
+        if (!Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
+            GameObject prefab = await exportImportGLTF.ImportGLTF(path);
+            prefab.transform.position = placeInfrontOfPlayer(1,2,4);
         }
     }
-    internal IEnumerator DeleteMapPrefab(GameObject prefab){
-        // Destroy the last object
-        Destroy(prefab);
-        // Yield to the next frame to spread out the workload
-        yield return null;
+    void teleportPlayer(Vector3 vec){
+        player.GetComponent<CharacterController>().enabled = false;
+        player.transform.position = vec;
+        player.GetComponent<CharacterController>().enabled = true;
+    }
+    public Vector3 placeInfrontOfPlayer(float x,float y, float z){
+        Transform playerTransform = player.transform;
+        Vector3 right = playerTransform.right*x;
+        Vector3 up = playerTransform.up*y;
+        Vector3 front = playerTransform.forward*z;
+        return playerTransform.position + right + up + front;
+    }
+    public void createPortal(string path){
+        GameObject portalGameObject = Instantiate(portalPrefab, placeInfrontOfPlayer(1,2,4), transform.rotation);
+        portalGameObject.GetComponent<PortalGameObject>().init(currentMap.transform.GetChild(3).GetChild(0).gameObject,player,path);
+    }
+    public void createIcon(string path){
+        GameObject iconGameObject = Instantiate(iconPrefab, placeInfrontOfPlayer(1,2,4), transform.rotation);
+        iconGameObject.GetComponent<IconGameObject>().init(currentMap.transform.GetChild(3).GetChild(1).gameObject,player,path);
     }
 }

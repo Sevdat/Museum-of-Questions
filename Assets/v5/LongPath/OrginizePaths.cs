@@ -46,25 +46,12 @@ public class OrginizePaths : MonoBehaviour
     public bool createFolder(string path){
         try {
             if (string.IsNullOrWhiteSpace(path)) return false;
-
             string fullPath = Path.Combine(Application.persistentDataPath, path);
-            
             fullPath = Path.GetFullPath(fullPath);
-
-            // Check for invalid characters manually (optional extra safety)
             if (fullPath.IndexOfAny(Path.GetInvalidPathChars()) >= 0) return false;
-
-            // Check if the folder already exists before creating it
             if (!Directory.Exists(fullPath)) Directory.CreateDirectory(fullPath);
-            
             return true;
-        }
-        catch (Exception ex) when (
-            ex is ArgumentException ||
-            ex is NotSupportedException ||
-            ex is PathTooLongException ||
-            ex is IOException)
-        {
+        } catch (Exception ex) {
             Debug.LogError($"Failed to create folder: {ex.Message}");
             return false;
         } 

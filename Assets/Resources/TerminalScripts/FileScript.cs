@@ -52,7 +52,7 @@ public class FileScript : MonoBehaviour
         if (!spawnFile) 
             Process.Start(terminalScript.path.pathToString() + $"/{button.name}"); 
         else
-            terminalScript.folderPaths.editPrefab.createIcon(terminalScript.path.pathToString() + $"\\{button.name}");
+            terminalScript.folderPaths.createIcon(terminalScript.path.pathToString() + $"\\{button.name}");
     }
     public void onClick(){
         toggleHighlight();

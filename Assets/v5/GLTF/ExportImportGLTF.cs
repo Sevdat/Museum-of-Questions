@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityGLTF;
 
@@ -56,7 +57,7 @@ public class ExportImportGLTF : MonoBehaviour
         // if (unloadLoadedGameObject) Resources.UnloadAsset(targetObject);
     }
 
-    internal async void ImportGLTF(string importPath){
+    internal async Task<GameObject> ImportGLTF(string importPath){
         // Create an instance of GLTFSceneImporter
         GLTFSceneImporter sceneImporter = new GLTFSceneImporter(
             importPath, // Path to the .gltf file
@@ -66,16 +67,15 @@ public class ExportImportGLTF : MonoBehaviour
         try {
             await sceneImporter.LoadNodeAsync(0,new System.Threading.CancellationToken());
             print("GLTF file imported successfully!");
+            // folderPaths.currentMap.transform.position = folderPaths.editPrefab.placeInfrontOfPlayer(1,2,4);
+            AddMeshCollidersToHierarchy(sceneImporter.CreatedObject);
 
-            // Get the root GameObject of the imported scene
-            folderPaths.currentMap = sceneImporter.CreatedObject;
-            folderPaths.currentMap.transform.position = folderPaths.editPrefab.placeInfrontOfPlayer(1,2,4);
-            AddMeshCollidersToHierarchy(folderPaths.currentMap);
-
+            return sceneImporter.CreatedObject;
         }
         catch (System.Exception ex){
             print($"Failed to import GLTF file: {ex.Message}");
         }
+        return null;
     }
 
     void AddMeshCollidersToHierarchy(GameObject root){

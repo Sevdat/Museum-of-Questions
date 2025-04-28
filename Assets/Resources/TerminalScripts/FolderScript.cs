@@ -49,7 +49,7 @@ public class FolderScript : MonoBehaviour
     }
     public void onClick(Button button){
         if (spawnFolder){
-            terminalScript.folderPaths.editPrefab.createPortal(terminalScript.path.pathToString() + $"\\{button.name}");
+            terminalScript.folderPaths.createPortal(terminalScript.path.pathToString() + $"\\{button.name}");
         } else {
             terminalScript.path.addButton(button.name);
             getFolders();

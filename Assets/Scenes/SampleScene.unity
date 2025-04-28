@@ -381,9 +381,21 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
         type: 3}
+      propertyPath: iconPrefab
+      value: 
+      objectReference: {fileID: 1485452371342130532, guid: 8815c6274e9a669498bb9d6c77b0fb01,
+        type: 3}
+    - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
+        type: 3}
       propertyPath: menuActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
+        type: 3}
+      propertyPath: portalPrefab
+      value: 
+      objectReference: {fileID: 8808694548654777340, guid: 0562d97c907ab4b42be2eef3c355bca2,
+        type: 3}
     - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
         type: 3}
       propertyPath: AssetTerminal

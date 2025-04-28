@@ -36,7 +36,6 @@ public class AssetTerminal : MonoBehaviour
     // Start is called before the first frame update
     void Start(){
         refresh();
-        StartCoroutine(courutineStart());
         refreshGameObject.GetComponent<Button>().onClick.AddListener(() => StartCoroutine(onRefreshButtonClick()));
     }
 
@@ -188,7 +187,7 @@ public class AssetTerminal : MonoBehaviour
         print("Project");
     }
     public void onClickIcon(Button button){
-        main.exportImportGLTF.ImportGLTF(button.gameObject.name);
+        main.loadPrefab(button.gameObject.name);
         transform.gameObject.SetActive(false);
     }
 
