@@ -2,26 +2,27 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class OrginizePaths : MonoBehaviour
 {
-    internal Dictionary<string,string> portalTravelToMap; 
+    internal Dictionary<string,string> portalTravelToMap = new Dictionary<string, string>(); 
     internal string currentDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
     internal string traveledFrom;
-    internal string mapName; 
+    internal string mapName;
 
     // portlePath-mapName
     // \AppData\LocalLow\DefaultCompany\Museum of Questions\Maps - mapFolder/mapName
     // Start is called before the first frame update
 
+    void Awake()
+    {
+        
+    }
     void Start()
     {
-        // print(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-        // print(Application.persistentDataPath);
-        // print(mapPath("lol"));
-        // print(fullMapPath(mapPath("lol")));
-        // allFolders();
+        readData(Application.dataPath+ "/Resources/GeneratedMaps/MapData.txt");
     }
 
     // Update is called once per frame
@@ -43,6 +44,7 @@ public class OrginizePaths : MonoBehaviour
         string[] folders = Directory.GetDirectories(Application.dataPath+"/Resources/GeneratedAssets","*", SearchOption.AllDirectories);
         return folders;
     }
+    
     public bool createFolder(string path){
         try {
             if (string.IsNullOrWhiteSpace(path)) return false;
@@ -55,6 +57,10 @@ public class OrginizePaths : MonoBehaviour
             Debug.LogError($"Failed to create folder: {ex.Message}");
             return false;
         } 
+    }
+    internal string getKey(string path){
+        portalTravelToMap.TryGetValue(path,out string mapPath);
+        return mapPath;
     }
     void saveData(string filePath){                
         try {
@@ -72,6 +78,7 @@ public class OrginizePaths : MonoBehaviour
     }
 
     void readData(string filePath){
+        if (!File.Exists(filePath)) File.WriteAllText(filePath, "");
         portalTravelToMap = new Dictionary<string, string>();
         try {
             using (StreamReader reader = new StreamReader(filePath)){

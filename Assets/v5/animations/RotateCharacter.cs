@@ -11,7 +11,7 @@ public class RotateCameraFollow : MonoBehaviour
     private float mouseX; // Change in mouse position on the X-axis
     private float mouseY; // Change in mouse position on the Y-axis
     private Vector3 initialPosition;
-
+    
     void Start(){
         initialPosition = transform.position - player.transform.position;
         characterController = player.GetComponent<CharacterController>();

@@ -44,7 +44,7 @@ public class Main : MonoBehaviour
 
     // Start is called before the first frame update
     void Start(){
-        loadMap(Application.dataPath+"/Resources/GeneratedAssets/3DShapes/Colonial City LittlePack/Prefab/Content/Colonial_graveyardScene/Colonial_graveyardScene.gltf");
+        
     }
 
     // Update is called once per frame
@@ -87,10 +87,17 @@ public class Main : MonoBehaviour
         menu.main = this;
     }
     internal async void loadMap(string path){
-        if (!Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
+        path = orginizePaths.getKey(path);
+        if (path != null && !Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
+            orginizePaths.currentDirectoryPath = transform.name;
             GameObject oldMap = currentMap;
             currentMap = await exportImportGLTF.ImportGLTF(path);
-            teleportPlayer(currentMap.transform.GetChild(0).transform.position);
+            teleportPlayer();
+            Destroy(oldMap);
+        } else {
+            GameObject oldMap = currentMap;
+            currentMap = Instantiate(defaultMapRoot);
+            teleportPlayer();
             Destroy(oldMap);
         }
     }
@@ -100,9 +107,9 @@ public class Main : MonoBehaviour
             prefab.transform.position = placeInfrontOfPlayer(1,2,4);
         }
     }
-    void teleportPlayer(Vector3 vec){
+    internal void teleportPlayer(){
         player.GetComponent<CharacterController>().enabled = false;
-        player.transform.position = vec;
+        player.transform.position = currentMap.transform.GetChild(0).transform.position;
         player.GetComponent<CharacterController>().enabled = true;
     }
     public Vector3 placeInfrontOfPlayer(float x,float y, float z){

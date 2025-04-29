@@ -29,13 +29,7 @@ public class PortalGameObject : MonoBehaviour
     }
     public void teleportPlayer(){
         if (transform.name != ""){
-            transform.SetParent(null);
-            if (folderPaths.currentMap != null) {
-                folderPaths.orginizePaths.currentDirectoryPath = transform.name;
-            }
-            player.GetComponent<CharacterController>().enabled = false;
-            player.transform.position = Vector3.zero;
-            player.GetComponent<CharacterController>().enabled = true;
+            folderPaths.loadMap(transform.name);
             // StartCoroutine(folderPaths.LoadAndInstantiatePrefab(gameObject.name,gameObject,Vector3.zero));
         }
     }
