@@ -432,6 +432,12 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 896768897538380627, guid: 7e346849de9b3244a9a5aae8d78a6b95,
         type: 3}
+    - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
+        type: 3}
+      propertyPath: textBoxTerminalGameObject
+      value: 
+      objectReference: {fileID: 896768897538380627, guid: 5abbe5f59f48b2241baa9e0ca30cc749,
+        type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

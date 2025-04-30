@@ -32,7 +32,7 @@ public class ExportImportGLTF : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.J)){
-            ImportGLTF($"{Application.persistentDataPath}/ExportedModel/ExportedModel.gltf");
+            ImportGLTF($"{Application.persistentDataPath}/ExportedModel/ExportedModel.gltf",0);
         }
         if (Input.GetKeyDown(KeyCode.K)){
             StartCoroutine(ExportGameObject(exp,$"{Application.persistentDataPath}/ExportedModel"));
@@ -40,6 +40,7 @@ public class ExportImportGLTF : MonoBehaviour
     }
 
     internal IEnumerator ExportGameObject(GameObject targetObject,string exportPath, bool unloadLoadedGameObject = false){
+        print("targetObject");
         // Load the GameObject from Resources
         if (targetObject == null){
             print("Target GameObject is not assigned.");
@@ -57,7 +58,7 @@ public class ExportImportGLTF : MonoBehaviour
         // if (unloadLoadedGameObject) Resources.UnloadAsset(targetObject);
     }
 
-    internal async Task<GameObject> ImportGLTF(string importPath){
+    internal async Task<GameObject> ImportGLTF(string importPath, int index){
         // Create an instance of GLTFSceneImporter
         GLTFSceneImporter sceneImporter = new GLTFSceneImporter(
             importPath, // Path to the .gltf file
@@ -65,7 +66,7 @@ public class ExportImportGLTF : MonoBehaviour
         );
         // Load the GLTF scene asynchronously
         try {
-            await sceneImporter.LoadNodeAsync(0,new System.Threading.CancellationToken());
+            await sceneImporter.LoadNodeAsync(index,new System.Threading.CancellationToken());
             print("GLTF file imported successfully!");
             // folderPaths.currentMap.transform.position = folderPaths.editPrefab.placeInfrontOfPlayer(1,2,4);
             AddMeshCollidersToHierarchy(sceneImporter.CreatedObject);

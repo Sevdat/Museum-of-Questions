@@ -26,6 +26,9 @@ public class Main : MonoBehaviour
 
     public GameObject defaultMapRoot;
     internal GameObject currentMap;
+
+    public GameObject menuGameObject;
+    internal Menu menu;
     
     public GameObject assetTerminalGameObject;
     internal AssetTerminal assetTerminal;
@@ -33,13 +36,14 @@ public class Main : MonoBehaviour
     public GameObject terminalGameObject;
     internal TerminalScript terminalScript;
 
-    public GameObject menuGameObject;
-    internal Menu menu;
+    public GameObject textBoxTerminalGameObject;
+    internal TextBoxTerminal textBoxTerminal;
 
     internal bool allMenuDisabled = false;
     
     void Awake(){
         init();
+        print(KeyCode.A.ToString());
     }
 
     // Start is called before the first frame update
@@ -49,11 +53,12 @@ public class Main : MonoBehaviour
 
     // Update is called once per frame
     void Update(){
-        allMenuDisabled = !terminalGameObject.activeSelf && !assetTerminalGameObject.activeSelf && !menuGameObject.activeSelf;
+        allMenuDisabled = !menuGameObject.activeSelf && !terminalGameObject.activeSelf && !assetTerminalGameObject.activeSelf && !textBoxTerminalGameObject.activeSelf;
         if (Input.GetKeyDown(KeyCode.Escape)){
             menuGameObject.SetActive(!menu.gameObject.activeSelf);
             terminalGameObject.SetActive(false);
             assetTerminalGameObject.SetActive(false);
+            textBoxTerminalGameObject.SetActive(false);
         }
         if (Input.GetKeyDown(KeyCode.H)){
             loadMap(Application.dataPath+"/Resources/GeneratedAssets/255 pixel studios/CITY package/Prefab/Content/POLYGON city pack Scene/POLYGON city pack Scene.gltf");
@@ -72,26 +77,31 @@ public class Main : MonoBehaviour
         rotateCameraFollow.folderPaths = this;
         animateCharacter.folderPaths = this;
 
+        menuGameObject = Instantiate(menuGameObject);
+        menu = menuGameObject.GetComponent<Menu>();
+        menu.main = this;
+
         assetTerminalGameObject = Instantiate(assetTerminalGameObject);
         assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
         assetTerminal.main = this;
-        terminalGameObject.SetActive(false);
+        assetTerminalGameObject.SetActive(false);
 
         terminalGameObject = Instantiate(terminalGameObject);
         terminalScript = terminalGameObject.GetComponent<TerminalScript>();
         terminalScript.folderPaths = this;
-        assetTerminalGameObject.SetActive(false);
+        terminalGameObject.SetActive(false);
 
-        menuGameObject = Instantiate(menuGameObject);
-        menu = menuGameObject.GetComponent<Menu>();
-        menu.main = this;
+        textBoxTerminalGameObject = Instantiate(textBoxTerminalGameObject);
+        textBoxTerminal = textBoxTerminalGameObject.GetComponent<TextBoxTerminal>();
+        textBoxTerminal.main = this;
+        textBoxTerminalGameObject.SetActive(false);
     }
     internal async void loadMap(string path){
         path = orginizePaths.getKey(path);
         if (path != null && !Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
             orginizePaths.currentDirectoryPath = transform.name;
             GameObject oldMap = currentMap;
-            currentMap = await exportImportGLTF.ImportGLTF(path);
+            currentMap = await exportImportGLTF.ImportGLTF(path,0);
             teleportPlayer();
             Destroy(oldMap);
         } else {
@@ -103,7 +113,7 @@ public class Main : MonoBehaviour
     }
     internal async void loadPrefab(string path){
         if (!Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
-            GameObject prefab = await exportImportGLTF.ImportGLTF(path);
+            GameObject prefab = await exportImportGLTF.ImportGLTF(path,0);
             prefab.transform.position = placeInfrontOfPlayer(1,2,4);
         }
     }
