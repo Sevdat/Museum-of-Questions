@@ -43,7 +43,6 @@ public class Main : MonoBehaviour
     
     void Awake(){
         init();
-        print(KeyCode.A.ToString());
     }
 
     // Start is called before the first frame update
@@ -61,7 +60,8 @@ public class Main : MonoBehaviour
             textBoxTerminalGameObject.SetActive(false);
         }
         if (Input.GetKeyDown(KeyCode.H)){
-            loadMap(Application.dataPath+"/Resources/GeneratedAssets/255 pixel studios/CITY package/Prefab/Content/POLYGON city pack Scene/POLYGON city pack Scene.gltf");
+            loadMap();
+            // print(orginizePaths.getKey());
         }
     }
 
@@ -96,10 +96,9 @@ public class Main : MonoBehaviour
         textBoxTerminal.main = this;
         textBoxTerminalGameObject.SetActive(false);
     }
-    internal async void loadMap(string path){
-        path = orginizePaths.getKey(path);
+    internal async void loadMap(){
+        string path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+orginizePaths.getKey();
         if (path != null && !Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
-            orginizePaths.currentDirectoryPath = transform.name;
             GameObject oldMap = currentMap;
             currentMap = await exportImportGLTF.ImportGLTF(path,0);
             teleportPlayer();
@@ -115,6 +114,7 @@ public class Main : MonoBehaviour
         if (!Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
             GameObject prefab = await exportImportGLTF.ImportGLTF(path,0);
             prefab.transform.position = placeInfrontOfPlayer(1,2,4);
+            prefab.transform.SetParent(currentMap.transform.GetChild(2).transform);
         }
     }
     internal void teleportPlayer(){

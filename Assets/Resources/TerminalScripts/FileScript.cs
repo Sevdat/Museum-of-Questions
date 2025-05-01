@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,7 +53,11 @@ public class FileScript : MonoBehaviour
         if (!spawnFile) 
             Process.Start(terminalScript.path.pathToString() + $"/{button.name}"); 
         else
-            terminalScript.folderPaths.createIcon(terminalScript.path.pathToString() + $"\\{button.name}");
+            terminalScript.folderPaths.createIcon(normilizePath(terminalScript.path.pathToString()) + $"\\{button.name}");
+    }
+    string normilizePath(string path){
+        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return path.Replace('/', '\\').Replace(userProfile, "");
     }
     public void onClick(){
         toggleHighlight();

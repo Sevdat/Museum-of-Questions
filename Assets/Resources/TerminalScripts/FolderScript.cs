@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -49,14 +50,18 @@ public class FolderScript : MonoBehaviour
     }
     public void onClick(Button button){
         if (spawnFolder){
-            terminalScript.folderPaths.createPortal(terminalScript.path.pathToString() + $"\\{button.name}");
+
+            terminalScript.folderPaths.createPortal(normilizePath(terminalScript.path.pathToString()) + $"\\{button.name}");
         } else {
             terminalScript.path.addButton(button.name);
             getFolders();
             terminalScript.files.getFiles();
         }
     }
-
+    string normilizePath(string path){
+        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return path.Replace('/', '\\').Replace(userProfile, "");
+    }
     void Start()
     {
         folderSpawnerButton = folderSpawner.GetComponent<Button>();

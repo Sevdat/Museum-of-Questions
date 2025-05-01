@@ -7,6 +7,7 @@ using UnityEngine;
 
 public class OrginizePaths : MonoBehaviour
 {
+    internal Main main;
     internal Dictionary<string,string> portalTravelToMap = new Dictionary<string, string>(); 
     internal string currentDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
     internal string traveledFrom;
@@ -22,20 +23,20 @@ public class OrginizePaths : MonoBehaviour
     }
     void Start()
     {
-        readData(Application.dataPath+ "/Resources/GeneratedMaps/MapData.txt");
+        readData();
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
     void printAll(IEnumerable[] lol){
         foreach (IEnumerable str in lol) print(str);
     }
-    string mapPath(string mapName){
+    string normilizePath(string mapName){
         string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return $"{Application.persistentDataPath}/Maps/{mapName}".Replace('/', '\\').Replace(userProfile, "");
+        return mapName.Replace('/', '\\').Replace(userProfile, "");
     }
     string fullMapPath(string relativePath){
         return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + relativePath;
@@ -58,12 +59,26 @@ public class OrginizePaths : MonoBehaviour
             return false;
         } 
     }
-    internal string getKey(string path){
-        portalTravelToMap.TryGetValue(path,out string mapPath);
+    internal string getKey(){
+        portalTravelToMap.TryGetValue(normilizePath(currentDirectoryPath),out string mapPath);
         return mapPath;
     }
-    void saveData(string filePath){                
+    internal void setKey(string mapPath){
+        string normilizedFolderPath = normilizePath(currentDirectoryPath);
+        string normilizedMapPath = normilizePath(mapPath);
+        if (!portalTravelToMap.ContainsKey(normilizedFolderPath)) 
+            portalTravelToMap[normilizedFolderPath] = normilizedMapPath;
+    }
+    internal void deleteKey(string mapPath){
+        string normilizedFolderPath = normilizePath(currentDirectoryPath);
+        if (!portalTravelToMap.ContainsKey(normilizedFolderPath)) 
+            portalTravelToMap.Remove(normilizedFolderPath);
+        Directory.Delete(mapPath, recursive: true);
+    }
+
+    internal void saveData(){                
         try {
+            string filePath = Application.dataPath+ "/Resources/GeneratedMaps/MapData.txt";
             // Create and write to the file
             using (StreamWriter writer = new StreamWriter(filePath)){
                 foreach (KeyValuePair<string, string> pair in portalTravelToMap){
@@ -77,7 +92,8 @@ public class OrginizePaths : MonoBehaviour
         }
     }
 
-    void readData(string filePath){
+    void readData(){
+        string filePath = Application.dataPath+ "/Resources/GeneratedMaps/MapData.txt";
         if (!File.Exists(filePath)) File.WriteAllText(filePath, "");
         portalTravelToMap = new Dictionary<string, string>();
         try {

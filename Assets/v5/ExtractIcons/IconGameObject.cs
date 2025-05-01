@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,7 +17,7 @@ public class IconGameObject : ExtractIcon
         transform.SetParent(parent.transform);
     }
     internal void createIcon(string path){
-        transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = getGenericIcon(path);
+        transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = getGenericIcon(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+path);
     }
     internal void rename(string path){
         transform.name = path;
@@ -27,7 +28,7 @@ public class IconGameObject : ExtractIcon
 
     void OnTriggerEnter(Collider collision){
         if (collision.transform.name == player.name){
-            Process.Start(transform.name);
+            Process.Start(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + transform.name);
         }   
     }
 

@@ -1,10 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class TextBoxTerminal : MonoBehaviour
 {
@@ -25,10 +23,10 @@ public class TextBoxTerminal : MonoBehaviour
             }
         }else if (Input.GetKeyDown(KeyCode.Return)){
             if (inputBuffer.Length > 0 && inputBuffer.ToString().IndexOfAny(Path.GetInvalidPathChars()) == -1){
-                StartCoroutine(saveMap());
+                save();
             }
         } else if (Input.anyKeyDown){
-            char pressedKey = GetPressedKey()[0];
+            char pressedKey = getPressedKey()[0];
             bool symbols = !char.IsLetterOrDigit(pressedKey) && !excludedChars.Contains(pressedKey);
             bool digitsAndNum = char.IsLetterOrDigit(pressedKey);
             if (symbols || digitsAndNum){
@@ -37,12 +35,31 @@ public class TextBoxTerminal : MonoBehaviour
             }
         }
     }
-
-    IEnumerator saveMap(){
+    internal void save(){
+        string path = Application.dataPath+$"/Resources/GeneratedMaps";
+        string[] dir = Directory.GetDirectories(path);
+        bool exists = false;
+        foreach (string str in dir){
+            if (Path.GetFileName(str) == inputBuffer) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) StartCoroutine(saveMap(path+$"/{inputBuffer}/{inputBuffer}.gltf"));
+        else {
+            string str = path+$"/{inputBuffer}";
+            Directory.Delete(str, recursive: true);
+            StartCoroutine(saveMap(str + $"/{inputBuffer}.gltf"));
+        }
+        main.orginizePaths.saveData();
+    }
+    internal IEnumerator saveMap(string mapPath, bool setKey = true){
+        if (setKey) main.orginizePaths.setKey(mapPath);
+        main.currentMap.transform.name = inputBuffer;
         yield return main.exportImportGLTF.ExportGameObject(main.currentMap,Application.dataPath+$"/Resources/GeneratedMaps/{inputBuffer}");
         transform.gameObject.SetActive(false);
     }
-    private string GetPressedKey(){
+    private string getPressedKey(){
         // First check for character input
         if (!string.IsNullOrEmpty(Input.inputString)){
             return Input.inputString;
@@ -59,6 +76,7 @@ public class TextBoxTerminal : MonoBehaviour
         return "";
     }
     void deleteOldFolder(string folderPath){
+
         Directory.Delete(folderPath, recursive: true);
     }
 }

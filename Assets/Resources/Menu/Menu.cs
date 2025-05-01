@@ -31,5 +31,5 @@ public class Menu : MonoBehaviour
     public void onTextBoxTerminalButtonClick(){
         main.textBoxTerminalGameObject.SetActive(true);
         transform.gameObject.SetActive(false);
-    }
+    } 
 }
