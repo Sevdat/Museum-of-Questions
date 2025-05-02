@@ -422,6 +422,11 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
         type: 3}
+      propertyPath: selectTransparent
+      value: 
+      objectReference: {fileID: 2100000, guid: fd84663042b1c77438a04f32a80ab88a, type: 2}
+    - target: {fileID: 8241921860309073203, guid: dae1dbfa8fea13047a126c9294ef9bf0,
+        type: 3}
       propertyPath: terminalGameObject
       value: 
       objectReference: {fileID: 896768897538380627, guid: 0b2fa908130f25b4c959d028e3e2cdb4,

@@ -40,6 +40,8 @@ public class Main : MonoBehaviour
     public GameObject textBoxTerminalGameObject;
     internal TextBoxTerminal textBoxTerminal;
 
+    public Material selectTransparent;
+
     internal bool allMenuDisabled = false;
 
     
