@@ -40,6 +40,7 @@ public class Main : MonoBehaviour
     internal TextBoxTerminal textBoxTerminal;
 
     internal bool allMenuDisabled = false;
+
     
     void Awake(){
         init();
@@ -66,7 +67,6 @@ public class Main : MonoBehaviour
     }
 
     public void init(){
-        currentMap = Instantiate(defaultMapRoot);
         generatedAssets = transform.AddComponent<GeneratedAssets>();
         editPrefab = transform.AddComponent<EditPrefab>();
         rotateCameraFollow = follow.AddComponent<RotateCameraFollow>();
@@ -76,6 +76,7 @@ public class Main : MonoBehaviour
         rotateCameraFollow.player = player;
         rotateCameraFollow.folderPaths = this;
         animateCharacter.folderPaths = this;
+        orginizePaths.main = this;
 
         menuGameObject = Instantiate(menuGameObject);
         menu = menuGameObject.GetComponent<Menu>();
@@ -97,7 +98,7 @@ public class Main : MonoBehaviour
         textBoxTerminalGameObject.SetActive(false);
     }
     internal async void loadMap(){
-        string path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+orginizePaths.getKey();
+        string path = orginizePaths.fullPath(orginizePaths.getKey());
         if (path != null && !Directory.Exists(path) && path.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)){
             GameObject oldMap = currentMap;
             currentMap = await exportImportGLTF.ImportGLTF(path,0);

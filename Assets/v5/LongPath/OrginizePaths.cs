@@ -13,6 +13,12 @@ public class OrginizePaths : MonoBehaviour
     internal string traveledFrom;
     internal string mapName;
 
+    
+    internal string userPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    internal string assetPath = @$"{Application.dataPath}/Resources/GeneratedAssets";
+    internal string mapPath = Application.dataPath+ "/Resources/GeneratedMaps";
+    internal string saveMapPath = Application.dataPath+ "/Resources/GeneratedMaps/MapData.txt";
+
     // portlePath-mapName
     // \AppData\LocalLow\DefaultCompany\Museum of Questions\Maps - mapFolder/mapName
     // Start is called before the first frame update
@@ -24,6 +30,7 @@ public class OrginizePaths : MonoBehaviour
     void Start()
     {
         readData();
+        main.loadMap();
     }
 
     // Update is called once per frame
@@ -35,11 +42,10 @@ public class OrginizePaths : MonoBehaviour
         foreach (IEnumerable str in lol) print(str);
     }
     string normilizePath(string mapName){
-        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return mapName.Replace('/', '\\').Replace(userProfile, "");
+        return mapName.Replace('/', '\\').Replace(userPath, "");
     }
-    string fullMapPath(string relativePath){
-        return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + relativePath;
+    internal string fullPath(string relativePath){
+        return (userPath + relativePath).Replace('/', '\\');
     }
     string[] allFolders(){
         string[] folders = Directory.GetDirectories(Application.dataPath+"/Resources/GeneratedAssets","*", SearchOption.AllDirectories);
@@ -78,9 +84,8 @@ public class OrginizePaths : MonoBehaviour
 
     internal void saveData(){                
         try {
-            string filePath = Application.dataPath+ "/Resources/GeneratedMaps/MapData.txt";
             // Create and write to the file
-            using (StreamWriter writer = new StreamWriter(filePath)){
+            using (StreamWriter writer = new StreamWriter(saveMapPath)){
                 foreach (KeyValuePair<string, string> pair in portalTravelToMap){
                     writer.WriteLine(pair.Key);  // First line - path
                     writer.WriteLine(pair.Value);
@@ -93,11 +98,10 @@ public class OrginizePaths : MonoBehaviour
     }
 
     void readData(){
-        string filePath = Application.dataPath+ "/Resources/GeneratedMaps/MapData.txt";
-        if (!File.Exists(filePath)) File.WriteAllText(filePath, "");
+        if (!File.Exists(saveMapPath)) File.WriteAllText(saveMapPath, "");
         portalTravelToMap = new Dictionary<string, string>();
         try {
-            using (StreamReader reader = new StreamReader(filePath)){
+            using (StreamReader reader = new StreamReader(saveMapPath)){
                 while (!reader.EndOfStream){
                     string key = reader.ReadLine();
                     string value = reader.ReadLine();
@@ -110,5 +114,6 @@ public class OrginizePaths : MonoBehaviour
         catch (Exception ex){
             Console.WriteLine($"Read error: {ex.Message}");
         }
+        
     }
 }

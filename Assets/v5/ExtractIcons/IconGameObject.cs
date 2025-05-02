@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 public class IconGameObject : ExtractIcon
 {
+    Main folderPaths;
     GameObject player;
 
     public void init(GameObject parent, GameObject player, string path){
@@ -15,6 +16,7 @@ public class IconGameObject : ExtractIcon
         rename(path);
         transform.rotation = player.transform.rotation;
         transform.SetParent(parent.transform);
+        folderPaths = player.transform.parent.GetComponent<Main>();
     }
     internal void createIcon(string path){
         transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = getGenericIcon(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+path);
@@ -28,7 +30,7 @@ public class IconGameObject : ExtractIcon
 
     void OnTriggerEnter(Collider collision){
         if (collision.transform.name == player.name){
-            Process.Start(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + transform.name);
+            Process.Start(folderPaths.orginizePaths.fullPath(transform.name));
         }   
     }
 

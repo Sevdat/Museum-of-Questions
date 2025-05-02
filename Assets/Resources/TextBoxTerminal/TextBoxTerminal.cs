@@ -36,7 +36,7 @@ public class TextBoxTerminal : MonoBehaviour
         }
     }
     internal void save(){
-        string path = Application.dataPath+$"/Resources/GeneratedMaps";
+        string path = main.orginizePaths.mapPath;
         string[] dir = Directory.GetDirectories(path);
         bool exists = false;
         foreach (string str in dir){

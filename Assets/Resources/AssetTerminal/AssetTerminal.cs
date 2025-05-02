@@ -8,7 +8,6 @@ using UnityEngine.UI;
 
 public class AssetTerminal : MonoBehaviour
 {
-    
     public GameObject assetTerminalPrefab;
     public GameObject authorNameMenuContent,authorNamePrefab;
     public List<GameObject> authorNameButtons = new List<GameObject>();
@@ -22,7 +21,7 @@ public class AssetTerminal : MonoBehaviour
     public GameObject refreshGameObject;
     public TextMeshProUGUI precenageDoneGameObject;
 
-    string path = @$"{Application.dataPath}/Resources/GeneratedAssets";
+
     string[][] icons;
 
     string[] allAuthors;
@@ -123,7 +122,7 @@ public class AssetTerminal : MonoBehaviour
         if (maxValue != 0.0f) incrementPrecentegeDone = 100f/maxValue;
     }
     public (string[], int) getAllAuthors(){
-        string[] str = Directory.GetDirectories(path);
+        string[] str = Directory.GetDirectories(main.orginizePaths.assetPath);
         return (str, str.Length);
     }
     public (string[][], int) getAllProjects(){
@@ -138,7 +137,7 @@ public class AssetTerminal : MonoBehaviour
     }
     public (string[][], int) getAllIcons(){
         int size = 0;
-        string[] allDirectories = Directory.GetDirectories(path,"*",SearchOption.AllDirectories);
+        string[] allDirectories = Directory.GetDirectories(main.orginizePaths.assetPath,"*",SearchOption.AllDirectories);
         string[] allIconPaths = allDirectories.Where(dir => dir.Replace('\\', '/').EndsWith("Prefab/Icon")).ToArray();
         List<string[]> iconList = new List<string[]>();
         foreach (string str in allIconPaths){
@@ -159,7 +158,7 @@ public class AssetTerminal : MonoBehaviour
         string fileName = Path.GetFileNameWithoutExtension(path);
         GameObject icon = createItem(fileName,prefabIconsMenuContent,prefabIconsPrefab,2);
         Sprite sprite = createSpriteFromTexture2D(path);
-        icon.name = Path.GetDirectoryName(path).Replace(@"Prefab\Icon",@"Prefab\Content")+$@"\{fileName}"+$@"\{fileName}.gltf";
+        icon.name = Path.GetDirectoryName(path).Replace(@"Prefab\Icon",@"Prefab\Content")+$@"\{fileName}\{fileName}.gltf";
         icon.transform.GetChild(0).GetComponent<Image>().sprite = sprite;
         return icon;
     }

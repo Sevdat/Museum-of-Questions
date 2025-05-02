@@ -30,7 +30,7 @@ public class PortalGameObject : MonoBehaviour
     }
     public void teleportPlayer(){
         if (transform.name != ""){
-            folderPaths.orginizePaths.currentDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+transform.name;
+            folderPaths.orginizePaths.currentDirectoryPath = folderPaths.orginizePaths.fullPath(transform.name);
             folderPaths.loadMap();
             // StartCoroutine(folderPaths.LoadAndInstantiatePrefab(gameObject.name,gameObject,Vector3.zero));
         }
