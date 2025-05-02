@@ -11,10 +11,10 @@ public class PortalGameObject : MonoBehaviour
 
     public void init(GameObject parent, GameObject player, string path){
         this.player = player;
+        folderPaths = player.transform.parent.GetComponent<Main>();
         rename(path);
         transform.rotation = player.transform.rotation;
         transform.SetParent(parent.transform);
-        folderPaths = player.transform.parent.GetComponent<Main>();
     }
 
     internal void rename(string path){

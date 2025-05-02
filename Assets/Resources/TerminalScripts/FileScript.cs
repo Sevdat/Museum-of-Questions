@@ -56,7 +56,7 @@ public class FileScript : MonoBehaviour
             terminalScript.folderPaths.createIcon(normilizePath(terminalScript.path.pathToString()) + $"\\{button.name}");
     }
     string normilizePath(string path){
-        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string userProfile = terminalScript.folderPaths.orginizePaths.userPath;
         return path.Replace('/', '\\').Replace(userProfile, "");
     }
     public void onClick(){

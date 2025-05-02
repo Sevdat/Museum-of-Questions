@@ -13,13 +13,14 @@ public class IconGameObject : ExtractIcon
 
     public void init(GameObject parent, GameObject player, string path){
         this.player = player;
+        folderPaths = player.transform.parent.GetComponent<Main>();
         rename(path);
         transform.rotation = player.transform.rotation;
         transform.SetParent(parent.transform);
-        folderPaths = player.transform.parent.GetComponent<Main>();
     }
     internal void createIcon(string path){
-        transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = getGenericIcon(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+path);
+        print(folderPaths);
+        transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = getGenericIcon(folderPaths.orginizePaths.fullPath(path));
     }
     internal void rename(string path){
         transform.name = path;

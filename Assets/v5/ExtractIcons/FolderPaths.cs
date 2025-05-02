@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -48,7 +49,7 @@ public class Main : MonoBehaviour
 
     // Start is called before the first frame update
     void Start(){
-        
+        // createPortal(@"C:\Users\sevda\Downloads\Резюме.docx");
     }
 
     // Update is called once per frame
@@ -103,6 +104,7 @@ public class Main : MonoBehaviour
             GameObject oldMap = currentMap;
             currentMap = await exportImportGLTF.ImportGLTF(path,0);
             teleportPlayer();
+            respawnPath(currentMap);
             Destroy(oldMap);
         } else {
             GameObject oldMap = currentMap;
@@ -118,6 +120,24 @@ public class Main : MonoBehaviour
             prefab.transform.SetParent(currentMap.transform.GetChild(2).transform);
         }
     }
+    void respawnPath(GameObject map){
+        Transform path = map.transform.GetChild(3);
+        Transform folders = path.GetChild(0).transform;
+        Transform files = path.GetChild(1).transform;
+        GameObject[] folderChildren = folders.transform.Cast<Transform>().Select(t => t.gameObject).ToArray();
+        GameObject[] filesChildren = files.transform.Cast<Transform>().Select(t => t.gameObject).ToArray();
+        for (int i = 0; i<folderChildren.Length;i++){
+            GameObject temp = folderChildren[i];
+            createPortal(temp.transform.name).transform.position = temp.transform.position;
+            Destroy(temp);
+        }
+        for (int i = 0; i<filesChildren.Length;i++){
+            GameObject temp = filesChildren[i];
+            createIcon(temp.transform.name).transform.position = temp.transform.position;
+            Destroy(temp);
+        }
+
+    }
     internal void teleportPlayer(){
         player.GetComponent<CharacterController>().enabled = false;
         player.transform.position = currentMap.transform.GetChild(0).transform.position;
@@ -130,12 +150,14 @@ public class Main : MonoBehaviour
         Vector3 front = playerTransform.forward*z;
         return playerTransform.position + right + up + front;
     }
-    public void createPortal(string path){
+    public GameObject createPortal(string path){
         GameObject portalGameObject = Instantiate(portalPrefab, placeInfrontOfPlayer(1,2,4), transform.rotation);
         portalGameObject.GetComponent<PortalGameObject>().init(currentMap.transform.GetChild(3).GetChild(0).gameObject,player,path);
+        return portalGameObject;
     }
-    public void createIcon(string path){
+    public GameObject createIcon(string path){
         GameObject iconGameObject = Instantiate(iconPrefab, placeInfrontOfPlayer(1,2,4), transform.rotation);
         iconGameObject.GetComponent<IconGameObject>().init(currentMap.transform.GetChild(3).GetChild(1).gameObject,player,path);
+        return iconGameObject;
     }
 }
