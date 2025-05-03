@@ -653,6 +653,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   follow: {fileID: 5783504177211385465}
   player: {fileID: 2875621620508860012}
+  portalPrefab: {fileID: 8808694548654777340, guid: 0562d97c907ab4b42be2eef3c355bca2,
+    type: 3}
+  iconPrefab: {fileID: 1485452371342130532, guid: 8815c6274e9a669498bb9d6c77b0fb01,
+    type: 3}
+  defaultMapRoot: {fileID: 8737633509531514613, guid: c14d1441c65995c4295760e11b90fec6,
+    type: 3}
+  menuGameObject: {fileID: 896768897538380627, guid: e896fe73e2fb17146934ccb61b270553,
+    type: 3}
+  assetTerminalGameObject: {fileID: 896768897538380627, guid: 7e346849de9b3244a9a5aae8d78a6b95,
+    type: 3}
+  terminalGameObject: {fileID: 896768897538380627, guid: 0b2fa908130f25b4c959d028e3e2cdb4,
+    type: 3}
+  textBoxTerminalGameObject: {fileID: 896768897538380627, guid: 5abbe5f59f48b2241baa9e0ca30cc749,
+    type: 3}
+  selectTransparent: {fileID: 2100000, guid: fd84663042b1c77438a04f32a80ab88a, type: 2}
 --- !u!1 &5519264012186542149
 GameObject:
   m_ObjectHideFlags: 0
