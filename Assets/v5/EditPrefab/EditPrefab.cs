@@ -5,28 +5,38 @@ using UnityEngine;
 public class EditPrefab : MonoBehaviour
 {
     Main folderPaths;
-    internal GameObject selectedGameObject;
+    internal static GameObject selectedGameObject;
     Dictionary<GameObject,GameObjectData> selected = new Dictionary<GameObject, GameObjectData>();
-    
+
+    float reverseRotation = 1f;
+    float scale = 0.01f;
+
     struct GameObjectData {
         internal Material[] materials;
-        internal Vector3 vec, initialVec;
-        internal Quaternion quat, initialQuat;
+        internal Vector3 initialVec;
+        internal Quaternion initialQuat;
+        internal Transform oldParent;
         public GameObjectData(GameObject gameObject){
             materials = gameObject.GetComponent<Renderer>().materials;
-            vec = Camera.main.transform.InverseTransformPoint(gameObject.transform.position);
-            quat = Quaternion.Inverse(Camera.main.transform.rotation) * gameObject.transform.rotation;
             initialVec = gameObject.transform.position;
             initialQuat = gameObject.transform.rotation;
+            oldParent = gameObject.transform.parent;
+            if (selectedGameObject.transform.childCount == 0) {
+                selectedGameObject.transform.position = gameObject.transform.position;
+                selectedGameObject.transform.rotation = gameObject.transform.rotation;
+                }
+            gameObject.transform.SetParent(selectedGameObject.transform);
         }
     }
     // Start is called before the first frame update
     void Start(){
         folderPaths = transform.GetComponent<Main>();
+        selectedGameObject = new GameObject("selected");
     }
 
     // Update is called once per frame
     void Update(){
+
         if (Input.GetKey(KeyCode.R)){
             ray();
         }
@@ -34,7 +44,31 @@ public class EditPrefab : MonoBehaviour
             release();
         }
         if (Input.GetKeyDown(KeyCode.F)){
-            move();
+            selectedGameObject.transform.SetParent(folderPaths.follow.transform);
+        }
+        if (Input.GetKeyUp(KeyCode.F)){
+           selectedGameObject.transform.SetParent(null);
+        }
+
+        reverseRotation = Input.GetKey(KeyCode.Tab)? -0.1f:0.1f;
+        scale = Input.GetKey(KeyCode.Tab)? -0.001f:0.001f;
+
+        if (Input.GetKey(KeyCode.Alpha1)){
+           selectedGameObject.transform.Rotate(0, 0, reverseRotation);
+        }
+        if (Input.GetKey(KeyCode.Alpha2)){
+           selectedGameObject.transform.Rotate(0, reverseRotation, 0);
+        }
+        if (Input.GetKey(KeyCode.Alpha3)){
+           selectedGameObject.transform.Rotate(reverseRotation, 0, 0);
+        }
+
+        if (Input.GetKey(KeyCode.Alpha4)){
+           selectedGameObject.transform.localScale += new Vector3(scale, scale, scale);
+        }
+
+        if (Input.GetKey(KeyCode.Return)){
+           release(false);
         }
     }
     public void ray(){
@@ -56,18 +90,14 @@ public class EditPrefab : MonoBehaviour
             renderer.material = folderPaths.selectTransparent;
         }
     }
-    public void move(){
-        foreach (GameObject obj in selected.Keys){
-            Vector3 targetPosition = Camera.main.transform.TransformPoint(selected[obj].vec);
-            obj.transform.position = targetPosition;
-            obj.transform.rotation = Camera.main.transform.rotation * selected[obj].quat;
-        }
-    }
-    public void release(){
+
+    public void release(bool reset = true, bool resetMaterials = true){
         foreach (GameObject gameObject in selected.Keys){
-            gameObject.GetComponent<Renderer>().materials = selected[gameObject].materials;
-            gameObject.transform.position = selected[gameObject].initialVec;
-            gameObject.transform.rotation = selected[gameObject].initialQuat;
+            if (resetMaterials) gameObject.GetComponent<Renderer>().materials = selected[gameObject].materials;
+            if (reset){
+                gameObject.transform.position = selected[gameObject].initialVec;
+                gameObject.transform.rotation = selected[gameObject].initialQuat;
+            }
             gameObject.GetComponent<Collider>().enabled = true;
         }
         selected = new Dictionary<GameObject, GameObjectData>();

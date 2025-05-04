@@ -8,8 +8,8 @@ public class RotateCameraFollow : MonoBehaviour
     float sensitivityX = 5f; // Sensitivity for horizontal mouse movement
     float sensitivityY = 5f; // Sensitivity for vertical mouse movement
 
-    private float mouseX; // Change in mouse position on the X-axis
-    private float mouseY; // Change in mouse position on the Y-axis
+    internal float mouseX; // Change in mouse position on the X-axis
+    internal float mouseY; // Change in mouse position on the Y-axis
     private Vector3 initialPosition;
     
     void Start(){
