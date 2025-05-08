@@ -14,7 +14,7 @@ public class Main : MonoBehaviour
 {
 
     public GameObject follow, player;
-    public Camera firstPerson, thirdPerson;
+
     internal GeneratedAssets generatedAssets;
     internal EditPrefab editPrefab;
 
@@ -38,10 +38,11 @@ public class Main : MonoBehaviour
     internal TerminalScript terminalScript;
 
     public GameObject textBoxTerminalGameObject;
-    internal TextBoxTerminal textBoxTerminal;
+    internal SaveMap textBoxTerminal;
 
     public Material selectTransparent;
-
+    
+    public Camera firstPerson, thirdPerson;
     internal bool allMenuDisabled = false;
 
     
@@ -52,22 +53,20 @@ public class Main : MonoBehaviour
 
     // Start is called before the first frame update
     void Start(){
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
     }
 
     // Update is called once per frame
     void Update(){
-        allMenuDisabled = !menuGameObject.activeSelf && !terminalGameObject.activeSelf && !assetTerminalGameObject.activeSelf && !textBoxTerminalGameObject.activeSelf && Cursor.lockState == CursorLockMode.Locked;
+        allMenuDisabled = !menuGameObject.activeSelf && !terminalGameObject.activeSelf && 
+            !assetTerminalGameObject.activeSelf && !textBoxTerminalGameObject.activeSelf; 
+            // Cursor.lockState == CursorLockMode.Locked;
         if (Input.GetKeyDown(KeyCode.Escape)){
             menuGameObject.SetActive(!menu.gameObject.activeSelf);
             terminalGameObject.SetActive(false);
             assetTerminalGameObject.SetActive(false);
             textBoxTerminalGameObject.SetActive(false);
-        }
-        if (Input.GetKeyDown(KeyCode.Space)){
-            firstPerson.enabled = !firstPerson.isActiveAndEnabled;
-            thirdPerson.enabled = !thirdPerson.isActiveAndEnabled;
         }
     }
 
@@ -98,7 +97,7 @@ public class Main : MonoBehaviour
         terminalGameObject.SetActive(false);
 
         textBoxTerminalGameObject = Instantiate(textBoxTerminalGameObject);
-        textBoxTerminal = textBoxTerminalGameObject.GetComponent<TextBoxTerminal>();
+        textBoxTerminal = textBoxTerminalGameObject.GetComponent<SaveMap>();
         textBoxTerminal.main = this;
         textBoxTerminalGameObject.SetActive(false);
     }

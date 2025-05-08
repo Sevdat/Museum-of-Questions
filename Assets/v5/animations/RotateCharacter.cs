@@ -18,7 +18,7 @@ public class RotateCameraFollow : MonoBehaviour
     }
 
     void LateUpdate(){
-        if (folderPaths.allMenuDisabled){
+        if (folderPaths.allMenuDisabled && folderPaths.thirdPerson.isActiveAndEnabled){
             rotateCharacter();
         }
     }

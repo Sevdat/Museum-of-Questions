@@ -4,7 +4,7 @@ using System.IO;
 using TMPro;
 using UnityEngine;
 
-public class TextBoxTerminal : MonoBehaviour
+public class SaveMap : MonoBehaviour
 {
     internal Main main;
     public TMP_Text displayText;

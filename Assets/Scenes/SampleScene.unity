@@ -225,6 +225,18 @@ MonoBehaviour:
     mipBias: 0
     varianceClampScale: 0.9
     contrastAdaptiveSharpening: 0
+--- !u!114 &83840719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 83840715}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14936decdb4089446b2f4fff1b29ec27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!20 &212619886 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 4410040283706650998, guid: dae1dbfa8fea13047a126c9294ef9bf0,
@@ -357,6 +369,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2763819262933026682, guid: dae1dbfa8fea13047a126c9294ef9bf0,
+        type: 3}
+      propertyPath: m_TagString
+      value: MainCamera
+      objectReference: {fileID: 0}
     - target: {fileID: 5138988031655541165, guid: dae1dbfa8fea13047a126c9294ef9bf0,
         type: 3}
       propertyPath: m_Name
@@ -434,6 +451,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 83840718}
+    - targetCorrespondingSourceObject: {fileID: 2763819262933026682, guid: dae1dbfa8fea13047a126c9294ef9bf0,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 83840719}
   m_SourcePrefab: {fileID: 100100000, guid: dae1dbfa8fea13047a126c9294ef9bf0, type: 3}
 --- !u!1 &811111668
 GameObject:

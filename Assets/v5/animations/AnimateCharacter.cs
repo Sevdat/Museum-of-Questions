@@ -30,7 +30,7 @@ public class AnimateCharacter : MonoBehaviour
 
     // Update is called once per frame
     void Update(){
-        if (folderPaths.allMenuDisabled){
+        if (folderPaths.allMenuDisabled && folderPaths.thirdPerson.isActiveAndEnabled){
             animateCharacter();
         }
     }

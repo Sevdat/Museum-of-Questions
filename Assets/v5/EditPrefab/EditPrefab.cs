@@ -8,7 +8,7 @@ public class EditPrefab : MonoBehaviour
     Main folderPaths;
     static GameObject selectedGameObjects;
     static Dictionary<GameObject,GameObjectData> dictionary = new Dictionary<GameObject, GameObjectData>();
-    bool playmode = true;
+    
     struct GameObjectData {
         internal Material[] materials;
         internal Vector3 initialVec;
@@ -43,7 +43,10 @@ public class EditPrefab : MonoBehaviour
             release();
         }
         if (Input.GetKeyDown(KeyCode.F)){
-            selectedGameObjects.transform.SetParent(folderPaths.follow.transform);
+            if (folderPaths.thirdPerson.isActiveAndEnabled)
+                selectedGameObjects.transform.SetParent(folderPaths.follow.transform);
+            else if (folderPaths.firstPerson.isActiveAndEnabled) 
+                selectedGameObjects.transform.SetParent(folderPaths.firstPerson.transform);
         }
         if (Input.GetKeyUp(KeyCode.F)){
            selectedGameObjects.transform.SetParent(null);
@@ -57,6 +60,7 @@ public class EditPrefab : MonoBehaviour
     public void ray(){
         // Get the center of the screen
         Vector3 screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+        print(Camera.main);
         // Create a ray from the camera through the center of the screen
         Ray ray = Camera.main.ScreenPointToRay(screenCenter);
         // Perform the raycast
