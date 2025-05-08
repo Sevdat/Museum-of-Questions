@@ -11,32 +11,17 @@ public class ExportImportGLTF : MonoBehaviour
     GameObject exp;
     string str;
     // Start is called before the first frame update
-    //BOKI  (hayq Art) Karboosx
-    // terrain isn't supported, KHR_materials_pbrSpecularGlossiness has been deprecated  older specular-glossiness PBR workflow
     void Start()
     {
         folderPaths = transform.GetComponent<Main>();
         exp = Resources.Load<GameObject>("OutPostOnDesert");
         Resources.UnloadAsset(exp);
-        
-        // // StartCoroutine(ExportGameObject(exp, $"{Application.persistentDataPath}/Expertod"));
-
-        // str = Application.dataPath+"/Resources/GeneratedAssets/BERCEST STUDIO/LOW POLY MEDIEVAL SHIP/Prefab/Content/Vegetation Pack 2_URP Scene/Vegetation Pack 2_URP Scene.gltf";
-        // string str1 = Application.dataPath+"/Resources/GeneratedAssets/LineAcroos/Environment Forest/Prefab/Content/EnvironmentForestScene/EnvironmentForestScene.gltf";
-        // // ImportGLTF(str);
-        // // print(Application.persistentDataPath + "/Expertod");
-        // print(str);
     }
  
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.J)){
-            ImportGLTF($"{Application.persistentDataPath}/ExportedModel/ExportedModel.gltf",0);
-        }
-        if (Input.GetKeyDown(KeyCode.K)){
-            StartCoroutine(ExportGameObject(exp,$"{Application.persistentDataPath}/ExportedModel"));
-        }
+
     }
 
     internal IEnumerator ExportGameObject(GameObject targetObject,string exportPath, bool unloadLoadedGameObject = false){

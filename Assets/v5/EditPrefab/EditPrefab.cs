@@ -1,16 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using RuntimeHandle;
 
 public class EditPrefab : MonoBehaviour
 {
     Main folderPaths;
-    internal static GameObject selectedGameObject;
-    Dictionary<GameObject,GameObjectData> selected = new Dictionary<GameObject, GameObjectData>();
-
-    float reverseRotation = 1f;
-    float scale = 0.01f;
-
+    static GameObject selectedGameObjects;
+    static Dictionary<GameObject,GameObjectData> dictionary = new Dictionary<GameObject, GameObjectData>();
+    bool playmode = true;
     struct GameObjectData {
         internal Material[] materials;
         internal Vector3 initialVec;
@@ -21,55 +19,40 @@ public class EditPrefab : MonoBehaviour
             initialVec = gameObject.transform.position;
             initialQuat = gameObject.transform.rotation;
             oldParent = gameObject.transform.parent;
-            if (selectedGameObject.transform.childCount == 0) {
-                selectedGameObject.transform.position = gameObject.transform.position;
-                selectedGameObject.transform.rotation = gameObject.transform.rotation;
-                }
-            gameObject.transform.SetParent(selectedGameObject.transform);
+            if (dictionary.Count == 0) {
+                selectedGameObjects = new GameObject("selected");
+                selectedGameObjects.AddComponent<RuntimeTransformHandle>();
+                selectedGameObjects.transform.position = gameObject.transform.position;
+                selectedGameObjects.transform.rotation = gameObject.transform.rotation;
+            }
+            gameObject.transform.SetParent(selectedGameObjects.transform);
         }
     }
     // Start is called before the first frame update
     void Start(){
         folderPaths = transform.GetComponent<Main>();
-        selectedGameObject = new GameObject("selected");
     }
-
+    
     // Update is called once per frame
     void Update(){
 
-        if (Input.GetKey(KeyCode.R)){
+        if (Input.GetKeyDown(KeyCode.R)){
             ray();
         }
         if (Input.GetKeyDown(KeyCode.Y)){
             release();
         }
         if (Input.GetKeyDown(KeyCode.F)){
-            selectedGameObject.transform.SetParent(folderPaths.follow.transform);
+            selectedGameObjects.transform.SetParent(folderPaths.follow.transform);
         }
         if (Input.GetKeyUp(KeyCode.F)){
-           selectedGameObject.transform.SetParent(null);
-        }
-
-        reverseRotation = Input.GetKey(KeyCode.Tab)? -0.1f:0.1f;
-        scale = Input.GetKey(KeyCode.Tab)? -0.001f:0.001f;
-
-        if (Input.GetKey(KeyCode.Alpha1)){
-           selectedGameObject.transform.Rotate(0, 0, reverseRotation);
-        }
-        if (Input.GetKey(KeyCode.Alpha2)){
-           selectedGameObject.transform.Rotate(0, reverseRotation, 0);
-        }
-        if (Input.GetKey(KeyCode.Alpha3)){
-           selectedGameObject.transform.Rotate(reverseRotation, 0, 0);
-        }
-
-        if (Input.GetKey(KeyCode.Alpha4)){
-           selectedGameObject.transform.localScale += new Vector3(scale, scale, scale);
+           selectedGameObjects.transform.SetParent(null);
         }
 
         if (Input.GetKey(KeyCode.Return)){
            release(false);
         }
+        
     }
     public void ray(){
         // Get the center of the screen
@@ -79,27 +62,37 @@ public class EditPrefab : MonoBehaviour
         // Perform the raycast
         if (Physics.Raycast(ray, out RaycastHit hit, 100)){
             select(hit.transform.gameObject);
-            hit.collider.enabled = false;
         }
     }
-    public void select(GameObject select){
-        if (!selected.ContainsKey(select)) {
-            Renderer renderer = select.GetComponent<Renderer>();
-
-            selected[select] = new GameObjectData(select);
+    public void select(GameObject selected){
+        if (!dictionary.ContainsKey(selected)) {
+            Renderer renderer = selected.GetComponent<Renderer>();
+            dictionary[selected] = new GameObjectData(selected);
             renderer.material = folderPaths.selectTransparent;
+        } else {
+            GameObjectData gameObjectData = dictionary[selected];
+            selected.GetComponent<Renderer>().materials = gameObjectData.materials;
+            selected.transform.SetParent(gameObjectData.oldParent);
+            dictionary.Remove(selected);
         }
     }
 
-    public void release(bool reset = true, bool resetMaterials = true){
-        foreach (GameObject gameObject in selected.Keys){
-            if (resetMaterials) gameObject.GetComponent<Renderer>().materials = selected[gameObject].materials;
-            if (reset){
-                gameObject.transform.position = selected[gameObject].initialVec;
-                gameObject.transform.rotation = selected[gameObject].initialQuat;
+    public void release(bool resetPosition = true, bool resetMaterials = true){
+        foreach (GameObject selected in dictionary.Keys){
+            GameObjectData gameObjectData = dictionary[selected];
+            if (resetMaterials) {
+                selected.GetComponent<Renderer>().materials = gameObjectData.materials;
+                selected.transform.SetParent(gameObjectData.oldParent);
+                }
+            if (resetPosition){
+                selected.transform.position = gameObjectData.initialVec;
+                selected.transform.rotation = gameObjectData.initialQuat;
+
             }
-            gameObject.GetComponent<Collider>().enabled = true;
+            selected.GetComponent<Collider>().enabled = true;
+            
         }
-        selected = new Dictionary<GameObject, GameObjectData>();
+        dictionary = new Dictionary<GameObject, GameObjectData>();
+        if (resetMaterials) Destroy(selectedGameObjects);
     }
 }

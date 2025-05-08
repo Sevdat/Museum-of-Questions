@@ -1,2 +1,11 @@
 \Desktop
 \Documents\GitHub\Museum-of-Questions\Assets\Resources\GeneratedMaps\city\city.gltf
+\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Accessibility
+\Documents\GitHub\Museum-of-Questions\Assets\Resources\GeneratedMaps\kingdom\kingdom.gltf
+\Desktop\AI
+\Documents\GitHub\Museum-of-Questions\Assets\Resources\GeneratedMaps\town\town.gltf
+
+
+
+
+

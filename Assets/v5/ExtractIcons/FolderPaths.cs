@@ -14,7 +14,7 @@ public class Main : MonoBehaviour
 {
 
     public GameObject follow, player;
-
+    public Camera firstPerson, thirdPerson;
     internal GeneratedAssets generatedAssets;
     internal EditPrefab editPrefab;
 
@@ -47,25 +47,27 @@ public class Main : MonoBehaviour
     
     void Awake(){
         init();
+        firstPerson.enabled = false;
     }
 
     // Start is called before the first frame update
     void Start(){
-        // createPortal(@"C:\Users\sevda\Downloads\Резюме.docx");
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     // Update is called once per frame
     void Update(){
-        allMenuDisabled = !menuGameObject.activeSelf && !terminalGameObject.activeSelf && !assetTerminalGameObject.activeSelf && !textBoxTerminalGameObject.activeSelf;
+        allMenuDisabled = !menuGameObject.activeSelf && !terminalGameObject.activeSelf && !assetTerminalGameObject.activeSelf && !textBoxTerminalGameObject.activeSelf && Cursor.lockState == CursorLockMode.Locked;
         if (Input.GetKeyDown(KeyCode.Escape)){
             menuGameObject.SetActive(!menu.gameObject.activeSelf);
             terminalGameObject.SetActive(false);
             assetTerminalGameObject.SetActive(false);
             textBoxTerminalGameObject.SetActive(false);
         }
-        if (Input.GetKeyDown(KeyCode.H)){
-            loadMap();
-            // print(orginizePaths.getKey());
+        if (Input.GetKeyDown(KeyCode.Space)){
+            firstPerson.enabled = !firstPerson.isActiveAndEnabled;
+            thirdPerson.enabled = !thirdPerson.isActiveAndEnabled;
         }
     }
 
@@ -138,7 +140,6 @@ public class Main : MonoBehaviour
             createIcon(temp.transform.name).transform.position = temp.transform.position;
             Destroy(temp);
         }
-
     }
     internal void teleportPlayer(){
         player.GetComponent<CharacterController>().enabled = false;

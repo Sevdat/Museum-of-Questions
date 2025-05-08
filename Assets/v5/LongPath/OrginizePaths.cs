@@ -38,18 +38,11 @@ public class OrginizePaths : MonoBehaviour
     {
 
     }
-    void printAll(IEnumerable[] lol){
-        foreach (IEnumerable str in lol) print(str);
-    }
     string normilizePath(string mapName){
         return mapName.Replace('/', '\\').Replace(userPath, "");
     }
     internal string fullPath(string relativePath){
         return (userPath + relativePath).Replace('/', '\\');
-    }
-    string[] allFolders(){
-        string[] folders = Directory.GetDirectories(Application.dataPath+"/Resources/GeneratedAssets","*", SearchOption.AllDirectories);
-        return folders;
     }
     
     public bool createFolder(string path){
@@ -114,6 +107,5 @@ public class OrginizePaths : MonoBehaviour
         catch (Exception ex){
             Console.WriteLine($"Read error: {ex.Message}");
         }
-        
     }
 }

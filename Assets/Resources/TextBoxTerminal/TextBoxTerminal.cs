@@ -75,8 +75,4 @@ public class TextBoxTerminal : MonoBehaviour
 
         return "";
     }
-    void deleteOldFolder(string folderPath){
-
-        Directory.Delete(folderPath, recursive: true);
-    }
 }

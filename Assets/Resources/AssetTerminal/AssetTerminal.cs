@@ -45,7 +45,6 @@ public class AssetTerminal : MonoBehaviour
     }
 
     internal IEnumerator courutineStart(int amount = 10){
-
         var gridLayout = GetComponent<GridLayoutGroup>();
         if (gridLayout != null) gridLayout.enabled = false;
         
