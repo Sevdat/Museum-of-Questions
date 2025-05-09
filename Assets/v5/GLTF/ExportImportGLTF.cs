@@ -14,8 +14,6 @@ public class ExportImportGLTF : MonoBehaviour
     void Start()
     {
         folderPaths = transform.GetComponent<Main>();
-        exp = Resources.Load<GameObject>("OutPostOnDesert");
-        Resources.UnloadAsset(exp);
     }
  
     // Update is called once per frame
@@ -52,7 +50,6 @@ public class ExportImportGLTF : MonoBehaviour
         // Load the GLTF scene asynchronously
         try {
             await sceneImporter.LoadNodeAsync(index,new System.Threading.CancellationToken());
-            print("GLTF file imported successfully!");
             // folderPaths.currentMap.transform.position = folderPaths.editPrefab.placeInfrontOfPlayer(1,2,4);
             AddMeshCollidersToHierarchy(sceneImporter.CreatedObject);
 

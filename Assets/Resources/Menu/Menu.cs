@@ -35,6 +35,8 @@ public class Menu : MonoBehaviour
         transform.gameObject.SetActive(false);
     } 
     public void onEditorModeButtonClick(){
+        main.firstPerson.transform.position = main.thirdPerson.transform.position;
+        main.firstPerson.transform.rotation = main.thirdPerson.transform.rotation;
         main.firstPerson.enabled = true;
         main.thirdPerson.enabled = false;
         transform.gameObject.SetActive(false);

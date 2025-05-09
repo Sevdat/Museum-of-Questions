@@ -22,6 +22,7 @@ public class Main : MonoBehaviour
     internal RotateCameraFollow rotateCameraFollow;
     internal ExportImportGLTF exportImportGLTF;
     internal OrginizePaths orginizePaths;
+    internal FirstPersonFlythrough firstPersonFlythrough;
     
     public GameObject portalPrefab,iconPrefab;
 
@@ -53,20 +54,27 @@ public class Main : MonoBehaviour
 
     // Start is called before the first frame update
     void Start(){
-        // Cursor.lockState = CursorLockMode.Locked;
-        // Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     // Update is called once per frame
     void Update(){
         allMenuDisabled = !menuGameObject.activeSelf && !terminalGameObject.activeSelf && 
             !assetTerminalGameObject.activeSelf && !textBoxTerminalGameObject.activeSelf; 
-            // Cursor.lockState == CursorLockMode.Locked;
+        if (allMenuDisabled){
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        } else {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
         if (Input.GetKeyDown(KeyCode.Escape)){
             menuGameObject.SetActive(!menu.gameObject.activeSelf);
             terminalGameObject.SetActive(false);
             assetTerminalGameObject.SetActive(false);
             textBoxTerminalGameObject.SetActive(false);
+            editPrefab.release();
         }
     }
 
@@ -77,10 +85,13 @@ public class Main : MonoBehaviour
         animateCharacter = player.AddComponent<AnimateCharacter>();
         exportImportGLTF = transform.AddComponent<ExportImportGLTF>();
         orginizePaths = transform.AddComponent<OrginizePaths>();
+        firstPersonFlythrough = firstPerson.transform.AddComponent<FirstPersonFlythrough>();
         rotateCameraFollow.player = player;
         rotateCameraFollow.folderPaths = this;
         animateCharacter.folderPaths = this;
         orginizePaths.main = this;
+        firstPersonFlythrough.main = this;
+        editPrefab.main = this;
 
         menuGameObject = Instantiate(menuGameObject);
         menu = menuGameObject.GetComponent<Menu>();

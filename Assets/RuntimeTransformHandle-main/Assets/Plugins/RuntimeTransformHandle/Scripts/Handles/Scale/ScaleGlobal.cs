@@ -10,6 +10,9 @@ namespace RuntimeHandle
     {
         protected Vector3 _axis;
         protected Vector3 _startScale;
+
+        private Vector3 initialWorldPoint;  // A fixed point in world space (e.g., 1m ahead)
+        private Vector2 initialScreenCenter;
         
         public ScaleGlobal Initialize(RuntimeTransformHandle p_parentTransformHandle, Vector3 p_axis, Color p_color)
         {
@@ -34,16 +37,24 @@ namespace RuntimeHandle
 
         public override void Interact(Vector3 p_previousPosition)
         {
-            Vector3 mouseVector = (RuntimeTransformHandle.GetMousePosition() - p_previousPosition);
-            float d = (mouseVector.x + mouseVector.y) * Time.deltaTime * 2;
-            delta += d;
-            _parentTransformHandle.target.localScale = _startScale + Vector3.Scale(_startScale,_axis) * delta;
+            _parentTransformHandle.target.localScale = _startScale + _startScale * GetScreenDeviation();
             
             base.Interact(p_previousPosition);
         }
-
+        // Get current screen deviation (in pixels)
+        public float GetScreenDeviation()
+        {
+            // Re-project the SAME world point after camera rotation
+            Vector2 currentScreenPos = Camera.main.WorldToScreenPoint(initialWorldPoint);
+            Vector2 vec = currentScreenPos - initialScreenCenter;
+            float magnitude = (vec.y>0)?-vec.magnitude:vec.magnitude;
+            return magnitude/300;
+        }
         public override void StartInteraction(Vector3 p_hitPoint)
         {
+            initialWorldPoint = Camera.main.transform.position + Camera.main.transform.forward * 1f;
+            initialScreenCenter = Camera.main.WorldToScreenPoint(initialWorldPoint);
+
             base.StartInteraction(p_hitPoint);
             _startScale = _parentTransformHandle.target.localScale;
         }

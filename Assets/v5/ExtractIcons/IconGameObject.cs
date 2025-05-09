@@ -19,7 +19,6 @@ public class IconGameObject : ExtractIcon
         transform.SetParent(parent.transform);
     }
     internal void createIcon(string path){
-        print(folderPaths);
         transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = getGenericIcon(folderPaths.orginizePaths.fullPath(path));
     }
     internal void rename(string path){

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class FirstPersonFlythrough : MonoBehaviour
 {
+    internal Main main;
     float sensitivityX = 5f; // Sensitivity for horizontal mouse movement
     float sensitivityY = 5f; // Sensitivity for vertical mouse movement
 
@@ -27,6 +28,12 @@ public class FirstPersonFlythrough : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (main.allMenuDisabled){
+            cameraControls();
+        }
+    }
+    
+    void cameraControls(){
         forwardPressed = Input.GetKey(KeyCode.W);
         backwardPressed = Input.GetKey(KeyCode.S);
         leftPressed = Input.GetKey(KeyCode.A);
@@ -49,7 +56,7 @@ public class FirstPersonFlythrough : MonoBehaviour
         mouseY = Input.GetAxis("Mouse Y") * sensitivityY;
         rotateCamera(mouseX,mouseY);
     }
-    
+
     private void rotateCamera(float mouseX, float mouseY){
         // Rotate the camera horizontally (around the y-axis)
         transform.Rotate(-mouseY, mouseX, 0);
