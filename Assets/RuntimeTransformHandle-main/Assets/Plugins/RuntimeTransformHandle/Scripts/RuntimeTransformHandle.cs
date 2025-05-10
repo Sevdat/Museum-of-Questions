@@ -76,7 +76,7 @@ namespace RuntimeHandle
             }
         }
 
-        void Clear()
+        public void Clear()
         {
             _draggingHandle = null;
 

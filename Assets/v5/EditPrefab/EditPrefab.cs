@@ -24,19 +24,19 @@ public class EditPrefab : MonoBehaviour
             Renderer renderer = gameObject.GetComponent<Renderer>();
             if (renderer != null){
                 materials = renderer.materials;
-                Material[] newMaterials = renderer.materials; // Get a copy
+                Material[] newMaterials = renderer.materials;
                 for (int i = 0; i<newMaterials.Length;i++){
                     newMaterials[i] = selectTransparent;
                 }
                 renderer.materials = newMaterials;
             } else materials = null;
 
-            // if (renderer != null) renderer.material = selectTransparent;
             if (dictionary.Count == 0) {
                 selectedGameObjects = new GameObject("selected");
-                if (editorMode) runtimeTransformHandle = selectedGameObjects.AddComponent<RuntimeTransformHandle>();
+                if (editorMode && runtimeTransformHandle == null) runtimeTransformHandle = selectedGameObjects.AddComponent<RuntimeTransformHandle>();
                 selectedGameObjects.transform.position = gameObject.transform.position;
                 selectedGameObjects.transform.rotation = gameObject.transform.rotation;
+
             }
             gameObject.transform.SetParent(selectedGameObjects.transform);
             Collider collider = gameObject.GetComponent<Collider>();
@@ -69,6 +69,10 @@ public class EditPrefab : MonoBehaviour
         if (Input.GetKey(KeyCode.Return)){
            release(false);
         }
+
+        if (runtimeTransformHandle != null && Input.GetKey(KeyCode.T)){
+            saveAsGameObjectHierarchy();
+        }  
         
         if (runtimeTransformHandle != null && Input.GetKey(KeyCode.Alpha1)){
             runtimeTransformHandle.type = HandleType.POSITION;
@@ -78,20 +82,18 @@ public class EditPrefab : MonoBehaviour
         }
         if (runtimeTransformHandle != null && Input.GetKey(KeyCode.Alpha3)){
             runtimeTransformHandle.type = HandleType.SCALE;
-        }
-        
+        } 
     }
+
     public void ray(bool selectAll){
-        // Get the center of the screen
         Vector3 screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-        // Create a ray from the camera through the center of the screen
         Ray ray = Camera.main.ScreenPointToRay(screenCenter);
-        // Perform the raycast
         if (Physics.Raycast(ray, out RaycastHit hit, 100)){
             select(hit.transform.gameObject);
             if (selectAll) selectParent();
         }
     }
+
     public void selectParent(){
         HashSet<Transform> set = new HashSet<Transform>();
         foreach (GameObject selected in dictionary.Keys){
@@ -102,8 +104,8 @@ public class EditPrefab : MonoBehaviour
             RecursivelyProcessChildren(parent);
         }
     }
+
     void RecursivelyProcessChildren(Transform parent){
-        // Loop through all children
         for (int i = 0; i < parent.childCount; i++){
             Transform child = parent.GetChild(i);
             RecursivelyProcessChildren(child);
@@ -111,6 +113,7 @@ public class EditPrefab : MonoBehaviour
             if (doesntContain) i--;
         }
     }
+
     public bool select(GameObject selected, bool deselectDuplicate = true){
         bool doesntContain = !dictionary.ContainsKey(selected);
         if (doesntContain) {
@@ -130,24 +133,54 @@ public class EditPrefab : MonoBehaviour
         dictionary = new Dictionary<GameObject, GameObjectData>();
     }
 
-    public void release(bool resetPosition = true, bool resetMaterials = true){
+    public void saveAsGameObjectHierarchy(){
+        Transform mapData = main.currentMap.transform.GetChild(2);
+        selectedGameObjects.transform.SetParent(mapData);
+        selectedGameObjects = null;
+        release(false,true,false);
+        DeleteEmptyChildrenRecursive(mapData);
+    }
+
+    public void release(bool resetPosition = true, bool resetMaterials = true, bool resetOldParent = true){
         foreach (GameObject selected in dictionary.Keys){
             GameObjectData gameObjectData = dictionary[selected];
             if (resetMaterials) {
                 Renderer renderer = selected.GetComponent<Renderer>();
-                if (renderer!= null)renderer.materials = gameObjectData.materials;
-                selected.transform.SetParent(gameObjectData.oldParent);
-                }
+                if (renderer!= null) renderer.materials = gameObjectData.materials;
+                if (resetOldParent) selected.transform.SetParent(gameObjectData.oldParent);
+            }
             if (resetPosition){
                 selected.transform.position = gameObjectData.initialVec;
                 selected.transform.rotation = gameObjectData.initialQuat;
             }
-            selected.GetComponent<Collider>().enabled = true;
+            Collider collider = selected.GetComponent<Collider>();
+            if (collider != null) collider.enabled = true;
         }
         dictionary = new Dictionary<GameObject, GameObjectData>();
         if (resetMaterials) {
-            Destroy(selectedGameObjects);
+            if (selectedGameObjects != null) Destroy(selectedGameObjects);
+            if (runtimeTransformHandle != null) runtimeTransformHandle.Clear();
             runtimeTransformHandle = null;
         }
+    }
+
+    private void DeleteEmptyChildrenRecursive(Transform parent){
+        // We need to iterate backwards because we might delete elements
+        for (int i = parent.childCount - 1; i >= 0; i--){
+            Transform child = parent.GetChild(i);
+            
+            // First process the child's children
+            DeleteEmptyChildrenRecursive(child);
+            
+            // Then check if this child is now empty
+            if (child.childCount == 0 && IsTrulyEmpty(child.gameObject)){
+                DestroyImmediate(child.gameObject);
+            }
+        }
+    }
+
+    private bool IsTrulyEmpty(GameObject gameObject){
+        Component[] components = gameObject.GetComponents<Component>();
+        return components.Length == 1;
     }
 }
