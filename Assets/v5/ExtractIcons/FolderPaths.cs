@@ -70,11 +70,13 @@ public class Main : MonoBehaviour
             Cursor.visible = true;
         }
         if (Input.GetKeyDown(KeyCode.Escape)){
-            menuGameObject.SetActive(!menu.gameObject.activeSelf);
-            terminalGameObject.SetActive(false);
-            assetTerminalGameObject.SetActive(false);
-            textBoxTerminalGameObject.SetActive(false);
-            editPrefab.release();
+            if (editPrefab.dictionary.Count>0) editPrefab.release(); 
+            else {
+                menuGameObject.SetActive(!menu.gameObject.activeSelf);
+                terminalGameObject.SetActive(false);
+                assetTerminalGameObject.SetActive(false);
+                textBoxTerminalGameObject.SetActive(false);
+            }
         }
     }
 
