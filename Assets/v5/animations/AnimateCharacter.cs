@@ -9,38 +9,57 @@ public class AnimateCharacter : MonoBehaviour
     Animator animator;
     internal float velocityZ = 0.0f;
     internal float velocityX = 0.0f;
+    internal float fly = 0.0f;
     float acceleration = 10.0f;
     float deacceleration = -10.0f;
     float maximumWalkVelocity = 5f;
     float maximumRunVelocity = 10f;
     int VelocityZHash;
     int VelocityXHash;
+    int FlyHash;
     internal bool forwardPressed;
     internal bool backwardPressed;
     internal bool leftPressed;
     internal bool rightPressed;
     internal bool runPressed;
+    internal bool jump;
     // Start is called before the first frame update
     void Start(){
         animator = GetComponent<Animator>();
         VelocityZHash = Animator.StringToHash("VelocityZ");
         VelocityXHash = Animator.StringToHash("VelocityX");
+        FlyHash = Animator.StringToHash("fly");
         characterController = transform.GetComponent<CharacterController>();
     }
 
     // Update is called once per frame
     void Update(){
-        if (folderPaths.allMenuDisabled && folderPaths.thirdPerson.isActiveAndEnabled){
-            animateCharacter();
-        }
-    }
-
-    public void animateCharacter(){
         forwardPressed = Input.GetKey(KeyCode.W);
         backwardPressed = Input.GetKey(KeyCode.S);
         leftPressed = Input.GetKey(KeyCode.A);
         rightPressed = Input.GetKey(KeyCode.D);
         runPressed = Input.GetKey(KeyCode.LeftShift);
+        jump = Input.GetKey(KeyCode.Space);
+        runCharacter();
+        if (jump || (fly > 0 && fly <1)) fly += 0.0015f;
+        if (!jump && fly > 0) fly -= 0.1f;
+        if (fly <0) fly = 0;
+        animator.SetFloat(FlyHash, fly);
+    }
+
+    public void runCharacter(){
+        if (folderPaths.allMenuDisabled && folderPaths.thirdPerson.isActiveAndEnabled){
+            animateCharacter();
+            motion();
+        } else {
+            velocityZ = 0;
+            velocityX = 0;
+        }
+        animator.SetFloat(VelocityZHash, velocityZ);
+        animator.SetFloat(VelocityXHash, velocityX);
+    }
+
+    public void animateCharacter(){
 
         float currentmaxVelocity = runPressed ? maximumRunVelocity: maximumWalkVelocity;
 
@@ -67,13 +86,9 @@ public class AnimateCharacter : MonoBehaviour
             velocityX += Mathf.Sign(velocityX)*Time.deltaTime *deacceleration;
             if (Mathf.Abs(velocityX) < 0.05f) velocityX = 0.0f;
         }
-
-        animator.SetFloat(VelocityZHash, velocityZ);
-        animator.SetFloat(VelocityXHash, velocityX);
-        run();
     }
 
-    public void run()
+    public void motion()
     {
         // Calculate the combined movement direction
         Vector3 movementDirection = Vector3.zero;
@@ -97,7 +112,8 @@ public class AnimateCharacter : MonoBehaviour
         }
 
         // Apply the velocity to the Rigidbody
-        characterController.SimpleMove(movementDirection * moveSpeed);
+        if (fly == 0) characterController.SimpleMove(movementDirection * moveSpeed);
+        else characterController.Move(Camera.main.transform.forward * moveSpeed/100);
     }
 
 }

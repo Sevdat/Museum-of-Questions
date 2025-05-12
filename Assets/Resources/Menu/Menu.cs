@@ -28,10 +28,10 @@ public class Menu : MonoBehaviour
     public void onAssetTerminalButtonClick(){
         main.assetTerminalGameObject.SetActive(true);
         transform.gameObject.SetActive(false);
-        main.assetTerminal.onMenuClick();
+        main.assetTerminalScript.onMenuClick();
     }
     public void onSaveMapButtonClick(){
-        main.textBoxTerminalGameObject.SetActive(true);
+        main.saveMapGameObject.SetActive(true);
         transform.gameObject.SetActive(false);
     } 
     public void onEditorModeButtonClick(){

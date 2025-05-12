@@ -32,14 +32,17 @@ public class Main : MonoBehaviour
     public GameObject menuGameObject;
     internal Menu menu;
     
-    public GameObject assetTerminalGameObject;
-    internal AssetTerminal assetTerminal;
-
     public GameObject terminalGameObject;
     internal TerminalScript terminalScript;
 
-    public GameObject textBoxTerminalGameObject;
-    internal SaveMap textBoxTerminal;
+    public GameObject assetTerminalGameObject;
+    internal AssetTerminal assetTerminalScript;
+
+    public GameObject textureTerminalGameObject;
+    internal TextureTerminal textureTerminalScript;
+
+    public GameObject saveMapGameObject;
+    internal SaveMap saveMapScript;
 
     public Material selectTransparent;
     
@@ -61,7 +64,7 @@ public class Main : MonoBehaviour
     // Update is called once per frame
     void Update(){
         allMenuDisabled = !menuGameObject.activeSelf && !terminalGameObject.activeSelf && 
-            !assetTerminalGameObject.activeSelf && !textBoxTerminalGameObject.activeSelf; 
+            !assetTerminalGameObject.activeSelf && !saveMapGameObject.activeSelf; 
         if (allMenuDisabled){
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -75,7 +78,7 @@ public class Main : MonoBehaviour
                 menuGameObject.SetActive(!menu.gameObject.activeSelf);
                 terminalGameObject.SetActive(false);
                 assetTerminalGameObject.SetActive(false);
-                textBoxTerminalGameObject.SetActive(false);
+                saveMapGameObject.SetActive(false);
             }
         }
     }
@@ -100,8 +103,8 @@ public class Main : MonoBehaviour
         menu.main = this;
 
         assetTerminalGameObject = Instantiate(assetTerminalGameObject);
-        assetTerminal = assetTerminalGameObject.GetComponent<AssetTerminal>();
-        assetTerminal.main = this;
+        assetTerminalScript = assetTerminalGameObject.GetComponent<AssetTerminal>();
+        assetTerminalScript.main = this;
         assetTerminalGameObject.SetActive(false);
 
         terminalGameObject = Instantiate(terminalGameObject);
@@ -109,10 +112,15 @@ public class Main : MonoBehaviour
         terminalScript.folderPaths = this;
         terminalGameObject.SetActive(false);
 
-        textBoxTerminalGameObject = Instantiate(textBoxTerminalGameObject);
-        textBoxTerminal = textBoxTerminalGameObject.GetComponent<SaveMap>();
-        textBoxTerminal.main = this;
-        textBoxTerminalGameObject.SetActive(false);
+        textureTerminalGameObject = Instantiate(textureTerminalGameObject);
+        textureTerminalScript = textureTerminalGameObject.GetComponent<TextureTerminal>();
+        textureTerminalScript.main = this;
+        textureTerminalGameObject.SetActive(false);
+
+        saveMapGameObject = Instantiate(saveMapGameObject);
+        saveMapScript = saveMapGameObject.GetComponent<SaveMap>();
+        saveMapScript.main = this;
+        saveMapGameObject.SetActive(false);
     }
     internal async void loadMap(){
         string path = orginizePaths.fullPath(orginizePaths.getKey());

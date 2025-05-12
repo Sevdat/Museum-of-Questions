@@ -83,6 +83,10 @@ public class EditPrefab : MonoBehaviour
         if (runtimeTransformHandle != null && Input.GetKey(KeyCode.Alpha3)){
             runtimeTransformHandle.type = HandleType.SCALE;
         } 
+        if (runtimeTransformHandle != null && Input.GetKey(KeyCode.Alpha4)){
+            main.textureTerminalGameObject.SetActive(true);
+            main.textureTerminalScript.onMenuClick();
+        } 
     }
 
     public void ray(bool selectAll){
@@ -183,4 +187,18 @@ public class EditPrefab : MonoBehaviour
         Component[] components = gameObject.GetComponents<Component>();
         return components.Length == 1;
     }
+
+    public void setMaterial(Material[] setMaterial) {
+        foreach (GameObject selected in dictionary.Keys){
+            Renderer renderer = selected.GetComponent<Renderer>();
+            if (renderer != null){
+                Material[] newMaterials = new Material[renderer.materials.Length];
+                for (int i = 0; newMaterials != null && i < newMaterials.Length; i++) {
+                    newMaterials[i] = setMaterial[i];  
+                }
+                renderer.materials = newMaterials; 
+            }
+        }
+    }
+
 }

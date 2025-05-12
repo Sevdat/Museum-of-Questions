@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class TextureTerminal : MonoBehaviour
 {
-    public GameObject assetTerminalPrefab;
+    public GameObject textureTerminalPrefab;
     public GameObject authorNameMenuContent,authorNamePrefab;
     public List<GameObject> authorNameButtons = new List<GameObject>();
 
@@ -21,6 +21,13 @@ public class TextureTerminal : MonoBehaviour
     public GameObject refreshGameObject;
     public TextMeshProUGUI precenageDoneGameObject;
 
+    public GameObject selectionButton;
+    public TextMeshProUGUI selectionAmountGameObject;
+    internal Material[] materials;
+
+
+    internal int amountOfMaterials = 0;
+    internal List<string> amountOfChosen;
 
     string[][] icons;
 
@@ -36,6 +43,7 @@ public class TextureTerminal : MonoBehaviour
     void Start(){
         refresh();
         refreshGameObject.GetComponent<Button>().onClick.AddListener(() => StartCoroutine(onRefreshButtonClick()));
+        refreshGameObject.GetComponent<Button>().onClick.AddListener(() => deselect());
     }
 
     // Update is called once per frame
@@ -47,7 +55,8 @@ public class TextureTerminal : MonoBehaviour
     internal IEnumerator courutineStart(int amount = 10){
         var gridLayout = GetComponent<GridLayoutGroup>();
         if (gridLayout != null) gridLayout.enabled = false;
-        
+        amountOfChosen = new List<string>();
+        selectionAmountGameObject.text = $"{amountOfChosen.Count}/{amountOfMaterials}";
         int count = 0;
         foreach (string str in allAuthors) {      
             if (count >amount) {count = 0; yield return null;}
@@ -137,7 +146,7 @@ public class TextureTerminal : MonoBehaviour
     public (string[][], int) getAllIcons(){
         int size = 0;
         string[] allDirectories = Directory.GetDirectories(main.orginizePaths.assetPath,"*",SearchOption.AllDirectories);
-        string[] allIconPaths = allDirectories.Where(dir => dir.Replace('\\', '/').EndsWith("Prefab/Icon")).ToArray();
+        string[] allIconPaths = allDirectories.Where(dir => dir.Replace('\\', '/').EndsWith("Texture2D/Icon")).ToArray();
         List<string[]> iconList = new List<string[]>();
         foreach (string str in allIconPaths){
             string[] temp = Directory.GetFiles(str, "*.png");
@@ -157,7 +166,7 @@ public class TextureTerminal : MonoBehaviour
         string fileName = Path.GetFileNameWithoutExtension(path);
         GameObject icon = createItem(fileName,prefabIconsMenuContent,prefabIconsPrefab,2);
         Sprite sprite = createSpriteFromTexture2D(path);
-        icon.name = Path.GetDirectoryName(path).Replace(@"Prefab\Icon",@"Prefab\Content")+$@"\{fileName}\{fileName}.gltf";
+        icon.name = Path.GetDirectoryName(path).Replace(@"Texture2D\Icon",@"Texture2D\Content")+$@"\{fileName}.png";
         icon.transform.GetChild(0).GetComponent<Image>().sprite = sprite;
         return icon;
     }
@@ -185,10 +194,24 @@ public class TextureTerminal : MonoBehaviour
         print("Project");
     }
     public void onClickIcon(Button button){
-        main.loadPrefab(button.gameObject.name);
-        transform.gameObject.SetActive(false);
-    }
+        if (amountOfMaterials < amountOfChosen.Count) {
+            
+            amountOfChosen.Add(button.gameObject.name);
+            
+            materials = new Material[amountOfChosen.Count];
+            for (int i = 0; i< amountOfChosen.Count;i++){
+                materials[i] = CreateMaterialFromPNG(amountOfChosen[i]);
+            } 
+            
 
+        }
+
+    }
+    public static Material CreateMaterialFromPNG(string pngPath){
+        Material newMaterial = new Material(Shader.Find("Standard"));
+        newMaterial.mainTexture = LoadPNG(pngPath);
+        return newMaterial;
+    }
     public static Texture2D LoadPNG(string filePath) {
         Texture2D tex = null;
         byte[] fileData;
@@ -228,4 +251,10 @@ public class TextureTerminal : MonoBehaviour
         }
     }
 
+    public void deselect(){
+        if (amountOfChosen.Count>0){
+            amountOfChosen.RemoveAt(amountOfChosen.Count-1);
+            selectionAmountGameObject.text = $"{amountOfChosen.Count}/{amountOfMaterials}";
+        }
+    }
 }
