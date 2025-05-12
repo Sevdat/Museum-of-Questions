@@ -27,7 +27,7 @@ public class TextureTerminal : MonoBehaviour
 
 
     internal int amountOfMaterials = 0;
-    internal List<string> amountOfChosen;
+    internal List<string> amountOfChosen = new List<string>();
 
     string[][] icons;
 
@@ -194,22 +194,21 @@ public class TextureTerminal : MonoBehaviour
         print("Project");
     }
     public void onClickIcon(Button button){
-        if (amountOfMaterials < amountOfChosen.Count) {
-            
+        if (amountOfChosen.Count < amountOfMaterials) {
             amountOfChosen.Add(button.gameObject.name);
-            
+            selectionAmountGameObject.text = $"{amountOfChosen.Count}/{amountOfMaterials}";
             materials = new Material[amountOfChosen.Count];
             for (int i = 0; i< amountOfChosen.Count;i++){
                 materials[i] = CreateMaterialFromPNG(amountOfChosen[i]);
             } 
-            
-
+            main.editPrefab.setMaterial(materials);
         }
-
     }
     public static Material CreateMaterialFromPNG(string pngPath){
-        Material newMaterial = new Material(Shader.Find("Standard"));
-        newMaterial.mainTexture = LoadPNG(pngPath);
+        Material newMaterial = new Material(Shader.Find("UnityGLTF/PBRGraph"));
+
+        newMaterial.SetTexture("baseColorTexture", LoadPNG(pngPath));
+        
         return newMaterial;
     }
     public static Texture2D LoadPNG(string filePath) {
@@ -240,7 +239,9 @@ public class TextureTerminal : MonoBehaviour
         yield return StartCoroutine(courutineStart());
     }
 
-    public void onMenuClick(){
+    public void onMenuClick(int amount = 0){
+        amountOfMaterials = amount;
+        selectionAmountGameObject.text = $"{amountOfChosen.Count}/{amountOfMaterials}";
         StartCoroutine(onMenuButtonClick());
     }
     public IEnumerator onMenuButtonClick(){

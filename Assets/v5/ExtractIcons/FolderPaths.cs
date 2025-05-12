@@ -64,7 +64,7 @@ public class Main : MonoBehaviour
     // Update is called once per frame
     void Update(){
         allMenuDisabled = !menuGameObject.activeSelf && !terminalGameObject.activeSelf && 
-            !assetTerminalGameObject.activeSelf && !saveMapGameObject.activeSelf; 
+            !assetTerminalGameObject.activeSelf && !textureTerminalGameObject.activeSelf && !saveMapGameObject.activeSelf; 
         if (allMenuDisabled){
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -78,6 +78,7 @@ public class Main : MonoBehaviour
                 menuGameObject.SetActive(!menu.gameObject.activeSelf);
                 terminalGameObject.SetActive(false);
                 assetTerminalGameObject.SetActive(false);
+                textureTerminalGameObject.SetActive(false);
                 saveMapGameObject.SetActive(false);
             }
         }

@@ -85,7 +85,14 @@ public class EditPrefab : MonoBehaviour
         } 
         if (runtimeTransformHandle != null && Input.GetKey(KeyCode.Alpha4)){
             main.textureTerminalGameObject.SetActive(true);
-            main.textureTerminalScript.onMenuClick();
+            int max = 0;
+            foreach (GameObject selected in dictionary.Keys){
+            GameObjectData gameObjectData = dictionary[selected];
+                if (gameObjectData.materials != null && max<gameObjectData.materials.Length){
+                    max = gameObjectData.materials.Length;
+                }
+            }
+            main.textureTerminalScript.onMenuClick(max);
         } 
     }
 
@@ -192,8 +199,9 @@ public class EditPrefab : MonoBehaviour
         foreach (GameObject selected in dictionary.Keys){
             Renderer renderer = selected.GetComponent<Renderer>();
             if (renderer != null){
-                Material[] newMaterials = new Material[renderer.materials.Length];
-                for (int i = 0; newMaterials != null && i < newMaterials.Length; i++) {
+                int size = dictionary[selected].materials.Length;
+                Material[] newMaterials = new Material[size];
+                for (int i = 0; i < size && i<setMaterial.Length; i++) {
                     newMaterials[i] = setMaterial[i];  
                 }
                 renderer.materials = newMaterials; 
