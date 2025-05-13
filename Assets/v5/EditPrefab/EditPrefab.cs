@@ -32,7 +32,7 @@ public class EditPrefab : MonoBehaviour
             } else materials = null;
 
             if (dictionary.Count == 0) {
-                selectedGameObjects = new GameObject("selected");
+                if(selectedGameObjects == null) selectedGameObjects = new GameObject("selected");
                 if (editorMode && runtimeTransformHandle == null) runtimeTransformHandle = selectedGameObjects.AddComponent<RuntimeTransformHandle>();
                 selectedGameObjects.transform.position = gameObject.transform.position;
                 selectedGameObjects.transform.rotation = gameObject.transform.rotation;

@@ -73,13 +73,21 @@ public class Main : MonoBehaviour
             Cursor.visible = true;
         }
         if (Input.GetKeyDown(KeyCode.Escape)){
-            if (editPrefab.dictionary.Count>0) editPrefab.release(); 
+            if (editPrefab.dictionary.Count>0) {
+                editPrefab.release();
+                if (textureTerminalGameObject.activeSelf) {textureTerminalScript.amountOfChosen = new List<string>();
+                    textureTerminalScript.selectionAmountGameObject.text = 
+                    $"{textureTerminalScript.amountOfChosen.Count}/{textureTerminalScript.amountOfMaterials}";
+                    textureTerminalGameObject.SetActive(false);
+                }
+                } 
             else {
                 menuGameObject.SetActive(!menu.gameObject.activeSelf);
                 terminalGameObject.SetActive(false);
                 assetTerminalGameObject.SetActive(false);
                 textureTerminalGameObject.SetActive(false);
                 saveMapGameObject.SetActive(false);
+                editPrefab.release();
             }
         }
     }

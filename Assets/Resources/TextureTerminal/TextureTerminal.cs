@@ -202,6 +202,12 @@ public class TextureTerminal : MonoBehaviour
                 materials[i] = CreateMaterialFromPNG(amountOfChosen[i]);
             } 
             main.editPrefab.setMaterial(materials);
+        } 
+
+        if (amountOfChosen.Count >= amountOfMaterials) {
+            main.editPrefab.release(false,false,true);
+            amountOfChosen = new List<string>();
+            main.textureTerminalGameObject.SetActive(false);
         }
     }
     public static Material CreateMaterialFromPNG(string pngPath){

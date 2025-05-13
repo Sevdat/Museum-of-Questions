@@ -122,15 +122,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   textureTerminalPrefab: {fileID: 896768897538380627}
   authorNameMenuContent: {fileID: 6501398121286040901}
-  authorNamePrefab: {fileID: 2932189640931733488, guid: 4ea01594d7678ee459a8af15bdde02fa,
+  authorNamePrefab: {fileID: 2932189640931733488, guid: d12219203b76cfa4f83cf4839651ee7c,
     type: 3}
   authorNameButtons: []
   projectNameMenuContent: {fileID: 2310265774018036750}
-  projectNamePrefab: {fileID: 2932189640931733488, guid: 9b10ac7f2d90df44fa1f233f5e9342cc,
+  projectNamePrefab: {fileID: 2932189640931733488, guid: 2f3361e97a9affc429a5a6b252c97e8a,
     type: 3}
   projectNameButtons: []
   prefabIconsMenuContent: {fileID: 3048418232671549250}
-  prefabIconsPrefab: {fileID: 2932189640931733488, guid: 757684a26b6174a42b3328af8b90d191,
+  prefabIconsPrefab: {fileID: 2932189640931733488, guid: 445881ef8675d0443a0b47e0ab5aa91c,
     type: 3}
   prefabIconsButtons: []
   refreshGameObject: {fileID: 1479456949921425747}
@@ -257,8 +257,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6899072689009442782}
   m_HandleRect: {fileID: 5494696072546254545}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 0.9989429
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -677,7 +677,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.02745098}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1211,7 +1211,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 474.99088, y: -7.999975}
+  m_AnchoredPosition: {x: 475.06, y: -7.999975}
   m_SizeDelta: {x: 0, y: 8}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &7425541760011650066
@@ -1351,7 +1351,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.023529412}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1549,7 +1549,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.02745098}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
