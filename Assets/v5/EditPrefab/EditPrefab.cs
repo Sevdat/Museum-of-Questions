@@ -152,13 +152,13 @@ public class EditPrefab : MonoBehaviour
         DeleteEmptyChildrenRecursive(mapData);
     }
 
-    public void release(bool resetPosition = true, bool resetMaterials = true, bool resetOldParent = true){
+    public void release(bool resetPosition = true, bool resetMaterials = true, bool resetOldParent = true, bool destroySelect = true){
         foreach (GameObject selected in dictionary.Keys){
             GameObjectData gameObjectData = dictionary[selected];
+            if (resetOldParent) selected.transform.SetParent(gameObjectData.oldParent);
             if (resetMaterials) {
                 Renderer renderer = selected.GetComponent<Renderer>();
                 if (renderer!= null) renderer.materials = gameObjectData.materials;
-                if (resetOldParent) selected.transform.SetParent(gameObjectData.oldParent);
             }
             if (resetPosition){
                 selected.transform.position = gameObjectData.initialVec;
@@ -169,10 +169,10 @@ public class EditPrefab : MonoBehaviour
         }
         dictionary = new Dictionary<GameObject, GameObjectData>();
         if (resetMaterials) {
-            if (selectedGameObjects != null) Destroy(selectedGameObjects);
             if (runtimeTransformHandle != null) runtimeTransformHandle.Clear();
             runtimeTransformHandle = null;
         }
+        if (destroySelect) Destroy(selectedGameObjects);
     }
 
     private void DeleteEmptyChildrenRecursive(Transform parent){
