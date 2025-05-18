@@ -11,8 +11,6 @@ https://docs.google.com/presentation/d/1pElspqugE_I1461ZKh2dGQrFCunk660IgwkR5fT5
 Unity Discussions:
 https://discussions.unity.com/t/i-turned-windows-user-interface-into-a-modifiable-unity-game/1644380
 
-
-Tools
 unityGLTF (slightly modified the library due to bugs):
 https://github.com/KhronosGroup/UnityGLTF
 
