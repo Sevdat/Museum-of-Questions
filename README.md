@@ -21,3 +21,6 @@ To render windows icons:
 - shell32.dll
 - user32.dll
 - IWshRuntimeLibrary.dll 
+
+Future Upgrade To render apps inside the game.
+https://github.com/hecomi/uWindowCapture
